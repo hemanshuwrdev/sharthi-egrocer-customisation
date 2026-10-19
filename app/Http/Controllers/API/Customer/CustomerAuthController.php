@@ -14,6 +14,7 @@ use App\Models\RetailerProfile;
 use App\Models\Salesman;
 use App\Models\Setting;
 use App\Models\UserToken;
+use App\Services\RetailerOnboardingService;
 use App\Models\SubscriptionPlan;
 use App\Models\UserSubscription;
 use Illuminate\Http\Request;
@@ -34,23 +35,7 @@ class CustomerAuthController extends Controller
     
     private function normalizeCountryCode($code): string
     {
-        $default = Setting::where('variable', 'country_code')->value('value') ?? '+91';
-        // Ensure default itself is normalized
-        if ($default && !str_starts_with($default, '+')) {
-            $default = '+' . ltrim(preg_replace('/\D/', '', $default), '0');
-        }
-
-        if (!$code) {
-            return $default;
-        }
-
-        $digits = preg_replace('/\D/', '', (string) $code);
-
-        if (!$digits) {
-            return $default;
-        }
-
-        return '+' . ltrim($digits, '0');
+        return RetailerOnboardingService::normalizeCountryCode($code);
     }
 
     public function login(Request $request)
@@ -693,20 +678,7 @@ class CustomerAuthController extends Controller
      */
     private function ensureRetailerQr(User $user, bool $regenerate = false): array
     {
-        $path = 'retailer_qr/' . $user->id . '.svg';
-        if ($regenerate || !Storage::disk('public')->exists($path)) {
-            $svg = QrCode::format('svg')
-                ->size(400)
-                ->margin(1)
-                ->errorCorrection('M')
-                ->generate((string) $user->id);
-            Storage::disk('public')->put($path, $svg);
-        }
-
-        return [
-            'qr_code'      => (string) $user->id,
-            'qr_image_url' => Storage::disk('public')->url($path),
-        ];
+        return app(RetailerOnboardingService::class)->ensureQr($user, $regenerate);
     }
 
     /**
@@ -715,65 +687,7 @@ class CustomerAuthController extends Controller
      */
     private function fanOutNewRetailerToSalesmen(User $retailer, RetailerProfile $profile): void
     {
-        if (!$profile->gps_lat || !$profile->gps_lng) {
-            return;
-        }
-
-        // Fan out to every distributor mapped anywhere in the retailer's whole zone, not
-        // just the single city polygon their GPS point happens to land inside.
-        $zoneCityIds = CommonHelper::getDeliverableZoneCityIds($profile->gps_lat, $profile->gps_lng);
-        if (empty($zoneCityIds)) {
-            return;
-        }
-
-        $distributorIds = BrandDistributorMapping::whereIn('city_id', $zoneCityIds)
-            ->pluck('seller_id')->unique()->values();
-
-        if ($distributorIds->isEmpty()) {
-            return;
-        }
-
-        $salesmen = Salesman::whereIn('seller_id', $distributorIds)
-            ->where('status', Salesman::$statusActive)
-            ->whereNotNull('admin_id')
-            ->get(['id', 'admin_id', 'name']);
-
-        if ($salesmen->isEmpty()) {
-            return;
-        }
-
-        $cityName = City::where('id', $profile->city_id)->value('name') ?? '';
-        $placeholders = [
-            'shop_name'     => $profile->shop_name ?? '',
-            'retailer_name' => $retailer->name ?? '',
-            'city_name'     => $cityName,
-            'retailer_id'   => $retailer->id,
-        ];
-
-        foreach ($salesmen as $sm) {
-            try {
-                $tokens = AdminToken::where('user_id', $sm->admin_id)
-                    ->where('type', 'Salesman')
-                    ->get();
-                if ($tokens->isEmpty()) {
-                    continue;
-                }
-                CommonHelper::sendNotificationByTemplate(
-                    $tokens,
-                    'new_retailer_pending',
-                    $placeholders,
-                    'new_retailer',
-                    0,
-                    '',
-                    null,
-                    null,
-                    'retailer',
-                    $retailer->id
-                );
-            } catch (\Throwable $e) {
-                Log::error('[registerRetailer] salesman push failed for salesman_id=' . $sm->id . ': ' . $e->getMessage());
-            }
-        }
+        app(RetailerOnboardingService::class)->fanOutToSalesmen($retailer, $profile);
     }
 
     public function logout(Request $request)

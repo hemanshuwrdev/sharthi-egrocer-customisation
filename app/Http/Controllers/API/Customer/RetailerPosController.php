@@ -220,7 +220,9 @@ class RetailerPosController extends Controller
             $variantId = (int) $item['product_variant_id'];
             $qty       = (float) $item['qty'];
 
-            $line = MasterCatalogOrderHelper::resolveLine($sellerId, $variantId, $qty);
+            // Buyer = this retailer, as in the cart checkout: it decides the tax rate. Left out, tax came
+            // out as 0 — no GST on the order/invoice and schemes worked out on the wrong (tax-inclusive) base.
+            $line = MasterCatalogOrderHelper::resolveLine($sellerId, $variantId, $qty, null, $user->id);
             if (!$line['ok']) {
                 return CommonHelper::responseError($line['error']);
             }
@@ -238,6 +240,7 @@ class RetailerPosController extends Controller
                 'seller_product_id' => $r['line']['seller_product']->id,
                 'qty'               => (float) $r['item']['qty'],
                 'line_total'        => $lineTotal,
+                'actual_line_total' => $r['line']['actual_price_per_unit'] * (float) $r['item']['qty'],
             ];
         }
         $sellerTaxTotal = round($sellerTaxTotal, 2);
@@ -273,8 +276,11 @@ class RetailerPosController extends Controller
                     'promo_discount'  => 0,
                     'scheme_id'       => $scheme['scheme_id'] ?? null,
                     'scheme_discount' => $schemeDiscount,
-                    'final_total'     => $sellerTotal - $schemeDiscount + $sellerTaxTotal,
-                    'remaining_final' => $sellerTotal - $schemeDiscount + $sellerTaxTotal,
+                    // Inclusive pricing: $sellerTotal already contains tax ($sellerTaxTotal is backed out of it
+                    // for the tax_amount column only) — adding it again would charge the tax twice. Matches the
+                    // retailer / salesman checkouts and the total this endpoint returns.
+                    'final_total'     => $sellerTotal - $schemeDiscount,
+                    'remaining_final' => $sellerTotal - $schemeDiscount,
                     'payment_method'  => $request->payment_method,
                     'address'         => $orderAddress['address'],
                     'latitude'        => $request->latitude,
@@ -289,7 +295,12 @@ class RetailerPosController extends Controller
                     'address_id'      => $request->address_id ?? 0,
                     'created_at'      => now(),
                     'updated_at'      => now(),
-                ] + $orderAddress['columns']);
+                // Snapshot so the invoice can show a before-tax ("Inclusive") scheme discount as a
+                // deduction from Net Taxable, whatever the scheme says later (no-op pre-migration).
+                ] + CommonHelper::schemeSnapshotColumns($scheme, (float) $schemeDiscount) + $orderAddress['columns']);
+
+                // Schemes stack: orders.scheme_discount is their total, this keeps each one.
+                \App\Models\OrderScheme::record($orderId, $scheme);
 
                 foreach ($resolved as $r) {
                     $sp        = $r['line']['seller_product'];
@@ -348,7 +359,7 @@ class RetailerPosController extends Controller
                         'status'                    => json_encode([['received', date('Y-m-d H:i:s')]]),
                         'active_status'             => (string) OrderStatusList::$received,
                         'seller_id'                 => $sellerId,
-                        'scheme_id'                 => $scheme['scheme_id'],
+                        'scheme_id'                 => $free['scheme_id'] ?? $scheme['scheme_id'],
                         'is_free_item'              => 1,
                         'created_at'                => now(),
                         'updated_at'                => now(),
@@ -392,13 +403,15 @@ class RetailerPosController extends Controller
             'sub_total'       => round($sellerTotal, 2),
             'scheme_discount' => round($schemeDiscount, 2),
             'final_total'     => round($sellerTotal - $schemeDiscount, 2),
+            // applied_scheme = the biggest scheme on its own (as before); applied_schemes = every scheme applied.
             'applied_scheme'  => $scheme ? [
-                'scheme_id'       => $scheme['scheme_id'],
-                'name'            => $scheme['name'],
-                'type'            => $scheme['type'],
-                'scheme_discount' => $schemeDiscount,
-                'free_items'      => $scheme['free_items'],
+                'scheme_id'       => $scheme['schemes'][0]['scheme_id'],
+                'name'            => $scheme['schemes'][0]['name'],
+                'type'            => $scheme['schemes'][0]['type'],
+                'scheme_discount' => $scheme['schemes'][0]['scheme_discount'],
+                'free_items'      => $scheme['schemes'][0]['free_items'],
             ] : null,
+            'applied_schemes' => $scheme['schemes'] ?? [],
             'message' => __('order_placed_successfully'),
         ]);
     }

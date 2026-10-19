@@ -115,6 +115,7 @@ export default {
                 {key: 'pincode', label: __('pincode'), sortable: true, sortDirection: 'desc'},
                 {key: 'state', label: __('state'), sortable: true, sortDirection: 'desc'},
                 {key: 'district', label: __('district'), sortable: true, sortDirection: 'desc'},
+                {key: 'city', label: __('area_city'), sortable: true, sortDirection: 'desc'},
                 {key: 'status', label: __('status')},
                 {key: 'actions', label: __('actions'), class: 'text-center' }
             ],

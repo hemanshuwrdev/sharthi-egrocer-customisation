@@ -9,19 +9,24 @@ use App\Models\SellerProduct;
 class SchemeEngine
 {
     /**
-     * Evaluate all active schemes of a seller against cart lines and return
-     * the single best one (max benefit), or null when none applies.
+     * Evaluate all active schemes of a seller against cart lines and apply EVERY one that
+     * qualifies — schemes stack. Each scheme is worked out on the cart as it stands (not on what
+     * another scheme left over), so discounts simply add up; the combined discount is capped at
+     * the cart value so it can never exceed the bill. Returns null when no scheme applies.
      *
      * $lines = [ ['seller_product_id' => int, 'qty' => float, 'line_total' => float], ... ]
      *
-     * Return shape:
+     * Return shape — the keys of the old single-scheme result are kept so callers written for
+     * "one scheme" still work; scheme_id/name/type are the biggest scheme's, the money keys are totals:
      * [
-     *   'scheme_id'       => int,
+     *   'scheme_id'       => int,    // biggest scheme (by benefit)
      *   'name'            => string,
-     *   'type'            => 'buy_x_get_y' | 'group_discount_price' | 'group_discount_qty',
-     *   'benefit'         => float,
-     *   'scheme_discount' => float,
-     *   'free_items'      => [...],
+     *   'type'            => 'buy_x_get_y' | 'group_discount_price' | 'group_discount_qty' | 'product_conditions',
+     *   'benefit'         => float,  // total of all applied schemes
+     *   'scheme_discount' => float,  // total ₹ off, capped at the cart value
+     *   'tax_option'      => ?string, 'scheme_discount_pretax' => ?float,   // combined tax snapshot, see stack()
+     *   'free_items'      => [...],  // every scheme's free items, each tagged with its scheme_id
+     *   'schemes'         => [ ...one result per applied scheme, biggest first, same keys as above ],
      * ]
      */
     public static function evaluate(int $sellerId, array $lines): ?array
@@ -52,7 +57,7 @@ class SchemeEngine
             ])
             ->get();
 
-        $best = null;
+        $results = [];
         foreach ($schemes as $scheme) {
             $hasRowConditions = ($scheme->type === Scheme::TYPE_PRODUCT_CONDITIONS)
                 || $scheme->schemeProducts->contains(function ($sp) {
@@ -70,23 +75,116 @@ class SchemeEngine
                 };
             }
 
-            if ($result !== null && ($best === null || $result['benefit'] > $best['benefit'])) {
-                $best = $result;
+            if ($result !== null) {
+                $results[] = $result;
             }
         }
 
-        return $best;
+        if (empty($results)) {
+            return null;
+        }
+
+        // Biggest benefit first (that one becomes the "primary"); equal benefit -> older scheme first.
+        usort($results, fn ($a, $b) => [$b['benefit'], $a['scheme_id']] <=> [$a['benefit'], $b['scheme_id']]);
+
+        return self::stack($results, $qtyByProduct, array_sum($totalByProduct));
+    }
+
+    /**
+     * Combine the per-scheme results (already sorted, biggest first) into one stacked result.
+     *
+     *  - ₹ discounts add up, but never past the cart value: a later scheme only gets what is left.
+     *  - Free items: each scheme already checked stock on its own; here we only stop two schemes
+     *    from both counting the same stock (the earlier, bigger scheme keeps its items).
+     *  - Tax snapshot: orders store ONE tax treatment. With a single money scheme that is its own;
+     *    with several, only when every one is a before-tax flat discount (their before-tax parts
+     *    are summed) — otherwise null, and the invoice falls back to its plain "Scheme discount" line.
+     */
+    private static function stack(array $results, array $qtyByProduct, float $cartTotal): ?array
+    {
+        $freeProductIds = collect($results)->pluck('free_items')->flatten(1)->pluck('seller_product_id')->unique();
+        $stockById = $freeProductIds->isEmpty() ? collect() : SellerProduct::whereIn('id', $freeProductIds)->pluck('stock', 'id');
+        $freeAllocated = [];
+        $remaining     = $cartTotal;
+        $applied       = [];
+
+        foreach ($results as $r) {
+            $freeItems   = [];
+            $droppedFree = 0.0;
+            foreach ($r['free_items'] as $fi) {
+                $spId = (int) $fi['seller_product_id'];
+                $qty  = (float) $fi['qty'];
+                $stockLeft = (float) ($stockById[$spId] ?? 0) - (float) ($qtyByProduct[$spId] ?? 0) - ($freeAllocated[$spId] ?? 0);
+                if (($freeAllocated[$spId] ?? 0) > 0 && $stockLeft < $qty) {
+                    $droppedFree += $qty * (float) $fi['unit_value'];
+                    continue;
+                }
+                $freeAllocated[$spId] = ($freeAllocated[$spId] ?? 0) + $qty;
+                $freeItems[] = $fi + ['scheme_id' => $r['scheme_id']];
+            }
+
+            $discount = min((float) $r['scheme_discount'], max(0.0, $remaining));
+            $remaining -= $discount;
+            if ($discount < (float) $r['scheme_discount']) {
+                // Cut short by the cap: the stored before-tax part no longer matches this discount.
+                $r['scheme_discount_pretax'] = null;
+            }
+
+            $benefit = (float) $r['benefit'] - $droppedFree - ((float) $r['scheme_discount'] - $discount);
+            if (round($benefit, 2) <= 0) {
+                continue;
+            }
+
+            $applied[] = array_merge($r, [
+                'scheme_discount' => $discount,
+                'benefit'         => $benefit,
+                'free_items'      => $freeItems,
+            ]);
+        }
+
+        if (empty($applied)) {
+            return null;
+        }
+
+        $primary = $applied[0];
+        $money   = array_values(array_filter($applied, fn ($s) => $s['scheme_discount'] > 0));
+
+        if (count($money) <= 1) {
+            $taxOption = $money[0]['tax_option'] ?? ($primary['tax_option'] ?? null);
+            $pretax    = $money[0]['scheme_discount_pretax'] ?? null;
+        } elseif (collect($money)->every(fn ($s) => ($s['tax_option'] ?? 'inclusive') === 'inclusive' && ($s['scheme_discount_pretax'] ?? null) !== null)) {
+            $taxOption = 'inclusive';
+            $pretax    = round(array_sum(array_column($money, 'scheme_discount_pretax')), 2);
+        } else {
+            $taxOption = null;
+            $pretax    = null;
+        }
+
+        return [
+            'scheme_id'              => $primary['scheme_id'],
+            'name'                   => $primary['name'],
+            'type'                   => $primary['type'],
+            'benefit'                => array_sum(array_column($applied, 'benefit')),
+            'scheme_discount'        => array_sum(array_column($applied, 'scheme_discount')),
+            'tax_option'             => $taxOption,
+            'scheme_discount_pretax' => $pretax,
+            'free_items'             => array_merge(...array_column($applied, 'free_items')),
+            'schemes'                => $applied,
+        ];
     }
 
     /**
      * Find the single nearest scheme that is NOT yet triggered — the one requiring
      * the smallest additional spend / qty to unlock.
      */
-    public static function nearestUnapplied(int $sellerId, array $lines, ?int $appliedSchemeId = null): ?array
+    public static function nearestUnapplied(int $sellerId, array $lines, $appliedSchemeIds = null): ?array
     {
         if (empty($lines)) {
             return null;
         }
+
+        // Schemes stack, so several can already be applied — one id, a list of ids, or null all work.
+        $appliedSchemeIds = array_map('intval', array_filter((array) $appliedSchemeIds, fn ($id) => $id !== null));
 
         $qtyByProduct   = [];
         $totalByProduct = [];
@@ -111,7 +209,7 @@ class SchemeEngine
 
         foreach ($schemes as $scheme) {
             if ($scheme->type === Scheme::TYPE_BUY_X_GET_Y) {
-                if ($scheme->id === $appliedSchemeId) {
+                if (in_array((int) $scheme->id, $appliedSchemeIds, true)) {
                     continue;
                 }
                 if (!$scheme->buy_seller_product_id || !$scheme->buy_qty || !$scheme->free_seller_product_id || !$scheme->free_qty) {
@@ -257,7 +355,7 @@ class SchemeEngine
                         'minimumGroupQty'    => $minimumGroupQty,
                     ];
                 }
-            } elseif ($scheme->id !== $appliedSchemeId && ($scheme->type === Scheme::TYPE_PRODUCT_CONDITIONS || $scheme->schemeProducts->contains(fn ($sp) => $sp->min_qty !== null))) {
+            } elseif (!in_array((int) $scheme->id, $appliedSchemeIds, true) && ($scheme->type === Scheme::TYPE_PRODUCT_CONDITIONS || $scheme->schemeProducts->contains(fn ($sp) => $sp->min_qty !== null))) {
                 if ($scheme->schemeProducts->count() > 1) {
                     $firstSp = $scheme->schemeProducts->first();
                     $minQty = (float) ($firstSp->min_qty ?? 0);

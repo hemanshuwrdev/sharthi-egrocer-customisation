@@ -15,6 +15,7 @@ use App\Models\Scheme;
 use App\Models\SchemeProduct;
 use App\Models\SellerProduct;
 use App\Models\SellerProductSlabPrice;
+use App\Services\SchemeListing;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
@@ -420,6 +421,7 @@ class RetailerCatalogApiController extends Controller
 
         $offers = $sellerProducts->map(function ($sp) use ($nearestSchemesBySp, $appliedSchemesBySeller, $variant) {
             $sellerLogo = $sp->seller ? $sp->seller->logo : null;
+            $appliedHere = SchemeListing::appliedInvolving($appliedSchemesBySeller[$sp->seller_id] ?? [], $sp->id);
             return [
                 'seller_id'        => $sp->seller_id,
                 'seller_name'      => $sp->seller ? $sp->seller->getAttributeValue('name') : null,
@@ -449,8 +451,11 @@ class RetailerCatalogApiController extends Controller
                     'price' => (float) $s->price,
                 ])->values(),
                 'nearest_scheme' => $nearestSchemesBySp[$sp->id] ?? null,
-                // The scheme the cart already applies because of this product; {} when it is not in the cart.
-                'applied_scheme' => self::appliedSchemeFor($appliedSchemesBySeller[$sp->seller_id] ?? null, $sp->id),
+                // Schemes the cart already applies because of this product (they stack, so a list); empty
+                // when it is not in the cart. applied_scheme = the first of them, or {} — kept for the
+                // one-scheme app.
+                'applied_schemes' => $appliedHere,
+                'applied_scheme'  => $appliedHere[0] ?? new \stdClass(),
             ];
         })->sortBy(fn($o) => $o['discounted_price'] !== null && $o['discounted_price'] > 0 ? $o['discounted_price'] : $o['selling_price'])
             ->values();
@@ -576,8 +581,8 @@ class RetailerCatalogApiController extends Controller
     }
 
     /**
-     * [seller_id => applied scheme] for the distributors the retailer already holds this variant
-     * with in the cart — the cart's own evaluation (see RetailerCartOrderApiController::appliedSchemesBySeller).
+     * [seller_id => list of applied schemes] for the distributors the retailer already holds this
+     * variant with in the cart — the cart's own evaluation (see RetailerCartOrderApiController::appliedSchemesBySeller).
      * Empty for guests and when the variant is not in the cart, so the cart is only priced when it matters.
      */
     private static function appliedSchemesForVariant($user, int $variantId): array
@@ -600,30 +605,6 @@ class RetailerCatalogApiController extends Controller
         $applied = app(RetailerCartOrderApiController::class)->appliedSchemesBySeller($user);
 
         return array_intersect_key(array_filter($applied), array_flip($sellerIdsInCart));
-    }
-
-    /**
-     * The cart's applied scheme, but only when it really involves this product (as the buy or free
-     * item, or one of the scheme's products) — otherwise a product sitting in the cart would show a
-     * scheme earned by a different product. No scheme -> empty object so the app always gets `{}`.
-     */
-    private static function appliedSchemeFor(?array $applied, int $sellerProductId)
-    {
-        if (!$applied) {
-            return new \stdClass();
-        }
-
-        $scheme = Scheme::with('schemeProducts:id,scheme_id,seller_product_id')->find($applied['scheme_id']);
-        if (!$scheme) {
-            return new \stdClass();
-        }
-
-        $involved = array_map('intval', array_merge(
-            [$scheme->buy_seller_product_id, $scheme->free_seller_product_id],
-            $scheme->schemeProducts->pluck('seller_product_id')->all()
-        ));
-
-        return in_array($sellerProductId, $involved, true) ? $applied : new \stdClass();
     }
 
     private static function formatNearestScheme(Scheme $s): array

@@ -246,7 +246,7 @@ class PermissionSeeder extends Seeder
 
             /*customer*/
             [
-                'name' => ['customer_list', 'customer_update', 'manage_wishlists', 'transaction_list', 'manage_customer_wallet', 'product_request_list', 'product_request_update', 'product_request_delete', 'manage_privacy_policy'],
+                'name' => ['customer_list', 'customer_create', 'customer_update', 'customer_verify', 'manage_wishlists', 'transaction_list', 'manage_customer_wallet', 'product_request_list', 'product_request_update', 'product_request_delete', 'manage_privacy_policy'],
                 'category_name' => 'customer',
                 'default_roles' => ['Super Admin', 'Admin']
             ],

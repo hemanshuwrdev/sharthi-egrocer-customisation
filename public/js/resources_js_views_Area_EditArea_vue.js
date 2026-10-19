@@ -97,6 +97,13 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -108,6 +115,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         pincode: "",
         state: "",
         district: "",
+        city: "",
         status: 1
       },
       isLoading: false,
@@ -192,13 +200,13 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     saveRecord: function saveRecord() {
       var _this4 = this;
       return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee2() {
-        var _this4$area$state, _this4$area$district;
+        var _this4$area$state, _this4$area$district, _this4$area$city;
         var formData, _error$response, _error$response$data;
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                if (!(!_this4.area.name || !_this4.area.pincode)) {
+                if (!(!_this4.area.name || !_this4.area.pincode || !(_this4.area.city || '').trim())) {
                   _context2.next = 3;
                   break;
                 }
@@ -214,37 +222,38 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
                 formData.append("pincode", _this4.area.pincode);
                 formData.append("state", (_this4$area$state = _this4.area.state) !== null && _this4$area$state !== void 0 ? _this4$area$state : '');
                 formData.append("district", (_this4$area$district = _this4.area.district) !== null && _this4$area$district !== void 0 ? _this4$area$district : '');
+                formData.append("city", (_this4$area$city = _this4.area.city) !== null && _this4$area$city !== void 0 ? _this4$area$city : '');
                 formData.append("status", _this4.area.status);
-                _context2.prev = 11;
-                _context2.next = 14;
+                _context2.prev = 12;
+                _context2.next = 15;
                 return axios__WEBPACK_IMPORTED_MODULE_1___default().post(_this4.$apiUrl + '/areas/save', formData);
-              case 14:
+              case 15:
                 _this4.showMessage("success", __('area_saved_successfully'));
                 setTimeout(function () {
                   _this4.$router.push({
                     path: '/areas'
                   });
                 }, 1500);
-                _context2.next = 21;
+                _context2.next = 22;
                 break;
-              case 18:
-                _context2.prev = 18;
-                _context2.t0 = _context2["catch"](11);
+              case 19:
+                _context2.prev = 19;
+                _context2.t0 = _context2["catch"](12);
                 if ((_error$response = _context2.t0.response) !== null && _error$response !== void 0 && (_error$response$data = _error$response.data) !== null && _error$response$data !== void 0 && _error$response$data.message) {
                   _this4.showError(_context2.t0.response.data.message);
                 } else {
                   _this4.showError("Something went wrong!");
                 }
-              case 21:
-                _context2.prev = 21;
+              case 22:
+                _context2.prev = 22;
                 _this4.isLoading = false;
-                return _context2.finish(21);
-              case 24:
+                return _context2.finish(22);
+              case 25:
               case "end":
                 return _context2.stop();
             }
           }
-        }, _callee2, null, [[11, 18, 21, 24]]);
+        }, _callee2, null, [[12, 19, 22, 25]]);
       }))();
     }
   }
@@ -568,6 +577,48 @@ var render = function () {
                         },
                       },
                     }),
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "form-group" }, [
+                    _c("label", { attrs: { for: "city" } }, [
+                      _vm._v(_vm._s(_vm.__("area_city"))),
+                      _c("span", { staticClass: "text-danger text-sm" }, [
+                        _vm._v("*"),
+                      ]),
+                    ]),
+                    _vm._v(" "),
+                    _c("input", {
+                      directives: [
+                        {
+                          name: "model",
+                          rawName: "v-model",
+                          value: _vm.area.city,
+                          expression: "area.city",
+                        },
+                      ],
+                      staticClass: "form-control",
+                      attrs: {
+                        type: "text",
+                        name: "city",
+                        id: "city",
+                        placeholder: _vm.__("area_city"),
+                        maxlength: "191",
+                        required: "",
+                      },
+                      domProps: { value: _vm.area.city },
+                      on: {
+                        input: function ($event) {
+                          if ($event.target.composing) {
+                            return
+                          }
+                          _vm.$set(_vm.area, "city", $event.target.value)
+                        },
+                      },
+                    }),
+                    _vm._v(" "),
+                    _c("small", { staticClass: "text-muted" }, [
+                      _vm._v(_vm._s(_vm.__("area_city_hint"))),
+                    ]),
                   ]),
                   _vm._v(" "),
                   _c("div", { staticClass: "form-group" }, [

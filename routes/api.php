@@ -442,6 +442,10 @@ Route::middleware('auth:api')->group(function () {
     Route::group(['prefix' => 'customers'], function () {
         Route::get('/', [\App\Http\Controllers\API\CustomersApiController::class, 'getCustomers']);
         Route::post('change', [\App\Http\Controllers\API\CustomersApiController::class, 'changeStatus'])->name('customers.change');
+        Route::get('edit/{id}', [\App\Http\Controllers\API\CustomersApiController::class, 'edit']);
+        Route::post('save', [\App\Http\Controllers\API\CustomersApiController::class, 'save'])->name('customers.save');
+        Route::post('update', [\App\Http\Controllers\API\CustomersApiController::class, 'update'])->name('customers.update');
+        Route::post('verify', [\App\Http\Controllers\API\CustomersApiController::class, 'verify'])->name('customers.verify');
     });
 
     Route::group(['prefix' => 'user_product_requests'], function () {

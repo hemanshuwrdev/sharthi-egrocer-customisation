@@ -22,7 +22,8 @@ class AreaApiController extends Controller
                 $query->where('name', 'like', '%' . $searchTerm . '%')
                     ->orWhere('pincode', 'like', '%' . $searchTerm . '%')
                     ->orWhere('state', 'like', '%' . $searchTerm . '%')
-                    ->orWhere('district', 'like', '%' . $searchTerm . '%');
+                    ->orWhere('district', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('city', 'like', '%' . $searchTerm . '%');
             });
         }
 
@@ -56,19 +57,29 @@ class AreaApiController extends Controller
             ->where('status', 1)
             ->get();
 
-        // Registration screen prefills "city" from this. Areas have no city of their own
-        // (areas.city_id is a legacy delivery-zone link), so it comes from the postal data.
-        if ($areas->isNotEmpty()) {
-            $city = $this->cityForPincode($request->pincode);
-            $areas->each(fn ($area) => $area->city = $city);
-        }
+        // The app prefills "city" (registration and address change) from each area's own `city`,
+        // the one the admin entered. Areas that don't have one yet fall back to the postal API's
+        // guess, looked up once for the pincode.
+        $fallbackLoaded = false;
+        $fallbackCity = null;
+        $areas->each(function ($area) use ($request, &$fallbackLoaded, &$fallbackCity) {
+            if (filled($area->city)) {
+                return;
+            }
+            if (!$fallbackLoaded) {
+                $fallbackCity = $this->cityForPincode($request->pincode);
+                $fallbackLoaded = true;
+            }
+            $area->city = $fallbackCity;
+        });
 
         return CommonHelper::responseWithData($areas);
     }
 
     /**
-     * City name for a pincode, from the postal API's "Block" (the sub-district / taluka — the
-     * API has no city field, and "District" is a different, larger thing). A pincode can span
+     * Fallback city for a pincode whose areas have no `city` set, from the postal API's "Block"
+     * (the sub-district / taluka — the API has no city field, and "District" is a different,
+     * larger thing). Only a guess, which is why areas carry their own city. A pincode can span
      * several blocks; the most common one wins, first one on a tie. Cached per pincode so the
      * registration screen doesn't wait on the external API each time. A failed lookup returns
      * null and is not cached, so the next request retries.
@@ -162,6 +173,7 @@ class AreaApiController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required',
             'pincode' => 'required',
+            'city' => 'required|string|max:191',
         ]);
 
         if ($validator->fails()) {
@@ -172,6 +184,7 @@ class AreaApiController extends Controller
         $area->pincode = $request->pincode;
         $area->state = $request->state;
         $area->district = $request->district;
+        $area->city = trim($request->city);
         $area->status = $request->has('status') ? $request->status : 1;
         $area->save();
 

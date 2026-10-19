@@ -249,7 +249,19 @@
                                     <span>{{ __('discount') }}</span>
                                     <span>- {{ $currency }}{{ money(order.discount) }}</span>
                                 </div>
-                                <div class="money-row" v-if="order.scheme_id && num(order.scheme_discount) > 0">
+                                <!-- Schemes stack: one row per applied scheme. Orders placed before that
+                                     have no per-scheme rows and keep the single row below. -->
+                                <template v-if="order.applied_schemes && order.applied_schemes.length">
+                                    <template v-for="s in order.applied_schemes">
+                                        <div class="money-row" :key="'scheme-' + s.scheme_id" v-if="num(s.discount) > 0">
+                                            <span>{{ __('scheme') }}
+                                                <span class="badge bg-info ms-1">{{ s.name }}</span>
+                                            </span>
+                                            <span>- {{ $currency }}{{ money(s.discount) }}</span>
+                                        </div>
+                                    </template>
+                                </template>
+                                <div class="money-row" v-else-if="order.scheme_id && num(order.scheme_discount) > 0">
                                     <span>{{ __('scheme') }}
                                         <span class="badge bg-info ms-1">{{ order.scheme_name || ('#' + order.scheme_id) }}</span>
                                     </span>

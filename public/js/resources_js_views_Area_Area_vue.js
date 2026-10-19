@@ -148,6 +148,11 @@ __webpack_require__.r(__webpack_exports__);
         sortable: true,
         sortDirection: 'desc'
       }, {
+        key: 'city',
+        label: __('area_city'),
+        sortable: true,
+        sortDirection: 'desc'
+      }, {
         key: 'status',
         label: __('status')
       }, {

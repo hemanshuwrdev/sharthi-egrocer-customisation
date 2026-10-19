@@ -15,7 +15,7 @@ class RetailerProfile extends Model
         'address', 'address_line1', 'address_line2', 'city', 'state',
         'city_id', 'area_id', 'gps_lat', 'gps_lng',
         'verified_lat', 'verified_lng', 'storefront_photo', 'verification_notes',
-        'verified_at', 'verified_by_salesman_id',
+        'verified_at', 'verified_by_salesman_id', 'verified_by_admin_id', 'created_by_admin_id',
     ];
 
     protected $casts = [

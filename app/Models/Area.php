@@ -18,6 +18,7 @@ class Area extends Model
         'pincode',
         'state',
         'district',
+        'city',
         'status',
     ];
 

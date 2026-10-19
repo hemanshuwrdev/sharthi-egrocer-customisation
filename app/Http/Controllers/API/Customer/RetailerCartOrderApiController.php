@@ -116,15 +116,15 @@ class RetailerCartOrderApiController extends Controller
     }
 
     /**
-     * The scheme the cart screen shows as applied (groups[].applied_scheme), per distributor —
-     * [seller_id => scheme array|null]. Lets other screens (product detail) show exactly the
+     * The schemes the cart screen shows as applied (groups[].applied_schemes), per distributor —
+     * [seller_id => list of scheme arrays]. Lets other screens (product detail) show exactly the
      * same result without re-implementing the cart's pricing/scheme evaluation.
      */
     public function appliedSchemesBySeller($user): array
     {
         return collect($this->buildCartPayload($user)['groups'])
             ->filter(fn ($group) => isset($group['seller_id']))
-            ->mapWithKeys(fn ($group) => [(int) $group['seller_id'] => $group['applied_scheme'] ?? null])
+            ->mapWithKeys(fn ($group) => [(int) $group['seller_id'] => $group['applied_schemes'] ?? []])
             ->all();
     }
 
@@ -231,21 +231,25 @@ class RetailerCartOrderApiController extends Controller
             ->get(['id', 'name', 'min_order_amount', 'cash_discount_percent', 'cash_discount_applicable_on'])
             ->keyBy('id');
 
-        // Scheme preview: best offer per distributor (re-evaluated server-side at placeOrder).
+        // Scheme preview: every qualifying scheme of the distributor applies and stacks
+        // (re-evaluated server-side at placeOrder).
         foreach ($groups as $sellerId => &$group) {
             $schemeLines = $group['scheme_lines'] ?? [];
             $scheme      = SchemeEngine::evaluate((int) $sellerId, $schemeLines);
-            $appliedId   = $scheme['scheme_id'] ?? null;
+            $appliedIds  = array_column($scheme['schemes'] ?? [], 'scheme_id');
 
             unset($group['scheme_lines']);
-            $group['applied_scheme']  = $scheme;
+            // applied_scheme = the biggest single scheme, exactly as before (apps built for one scheme
+            // keep working); applied_schemes = every scheme applied; scheme_discount = their total.
+            $group['applied_scheme']  = $scheme['schemes'][0] ?? null;
+            $group['applied_schemes'] = $scheme['schemes'] ?? [];
             $group['scheme_discount'] = $scheme['scheme_discount'] ?? 0;
             $group['tax_amount']      = round($group['tax_amount'] ?? 0, 2);
             $group['actual_price']    = round($group['actual_price'] ?? 0, 2);
             // Inclusive pricing: sub_total already contains tax, so it is NOT added
             // again here — tax_amount/actual_price are only the billing-summary breakdown.
             $group['final_total']     = ($group['sub_total'] ?? 0) - $group['scheme_discount'];
-            $group['nearest_scheme']  = SchemeEngine::nearestUnapplied((int) $sellerId, $schemeLines, $appliedId);
+            $group['nearest_scheme']  = SchemeEngine::nearestUnapplied((int) $sellerId, $schemeLines, $appliedIds);
 
             $seller = $sellers[$sellerId] ?? null;
             $group['seller_name']           = $seller->name ?? null;
@@ -723,6 +727,9 @@ class RetailerCartOrderApiController extends Controller
                     // deduction from Net Taxable, whatever the scheme says later (no-op pre-migration).
                     ] + CommonHelper::schemeSnapshotColumns($scheme, (float) $schemeDiscount) + $orderAddress['columns']);
 
+                    // Schemes stack: orders.scheme_discount is their total, this keeps each one.
+                    \App\Models\OrderScheme::record($orderId, $scheme);
+
                     foreach ($sellerItems as $row) {
                         $r = $resolved[$row->id];
                         $sp = $r['seller_product'];
@@ -791,7 +798,7 @@ class RetailerCartOrderApiController extends Controller
                             'status' => json_encode([['received', date('Y-m-d H:i:s')]]),
                             'active_status' => (string) \App\Models\OrderStatusList::$received,
                             'seller_id' => $sellerId,
-                            'scheme_id' => $scheme['scheme_id'],
+                            'scheme_id' => $free['scheme_id'] ?? $scheme['scheme_id'],
                             'is_free_item' => 1,
                             'created_at' => now(),
                             'updated_at' => now(),
@@ -814,13 +821,16 @@ class RetailerCartOrderApiController extends Controller
                         'seller_id' => (int) $sellerId,
                         'delivery_charge' => $deliveryCharge,
                         'final_total' => $finalTotal,
+                        // scheme = the biggest scheme on its own (as before); schemes = every scheme applied.
                         'scheme' => $scheme ? [
-                            'scheme_id' => $scheme['scheme_id'],
-                            'name' => $scheme['name'],
-                            'type' => $scheme['type'],
-                            'scheme_discount' => $schemeDiscount,
-                            'free_items' => $scheme['free_items'],
+                            'scheme_id' => $scheme['schemes'][0]['scheme_id'],
+                            'name' => $scheme['schemes'][0]['name'],
+                            'type' => $scheme['schemes'][0]['type'],
+                            'scheme_discount' => $scheme['schemes'][0]['scheme_discount'],
+                            'free_items' => $scheme['schemes'][0]['free_items'],
                         ] : null,
+                        'schemes' => $scheme['schemes'] ?? [],
+                        'scheme_discount' => $schemeDiscount,
                         'delivery_date' => $deliveryDate,
                     ];
                 }

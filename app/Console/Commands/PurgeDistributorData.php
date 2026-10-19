@@ -174,6 +174,9 @@ class PurgeDistributorData extends Command
         $this->del('wallet_transactions', 'wallet_transactions', fn ($q) => $q->where(fn ($w) => $w->whereIn('order_id', $orderIds)->orWhereIn('order_item_id', $itemIds)));
         $this->del('app_usages', 'app_usages', fn ($q) => $q->whereIn('order_id', $orderIds));
         $this->del('order_items', 'order_items', fn ($q) => $q->whereIn('id', $itemIds), 'OrderItem');
+        if (\Illuminate\Support\Facades\Schema::hasTable('order_schemes')) {
+            $this->del('order_schemes', 'order_schemes', fn ($q) => $q->whereIn('order_id', $orderIds));
+        }
         $this->del('orders', 'orders', fn ($q) => $q->whereIn('id', $orderIds), 'Order');
         $this->del('loading_slips', 'loading_slips', fn ($q) => $q->whereIn('id', $slipIds), 'LoadingSlip');
         $this->del('vehicles', 'vehicles', fn ($q) => $q->whereIn('id', $vehicleIds), 'Vehicle');

@@ -58,6 +58,13 @@
                                 </div>
 
                                 <div class="form-group">
+                                    <label for="city">{{ __('area_city') }}<span class="text-danger text-sm">*</span></label>
+                                    <input type="text" class="form-control" name="city" id="city"
+                                        v-model="area.city" :placeholder="__('area_city')" maxlength="191" required>
+                                    <small class="text-muted">{{ __('area_city_hint') }}</small>
+                                </div>
+
+                                <div class="form-group">
                                     <label for="status">{{ __('status') }}</label>
                                     <select class="form-control form-select" name="status" id="status" v-model="area.status">
                                         <option :value="1">{{ __('active') }}</option>
@@ -89,6 +96,7 @@ export default {
                 pincode: "",
                 state: "",
                 district: "",
+                city: "",
                 status: 1,
             },
             isLoading: false,
@@ -156,7 +164,7 @@ export default {
         },
 
         async saveRecord() {
-            if (!this.area.name || !this.area.pincode) {
+            if (!this.area.name || !this.area.pincode || !(this.area.city || '').trim()) {
                 this.showError(__('please_fill_all_required_fields'));
                 return;
             }
@@ -171,6 +179,7 @@ export default {
             formData.append("pincode", this.area.pincode);
             formData.append("state", this.area.state ?? '');
             formData.append("district", this.area.district ?? '');
+            formData.append("city", this.area.city ?? '');
             formData.append("status", this.area.status);
 
             try {

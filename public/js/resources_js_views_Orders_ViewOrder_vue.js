@@ -477,6 +477,18 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -1874,204 +1886,254 @@ var render = function () {
                       ]),
                     ]),
                     _vm._v(" "),
-                    _c("div", { staticClass: "card-body" }, [
-                      _c("div", { staticClass: "money-row" }, [
-                        _c("span", [_vm._v(_vm._s(_vm.__("Items total")))]),
-                        _vm._v(" "),
-                        _c("span", [
-                          _vm._v(
-                            _vm._s(_vm.$currency) +
-                              _vm._s(_vm.money(_vm.order.total))
-                          ),
+                    _c(
+                      "div",
+                      { staticClass: "card-body" },
+                      [
+                        _c("div", { staticClass: "money-row" }, [
+                          _c("span", [_vm._v(_vm._s(_vm.__("Items total")))]),
+                          _vm._v(" "),
+                          _c("span", [
+                            _vm._v(
+                              _vm._s(_vm.$currency) +
+                                _vm._s(_vm.money(_vm.order.total))
+                            ),
+                          ]),
                         ]),
-                      ]),
-                      _vm._v(" "),
-                      _vm.num(_vm.order.discount) > 0
-                        ? _c("div", { staticClass: "money-row" }, [
-                            _c("span", [_vm._v(_vm._s(_vm.__("discount")))]),
-                            _vm._v(" "),
-                            _c("span", [
-                              _vm._v(
-                                "- " +
-                                  _vm._s(_vm.$currency) +
-                                  _vm._s(_vm.money(_vm.order.discount))
-                              ),
-                            ]),
-                          ])
-                        : _vm._e(),
-                      _vm._v(" "),
-                      _vm.order.scheme_id &&
-                      _vm.num(_vm.order.scheme_discount) > 0
-                        ? _c("div", { staticClass: "money-row" }, [
-                            _c("span", [
-                              _vm._v(
-                                _vm._s(_vm.__("scheme")) +
-                                  "\n                                    "
-                              ),
-                              _c(
-                                "span",
-                                { staticClass: "badge bg-info ms-1" },
-                                [
-                                  _vm._v(
-                                    _vm._s(
-                                      _vm.order.scheme_name ||
-                                        "#" + _vm.order.scheme_id
-                                    )
-                                  ),
+                        _vm._v(" "),
+                        _vm.num(_vm.order.discount) > 0
+                          ? _c("div", { staticClass: "money-row" }, [
+                              _c("span", [_vm._v(_vm._s(_vm.__("discount")))]),
+                              _vm._v(" "),
+                              _c("span", [
+                                _vm._v(
+                                  "- " +
+                                    _vm._s(_vm.$currency) +
+                                    _vm._s(_vm.money(_vm.order.discount))
+                                ),
+                              ]),
+                            ])
+                          : _vm._e(),
+                        _vm._v(" "),
+                        _vm.order.applied_schemes &&
+                        _vm.order.applied_schemes.length
+                          ? [
+                              _vm._l(_vm.order.applied_schemes, function (s) {
+                                return [
+                                  _vm.num(s.discount) > 0
+                                    ? _c(
+                                        "div",
+                                        {
+                                          key: "scheme-" + s.scheme_id,
+                                          staticClass: "money-row",
+                                        },
+                                        [
+                                          _c("span", [
+                                            _vm._v(
+                                              _vm._s(_vm.__("scheme")) +
+                                                "\n                                            "
+                                            ),
+                                            _c(
+                                              "span",
+                                              {
+                                                staticClass:
+                                                  "badge bg-info ms-1",
+                                              },
+                                              [_vm._v(_vm._s(s.name))]
+                                            ),
+                                          ]),
+                                          _vm._v(" "),
+                                          _c("span", [
+                                            _vm._v(
+                                              "- " +
+                                                _vm._s(_vm.$currency) +
+                                                _vm._s(_vm.money(s.discount))
+                                            ),
+                                          ]),
+                                        ]
+                                      )
+                                    : _vm._e(),
                                 ]
-                              ),
-                            ]),
-                            _vm._v(" "),
-                            _c("span", [
-                              _vm._v(
-                                "- " +
-                                  _vm._s(_vm.$currency) +
-                                  _vm._s(_vm.money(_vm.order.scheme_discount))
-                              ),
-                            ]),
-                          ])
-                        : _vm._e(),
-                      _vm._v(" "),
-                      _vm.num(_vm.order.promo_discount) > 0
-                        ? _c("div", { staticClass: "money-row" }, [
-                            _c("span", [
-                              _vm._v(
-                                _vm._s(_vm.__("promo_discount")) +
-                                  "\n                                    "
-                              ),
-                              _vm.order.promo_code
-                                ? _c(
-                                    "span",
-                                    {
-                                      staticClass:
-                                        "badge bg-light text-dark border ms-1",
-                                    },
-                                    [_vm._v(_vm._s(_vm.order.promo_code))]
-                                  )
-                                : _vm._e(),
-                            ]),
-                            _vm._v(" "),
-                            _c("span", [
-                              _vm._v(
-                                "- " +
-                                  _vm._s(_vm.$currency) +
-                                  _vm._s(_vm.money(_vm.order.promo_discount))
-                              ),
-                            ]),
-                          ])
-                        : _vm._e(),
-                      _vm._v(" "),
-                      _vm.num(_vm.order.wallet_balance) > 0
-                        ? _c("div", { staticClass: "money-row" }, [
-                            _c("span", [_vm._v(_vm._s(_vm.__("wallet_used")))]),
-                            _vm._v(" "),
-                            _c("span", [
-                              _vm._v(
-                                "- " +
-                                  _vm._s(_vm.$currency) +
-                                  _vm._s(_vm.money(_vm.order.wallet_balance))
-                              ),
-                            ]),
-                          ])
-                        : _vm._e(),
-                      _vm._v(" "),
-                      _vm.num(_vm.order.cash_discount_amount) > 0
-                        ? _c("div", { staticClass: "money-row" }, [
-                            _c("span", [
-                              _vm._v(_vm._s(_vm.__("Cash / Bank discount"))),
-                            ]),
-                            _vm._v(" "),
-                            _c("span", [
-                              _vm._v(
-                                "- " +
-                                  _vm._s(_vm.$currency) +
-                                  _vm._s(
-                                    _vm.money(_vm.order.cash_discount_amount)
-                                  )
-                              ),
-                            ]),
-                          ])
-                        : _vm._e(),
-                      _vm._v(" "),
-                      _vm.num(
-                        _vm.getAdditionalChargesTotal(
-                          _vm.order.additional_charges
-                        )
-                      ) > 0
-                        ? _c("div", { staticClass: "money-row" }, [
-                            _c("span", [
-                              _vm._v(_vm._s(_vm.__("additional_charges"))),
-                            ]),
-                            _vm._v(" "),
-                            _c("span", [
-                              _vm._v(
-                                "+ " +
-                                  _vm._s(_vm.$currency) +
-                                  _vm._s(
-                                    _vm.money(
-                                      _vm.getAdditionalChargesTotal(
-                                        _vm.order.additional_charges
+                              }),
+                            ]
+                          : _vm.order.scheme_id &&
+                            _vm.num(_vm.order.scheme_discount) > 0
+                          ? _c("div", { staticClass: "money-row" }, [
+                              _c("span", [
+                                _vm._v(
+                                  _vm._s(_vm.__("scheme")) +
+                                    "\n                                    "
+                                ),
+                                _c(
+                                  "span",
+                                  { staticClass: "badge bg-info ms-1" },
+                                  [
+                                    _vm._v(
+                                      _vm._s(
+                                        _vm.order.scheme_name ||
+                                          "#" + _vm.order.scheme_id
+                                      )
+                                    ),
+                                  ]
+                                ),
+                              ]),
+                              _vm._v(" "),
+                              _c("span", [
+                                _vm._v(
+                                  "- " +
+                                    _vm._s(_vm.$currency) +
+                                    _vm._s(_vm.money(_vm.order.scheme_discount))
+                                ),
+                              ]),
+                            ])
+                          : _vm._e(),
+                        _vm._v(" "),
+                        _vm.num(_vm.order.promo_discount) > 0
+                          ? _c("div", { staticClass: "money-row" }, [
+                              _c("span", [
+                                _vm._v(
+                                  _vm._s(_vm.__("promo_discount")) +
+                                    "\n                                    "
+                                ),
+                                _vm.order.promo_code
+                                  ? _c(
+                                      "span",
+                                      {
+                                        staticClass:
+                                          "badge bg-light text-dark border ms-1",
+                                      },
+                                      [_vm._v(_vm._s(_vm.order.promo_code))]
+                                    )
+                                  : _vm._e(),
+                              ]),
+                              _vm._v(" "),
+                              _c("span", [
+                                _vm._v(
+                                  "- " +
+                                    _vm._s(_vm.$currency) +
+                                    _vm._s(_vm.money(_vm.order.promo_discount))
+                                ),
+                              ]),
+                            ])
+                          : _vm._e(),
+                        _vm._v(" "),
+                        _vm.num(_vm.order.wallet_balance) > 0
+                          ? _c("div", { staticClass: "money-row" }, [
+                              _c("span", [
+                                _vm._v(_vm._s(_vm.__("wallet_used"))),
+                              ]),
+                              _vm._v(" "),
+                              _c("span", [
+                                _vm._v(
+                                  "- " +
+                                    _vm._s(_vm.$currency) +
+                                    _vm._s(_vm.money(_vm.order.wallet_balance))
+                                ),
+                              ]),
+                            ])
+                          : _vm._e(),
+                        _vm._v(" "),
+                        _vm.num(_vm.order.cash_discount_amount) > 0
+                          ? _c("div", { staticClass: "money-row" }, [
+                              _c("span", [
+                                _vm._v(_vm._s(_vm.__("Cash / Bank discount"))),
+                              ]),
+                              _vm._v(" "),
+                              _c("span", [
+                                _vm._v(
+                                  "- " +
+                                    _vm._s(_vm.$currency) +
+                                    _vm._s(
+                                      _vm.money(_vm.order.cash_discount_amount)
+                                    )
+                                ),
+                              ]),
+                            ])
+                          : _vm._e(),
+                        _vm._v(" "),
+                        _vm.num(
+                          _vm.getAdditionalChargesTotal(
+                            _vm.order.additional_charges
+                          )
+                        ) > 0
+                          ? _c("div", { staticClass: "money-row" }, [
+                              _c("span", [
+                                _vm._v(_vm._s(_vm.__("additional_charges"))),
+                              ]),
+                              _vm._v(" "),
+                              _c("span", [
+                                _vm._v(
+                                  "+ " +
+                                    _vm._s(_vm.$currency) +
+                                    _vm._s(
+                                      _vm.money(
+                                        _vm.getAdditionalChargesTotal(
+                                          _vm.order.additional_charges
+                                        )
                                       )
                                     )
-                                  )
-                              ),
-                            ]),
-                          ])
-                        : _vm._e(),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "money-row total" }, [
-                        _c("span", [_vm._v(_vm._s(_vm.__("payable_total")))]),
+                                ),
+                              ]),
+                            ])
+                          : _vm._e(),
                         _vm._v(" "),
-                        _c("span", [
+                        _c("div", { staticClass: "money-row total" }, [
+                          _c("span", [_vm._v(_vm._s(_vm.__("payable_total")))]),
+                          _vm._v(" "),
+                          _c("span", [
+                            _vm._v(
+                              _vm._s(_vm.$currency) +
+                                _vm._s(_vm.money(_vm.payableTotal))
+                            ),
+                          ]),
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "text-muted small mt-2" }, [
                           _vm._v(
-                            _vm._s(_vm.$currency) +
-                              _vm._s(_vm.money(_vm.payableTotal))
+                            "\n                                " +
+                              _vm._s(_vm.__("payment_method")) +
+                              ": "
                           ),
+                          _c("span", { staticClass: "fw-semibold text-body" }, [
+                            _vm._v(_vm._s(_vm.order.payment_method)),
+                          ]),
                         ]),
-                      ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "text-muted small mt-2" }, [
-                        _vm._v(
-                          "\n                                " +
-                            _vm._s(_vm.__("payment_method")) +
-                            ": "
-                        ),
-                        _c("span", { staticClass: "fw-semibold text-body" }, [
-                          _vm._v(_vm._s(_vm.order.payment_method)),
-                        ]),
-                      ]),
-                      _vm._v(" "),
-                      _vm.credit_notes && _vm.credit_notes.length > 0
-                        ? _c(
-                            "div",
-                            { staticClass: "mt-2" },
-                            _vm._l(_vm.credit_notes, function (cn) {
-                              return _c(
-                                "span",
-                                {
-                                  key: cn.id,
-                                  staticClass: "badge bg-secondary me-1 mb-1",
-                                },
-                                [
-                                  _vm._v(
-                                    "\n                                    " +
-                                      _vm._s(cn.credit_note_no) +
-                                      " (" +
-                                      _vm._s(
-                                        _vm.creditNoteTypeLabel(cn.reason_type)
-                                      ) +
-                                      " — " +
-                                      _vm._s(_vm.$currency) +
-                                      _vm._s(_vm.money(cn.total_amount)) +
-                                      ")\n                                "
-                                  ),
-                                ]
-                              )
-                            }),
-                            0
-                          )
-                        : _vm._e(),
-                    ]),
+                        _vm._v(" "),
+                        _vm.credit_notes && _vm.credit_notes.length > 0
+                          ? _c(
+                              "div",
+                              { staticClass: "mt-2" },
+                              _vm._l(_vm.credit_notes, function (cn) {
+                                return _c(
+                                  "span",
+                                  {
+                                    key: cn.id,
+                                    staticClass: "badge bg-secondary me-1 mb-1",
+                                  },
+                                  [
+                                    _vm._v(
+                                      "\n                                    " +
+                                        _vm._s(cn.credit_note_no) +
+                                        " (" +
+                                        _vm._s(
+                                          _vm.creditNoteTypeLabel(
+                                            cn.reason_type
+                                          )
+                                        ) +
+                                        " — " +
+                                        _vm._s(_vm.$currency) +
+                                        _vm._s(_vm.money(cn.total_amount)) +
+                                        ")\n                                "
+                                    ),
+                                  ]
+                                )
+                              }),
+                              0
+                            )
+                          : _vm._e(),
+                      ],
+                      2
+                    ),
                   ]),
                 ]),
               ]),

@@ -7,6 +7,7 @@ use App\Models\Scheme;
 use App\Models\SellerProduct;
 use Carbon\Carbon;
 use Closure;
+use Illuminate\Support\Collection;
 
 /**
  * Read-only "which offers are running" view of the distributor-owned scheme engine, shaped for the
@@ -18,30 +19,129 @@ use Closure;
  */
 class SchemeListing
 {
-    /** Running schemes (status on, today within start..end) of the given distributors, soonest-ending first. */
-    public static function runningQuery($sellerIds, ?string $type = null, string $search = '')
+    /** Everything format() reads, so a list of schemes costs a handful of queries, not one per scheme. */
+    private static function eagerLoads(): array
     {
         $productChain = 'masterProductVariant.masterProduct';
 
+        return [
+            'seller:id,name,store_name,logo',
+            'schemeProducts.sellerProduct.' . $productChain,
+            'schemeProducts.sellerProduct.masterProductVariant.unit',
+            'schemeProducts.sellerProduct.masterProductVariant.secondaryUnit',
+            'schemeSlabs',
+            'buyProduct.' . $productChain,
+            'buyProduct.masterProductVariant.unit',
+            'buyProduct.masterProductVariant.secondaryUnit',
+            'freeProduct.' . $productChain,
+            'freeProduct.masterProductVariant.unit',
+            'freeProduct.masterProductVariant.secondaryUnit',
+        ];
+    }
+
+    /** Running schemes (status on, today within start..end) of the given distributors, soonest-ending first. */
+    public static function runningQuery($sellerIds, ?string $type = null, string $search = '')
+    {
         return Scheme::active()
             ->whereIn('seller_id', $sellerIds)
-            ->with([
-                'seller:id,name,store_name,logo',
-                'schemeProducts.sellerProduct.' . $productChain,
-                'schemeProducts.sellerProduct.masterProductVariant.unit',
-                'schemeProducts.sellerProduct.masterProductVariant.secondaryUnit',
-                'schemeSlabs',
-                'buyProduct.' . $productChain,
-                'buyProduct.masterProductVariant.unit',
-                'buyProduct.masterProductVariant.secondaryUnit',
-                'freeProduct.' . $productChain,
-                'freeProduct.masterProductVariant.unit',
-                'freeProduct.masterProductVariant.secondaryUnit',
-            ])
+            ->with(self::eagerLoads())
             ->when($type, fn ($q) => $q->where('type', $type))
             ->when($search !== '', fn ($q) => $q->where('name', 'like', '%' . $search . '%'))
             ->orderBy('end_date')
             ->orderByDesc('id');
+    }
+
+    /**
+     * For each seller product, the running scheme it takes part in that ends soonest (as the buy
+     * product of a Buy X Get Y, or one of the products of any other scheme) —
+     * [seller_product_id => array|null]. Same keys as the retailer app's nearest_scheme (id, name, type,
+     * end_date, buy_qty, free_product, free_qty, slabs) plus is_multi_combo / conditions / reward, because
+     * that retailer helper skips the row-condition schemes (most of what distributors create).
+     */
+    public static function nearestForSellerProducts(Collection $sellerProductIds): Collection
+    {
+        $ids = $sellerProductIds->unique()->values();
+        if ($ids->isEmpty()) {
+            return collect();
+        }
+
+        $schemes = Scheme::active()
+            ->where(function ($q) use ($ids) {
+                $q->where(fn ($b) => $b->where('type', Scheme::TYPE_BUY_X_GET_Y)->whereIn('buy_seller_product_id', $ids))
+                    ->orWhereHas('schemeProducts', fn ($sp) => $sp->whereIn('seller_product_id', $ids));
+            })
+            ->with(self::eagerLoads())
+            ->get();
+
+        return $ids->mapWithKeys(function ($spId) use ($schemes) {
+            $nearest = $schemes
+                ->filter(fn ($s) => $s->type === Scheme::TYPE_BUY_X_GET_Y
+                    ? (int) $s->buy_seller_product_id === (int) $spId
+                    : $s->schemeProducts->contains('seller_product_id', $spId))
+                ->sortBy([['end_date', 'asc'], ['id', 'asc']])
+                ->map(fn ($s) => self::nearestPayload($s, (int) $spId))
+                ->filter()
+                ->first();
+
+            return [$spId => $nearest];
+        });
+    }
+
+    private static function nearestPayload(Scheme $s, int $sellerProductId): ?array
+    {
+        $f = self::format($s, fn () => true);
+        if (!$f) {
+            return null;
+        }
+
+        $isBxgy = $s->type === Scheme::TYPE_BUY_X_GET_Y;
+        $row    = $isBxgy ? null : collect($f['products'])->firstWhere('seller_product_id', $sellerProductId);
+
+        return [
+            'id'             => $s->id,
+            'name'           => $s->name,
+            'type'           => $s->type,
+            'end_date'       => $s->end_date,
+            'buy_qty'        => $isBxgy ? $s->buy_qty : null,
+            'free_product'   => $isBxgy && $f['free'] ? trim($f['free']['name'] . ' — ' . $f['free']['sku']) : null,
+            'free_qty'       => $isBxgy ? $s->free_qty : null,
+            'slabs'          => $f['slabs'],
+            // Row-condition schemes: the rule for THIS product, or the shared one when it is a combo.
+            'is_multi_combo' => $f['is_multi_combo'],
+            'conditions'     => $f['is_multi_combo'] ? $f['combo_condition'] : ($row['conditions'] ?? ''),
+            'reward'         => $f['is_multi_combo'] ? $f['combo_reward'] : ($row['reward'] ?? ''),
+        ];
+    }
+
+    /**
+     * Of the schemes a cart applies (SchemeEngine::evaluate()['schemes']), only those that really
+     * involve this seller product (as the buy or free item, or one of the scheme's products) —
+     * otherwise a product sitting in the cart would show a scheme earned by a different product.
+     * Order (biggest first) is kept.
+     */
+    public static function appliedInvolving(array $applied, int $sellerProductId): array
+    {
+        if (empty($applied)) {
+            return [];
+        }
+
+        $schemes = Scheme::with('schemeProducts:id,scheme_id,seller_product_id')
+            ->whereIn('id', array_column($applied, 'scheme_id'))
+            ->get()
+            ->keyBy('id');
+
+        return array_values(array_filter($applied, function ($a) use ($schemes, $sellerProductId) {
+            $scheme = $schemes[$a['scheme_id']] ?? null;
+            if (!$scheme) {
+                return false;
+            }
+            $involved = array_map('intval', array_merge(
+                [$scheme->buy_seller_product_id, $scheme->free_seller_product_id],
+                $scheme->schemeProducts->pluck('seller_product_id')->all()
+            ));
+
+            return in_array($sellerProductId, $involved, true);
+        }));
     }
 
     /** Same "is it sellable at all" rules the product feeds apply, before any per-caller visibility rule. */

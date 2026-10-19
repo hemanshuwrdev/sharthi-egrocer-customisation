@@ -2,6 +2,11 @@
     <div class="list-page">
         <div class="page-head">
             <h3 class="page-head-title">{{ __('retailers') }}</h3>
+            <router-link to="/users/create" class="btn btn-primary list-add-btn d-inline-flex align-items-center gap-2 text-nowrap"
+                v-if="$can('customer_create')">
+                <i class="fa fa-plus" aria-hidden="true"></i>
+                <span>{{ __('add_retailer') }}</span>
+            </router-link>
         </div>
 
         <div class="list-surface">
@@ -11,6 +16,8 @@
                     <b-form-input id="filter-input" v-model="filter" type="search" :placeholder="__('search')"
                         @click="addFilter()"></b-form-input>
                 </div>
+                <b-form-select v-model="verificationFilter" :options="verificationOptions" size="sm"
+                    class="form-control form-select w-auto"></b-form-select>
                 <button class="list-icon-btn" v-b-tooltip.hover :title="__('refresh')" @click="getCustomers()">
                     <i class="fa fa-refresh" aria-hidden="true"></i>
                 </button>
@@ -18,10 +25,10 @@
 
             <div class="table-responsive">
 
-                <b-table :items="customers" :fields="fields" :current-page="currentPage" :per-page="perPage"
+                <b-table :items="visibleCustomers" :fields="fields" :current-page="currentPage" :per-page="perPage"
                     :filter="filter" :filter-included-fields="filterOn" :sort-by.sync="sortBy"
                     :sort-desc.sync="sortDesc" :sort-direction="sortDirection" :bordered="true" :busy="isLoading"
-                    stacked="md" show-empty small>
+                    stacked="md" show-empty small @filtered="onFiltered">
                     <template #table-busy>
                         <div class="text-center text-black my-2">
                             <b-spinner class="align-middle"></b-spinner>
@@ -57,12 +64,29 @@
                         <span v-else class="badge bg-danger">{{ __('deactive') }}</span>
                     </template>
 
+                    <template #cell(verification_status)="row">
+                        <span v-if="isVerified(row.item)" class="badge bg-success" v-b-tooltip.hover
+                            :title="verifiedByText(row.item)">{{ __('verified') }}</span>
+                        <span v-else-if="isPending(row.item)" class="badge bg-warning text-dark">{{ __('pending') }}</span>
+                        <span v-else>-</span>
+                    </template>
+
                     <template #cell(created_at)="row">
                         {{ row.item.created_at }}
                     </template>
-                    <template v-if="$can('customer_update')" #cell(actions)="row">
+                    <template #cell(actions)="row">
                         <div class="list-actions">
-                            <a href="javascript:void(0)" @click="updateStatusCustomer(row.index, row.item.id)">
+                            <button class="list-action-btn is-verify" v-if="isPending(row.item) && $can('customer_verify')"
+                                v-b-tooltip.hover :title="__('verify_retailer')" @click="verifyCustomer(row.item)">
+                                <i class="fa fa-check"></i>
+                            </button>
+                            <router-link :to="'/users/edit/' + row.item.id" class="list-action-btn is-edit"
+                                v-if="row.item.verification_status && $can('customer_update')" v-b-tooltip.hover
+                                :title="__('edit')">
+                                <i class="fa fa-pencil-alt"></i>
+                            </router-link>
+                            <a href="javascript:void(0)" v-if="$can('customer_update')"
+                                @click="updateStatusCustomer(row.index, row.item.id)">
                                 <span class="primary-toggal" v-if="row.item.status == 1"><i
                                         class="fa fa-toggle-on fa-2x"></i></span>
                                 <span class="text-danger" v-else><i class="fa fa-toggle-off fa-2x"></i></span>
@@ -95,9 +119,11 @@ export default {
             fields: [
                 { key: 'id', label: __('id'), sortable: true, sortDirection: 'desc' },
                 { key: 'name', label: __('name'), sortable: true, class: 'text-center' },
+                { key: 'shop_name', label: __('shop_name'), sortable: true, class: 'text-center' },
                 { key: 'email', label: __('email'), sortable: true, class: 'text-center' },
                 { key: 'mobile', label: __('mobile_no'), sortable: true, class: 'text-center' },
                 { key: 'balance', label: __('balance'), sortable: true, class: 'text-center' },
+                { key: 'verification_status', label: __('verification'), sortable: true, class: 'text-center' },
                 { key: 'status', label: __('status'), sortable: true, class: 'text-center' },
                 // Sarthi: retailers only ever log in via phone OTP, so the login-type
                 // column is disabled. Kept for reference.
@@ -116,9 +142,24 @@ export default {
             filter: null,
             filterOn: [],
             customers: [],
+            verificationFilter: 'all',
+            verificationOptions: [
+                { value: 'all', text: __('all') },
+                { value: 'pending', text: __('pending') },
+                { value: 'verified', text: __('verified') },
+            ],
         }
     },
     computed: {
+        visibleCustomers() {
+            if (this.verificationFilter === 'pending') {
+                return this.customers.filter(c => this.isPending(c));
+            }
+            if (this.verificationFilter === 'verified') {
+                return this.customers.filter(c => this.isVerified(c));
+            }
+            return this.customers;
+        },
         sortOptions() {
             // Create an options list from our fields
             return this.fields
@@ -127,6 +168,12 @@ export default {
                     return { text: f.label, value: f.key }
                 })
         }
+    },
+    watch: {
+        visibleCustomers(list) {
+            this.totalRows = list.length;
+            this.currentPage = 1;
+        },
     },
     mounted() {
         // Set the initial number of items
@@ -156,9 +203,13 @@ export default {
                     this.isLoading = false;
                     vm.isLoading = false;
 
-                    this.customers = response.data.data;
+                    // shop_name lives on the retailer profile; lift it so the column can sort and search.
+                    this.customers = response.data.data.map(c => ({
+                        ...c,
+                        shop_name: c.retailer_profile?.shop_name || '-',
+                    }));
 
-                    this.totalRows = response.data.total;
+                    this.totalRows = this.visibleCustomers.length;
 
                 }).catch(error => {
 
@@ -172,6 +223,51 @@ export default {
                     }
                 });
 
+        },
+        onFiltered(filteredItems) {
+            this.totalRows = filteredItems.length;
+            this.currentPage = 1;
+        },
+        // 'approved' and 'active' can both order; 'pending' / 'salesman_verified' are still waiting.
+        isVerified(customer) {
+            return ['approved', 'active'].includes(customer.verification_status);
+        },
+        isPending(customer) {
+            return ['pending', 'salesman_verified'].includes(customer.verification_status);
+        },
+        verifiedByText(customer) {
+            const profile = customer.retailer_profile || {};
+            if (profile.verified_by_admin_id) return __('verified_by_admin');
+            if (profile.verified_by_salesman_id) return __('verified_by_salesman');
+            return '';
+        },
+        verifyCustomer(customer) {
+            this.$swal.fire({
+                title: __('verify_retailer'),
+                text: __('verify_retailer_confirm'),
+                confirmButtonText: __('yes_sure'),
+                cancelButtonText: __('cancel'),
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#37a279',
+                cancelButtonColor: '#d33',
+            }).then(result => {
+                if (!result.value) return;
+                this.isLoading = true;
+                axios.post(this.$apiUrl + '/customers/verify', { id: customer.id })
+                    .then((response) => {
+                        this.isLoading = false;
+                        if (response.data.status === 1) {
+                            this.showMessage("success", response.data.message);
+                            this.getCustomers();
+                        } else {
+                            this.showError(response.data.message);
+                        }
+                    }).catch(error => {
+                        this.isLoading = false;
+                        this.showError(error.request?.statusText || error.message || __('something_went_wrong'));
+                    });
+            });
         },
         updateStatusCustomer(index, id) {
             this.$swal.fire({
@@ -203,3 +299,9 @@ export default {
     }
 };
 </script>
+
+<style scoped>
+.list-action-btn.is-verify:hover {
+    color: #37a279 !important;
+}
+</style>

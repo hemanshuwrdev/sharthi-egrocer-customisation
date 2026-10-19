@@ -2946,6 +2946,19 @@ class CommonHelper
             // Who actually placed this order: the retailer themselves, or a salesman on their behalf.
             $order->placed_by = $order->placed_by_salesman_id ? 'salesman' : 'retailer';
 
+            // Every scheme that was applied (they stack). Empty for orders placed before that — those
+            // still carry their one scheme in scheme_id / scheme_name / scheme_discount.
+            $order->applied_schemes = \Illuminate\Support\Facades\Schema::hasTable('order_schemes')
+                ? \App\Models\OrderScheme::where('order_id', $order_id)->orderByDesc('benefit')->get()
+                    ->map(fn ($s) => [
+                        'scheme_id'  => $s->scheme_id,
+                        'name'       => $s->name,
+                        'type'       => $s->type,
+                        'discount'   => $s->discount,
+                        'free_items' => $s->free_items ?? [],
+                    ])->all()
+                : [];
+
             $order->additional_charges = json_decode($order->additional_charges ?? "[]");
 
             if ($order->order_type == 'selfpickup') {

@@ -810,7 +810,8 @@ class SalesmanAppApiController extends Controller
 
     /**
      * GET /api/salesman/products
-     * Query: filter, brand_id, category_id, parent_company_id, page, per_page
+     * Query: filter, brand_id, category_id, parent_company_id, page, per_page,
+     *        retailer_id (optional — fills applied_scheme(s) from the salesman's draft cart for that retailer)
      *
      * Returns the logged-in salesman's distributor catalog so he can pick
      * variants to add to a retailer's cart.  seller_id is resolved from the
@@ -828,6 +829,16 @@ class SalesmanAppApiController extends Controller
         $page     = max((int) $request->input('page', 1), 1);
         $offset   = ($page - 1) * $limit;
         $filter   = trim((string) $request->input('filter', ''));
+
+        // Optional retailer_id: the retailer this salesman is ordering for. It is what makes applied_scheme(s)
+        // meaningful — they come from the salesman's draft cart for THAT retailer. Without it they stay empty.
+        $schemeRetailer = null;
+        if ($request->filled('retailer_id')) {
+            $schemeRetailer = $this->ensureAccessibleActiveRetailer($salesman, $request->retailer_id);
+            if (!$schemeRetailer) {
+                return CommonHelper::responseError('retailer_not_owned_or_not_active');
+            }
+        }
 
         $query = MasterProductVariant::query()
             ->with(['masterProduct.brand', 'masterProduct.parentCompany', 'masterProduct.category', 'unit', 'secondaryUnit', 'weightUnit'])
@@ -943,6 +954,25 @@ class SalesmanAppApiController extends Controller
 
         $total = $items->count();
         $paged = $items->slice($offset, $limit)->values();
+
+        // Scheme hints, for this page only. nearest_scheme = the running scheme the product takes part in that
+        // ends soonest. applied_schemes = schemes already applied to the salesman's draft cart for retailer_id
+        // that involve this product (they stack); applied_scheme = the first of them, or {} — same as the retailer app.
+        $nearestBySp = SchemeListing::nearestForSellerProducts($paged->pluck('offer.seller_product_id'));
+        $appliedSchemes = [];
+        if ($schemeRetailer) {
+            $cartGroup = collect($this->buildCartListPayload($schemeRetailer, $salesman)['groups'])->first();
+            $appliedSchemes = $cartGroup['applied_schemes'] ?? [];
+        }
+        $paged = $paged->map(function ($item) use ($nearestBySp, $appliedSchemes) {
+            $spId = (int) $item['offer']['seller_product_id'];
+            $appliedHere = SchemeListing::appliedInvolving($appliedSchemes, $spId);
+            $item['offer']['nearest_scheme']  = $nearestBySp[$spId] ?? null;
+            $item['offer']['applied_schemes'] = $appliedHere;
+            $item['offer']['applied_scheme']  = $appliedHere[0] ?? new \stdClass();
+
+            return $item;
+        });
 
         return CommonHelper::responseWithData($paged, $total);
     }
@@ -1100,7 +1130,9 @@ class SalesmanAppApiController extends Controller
             $variant = $variants[$row->master_product_variant_id] ?? null;
             if (!$variant) continue;
 
-            $line = MasterCatalogOrderHelper::resolveLine((int) $row->seller_id, (int) $row->master_product_variant_id, (float) $row->qty);
+            // Buyer = the retailer, same as placeOrder: it decides the tax rate, which the schemes' before-tax
+            // maths depends on — without it the preview quoted a different discount than the order got.
+            $line = MasterCatalogOrderHelper::resolveLine((int) $row->seller_id, (int) $row->master_product_variant_id, (float) $row->qty, null, $retailer->id);
             if (!$line['ok']) {
                 $groups[$row->seller_id]['unavailable'][] = [
                     'cart_id' => $row->id,
@@ -1160,13 +1192,17 @@ class SalesmanAppApiController extends Controller
             ->get(['id', 'name', 'cash_discount_percent'])
             ->keyBy('id');
 
-        // Scheme preview: best offer per distributor (re-evaluated server-side at placeOrder).
+        // Scheme preview: every qualifying scheme of the distributor applies and stacks
+        // (re-evaluated server-side at placeOrder).
         foreach ($groups as $sellerId => &$group) {
             $schemeLines = $group['scheme_lines'] ?? [];
             $scheme  = SchemeEngine::evaluate((int) $sellerId, $schemeLines);
-            $nearest = SchemeEngine::nearestUnapplied((int) $sellerId, $schemeLines, $scheme['scheme_id'] ?? null);
+            $nearest = SchemeEngine::nearestUnapplied((int) $sellerId, $schemeLines, array_column($scheme['schemes'] ?? [], 'scheme_id'));
             unset($group['scheme_lines']);
-            $group['applied_scheme']  = $scheme;
+            // applied_scheme = the biggest single scheme, exactly as before; applied_schemes = every
+            // scheme applied; scheme_discount = their total.
+            $group['applied_scheme']  = $scheme['schemes'][0] ?? null;
+            $group['applied_schemes'] = $scheme['schemes'] ?? [];
             $group['scheme_discount'] = $scheme['scheme_discount'] ?? 0;
             $group['final_total']     = ($group['sub_total'] ?? 0) - $group['scheme_discount'];
             $group['nearest_scheme']  = $nearest;
@@ -1379,7 +1415,7 @@ class SalesmanAppApiController extends Controller
                         ];
                     }
 
-                    // Auto-apply best scheme first, then the salesman discount on the scheme-reduced amount.
+                    // Auto-apply every qualifying scheme first, then the salesman discount on the scheme-reduced amount.
                     $scheme = SchemeEngine::evaluate((int) $sellerId, $schemeLines);
                     $schemeDiscount = $scheme['scheme_discount'] ?? 0;
 
@@ -1435,6 +1471,9 @@ class SalesmanAppApiController extends Controller
                     // Snapshot so the invoice can show a before-tax ("Inclusive") scheme discount as a
                     // deduction from Net Taxable, whatever the scheme says later (no-op pre-migration).
                     ] + CommonHelper::schemeSnapshotColumns($scheme, (float) $schemeDiscount) + $orderAddress['columns']);
+
+                    // Schemes stack: orders.scheme_discount is their total, this keeps each one.
+                    \App\Models\OrderScheme::record($orderId, $scheme);
 
                     // Insert initial order_status row so customer order tracking works
                     \App\Models\OrderStatus::create([
@@ -1503,7 +1542,7 @@ class SalesmanAppApiController extends Controller
                             'status'                    => json_encode([['received', date('Y-m-d H:i:s')]]),
                             'active_status'             => (string) OrderStatusList::$received,
                             'seller_id'                 => $sellerId,
-                            'scheme_id'                 => $scheme['scheme_id'],
+                            'scheme_id'                 => $free['scheme_id'] ?? $scheme['scheme_id'],
                             'is_free_item'              => 1,
                             'created_at'                => now(),
                             'updated_at'                => now(),
@@ -1520,13 +1559,16 @@ class SalesmanAppApiController extends Controller
                         'salesman_discount' => $salesmanDiscountAmount,
                         'cash_discount_amount' => $cashDiscountAmount,
                         'cash_discount_percent' => $cashDiscountPercent,
+                        // scheme = the biggest scheme on its own (as before); schemes = every scheme applied.
                         'scheme' => $scheme ? [
-                            'scheme_id' => $scheme['scheme_id'],
-                            'name' => $scheme['name'],
-                            'type' => $scheme['type'],
-                            'scheme_discount' => $schemeDiscount,
-                            'free_items' => $scheme['free_items'],
+                            'scheme_id' => $scheme['schemes'][0]['scheme_id'],
+                            'name' => $scheme['schemes'][0]['name'],
+                            'type' => $scheme['schemes'][0]['type'],
+                            'scheme_discount' => $scheme['schemes'][0]['scheme_discount'],
+                            'free_items' => $scheme['schemes'][0]['free_items'],
                         ] : null,
+                        'schemes' => $scheme['schemes'] ?? [],
+                        'scheme_discount' => $schemeDiscount,
                         'delivery_date' => $deliveryDate,
                     ];
                 }

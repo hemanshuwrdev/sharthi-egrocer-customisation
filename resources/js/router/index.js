@@ -145,6 +145,7 @@ const SocialMedia = () => import("../views/WebSetings/SocialMedia/SocialMedia");
 
 //Customers
 const Customers = () => import("../views/Customers/Customers");
+const EditCustomer = () => import("../views/Customers/EditCustomer");
 
 //Customers Wallet Transactions
 const WalletTransactions = () => import("../views/Customers/WalletTransactions/WalletTransactions");
@@ -1303,6 +1304,29 @@ function configRoutes() {
                         permission: 'order_list',
                         role: adminRoles,
                         title: 'Customers'
+
+                    },
+                },
+                {
+                    path: "users/create",
+                    name: "CreateCustomer",
+                    component: EditCustomer,
+                    meta: {
+                        permission: 'customer_create',
+                        role: adminRoles,
+                        title: 'Add Retailer'
+
+                    },
+                },
+                {
+                    path: "users/edit/:id",
+                    name: "EditCustomer",
+                    component: EditCustomer,
+                    props: true,
+                    meta: {
+                        permission: 'customer_update',
+                        role: adminRoles,
+                        title: 'Edit Retailer'
 
                     },
                 },
