@@ -147,7 +147,7 @@
             <table width="100%" style="border-collapse: collapse; margin-bottom: 12px; border-bottom: 1.5px solid #000; padding-bottom: 12px;">
                 <tr>
                     <td width="45%" style="vertical-align: top; border: none; padding: 0 15px 0 0;">
-                        <h4 style="margin: 0 0 6px 0; font-size: 11px; font-weight: 900; color: #000; text-transform: uppercase; font-family: sans-serif;">SHIP FROM:</h4>
+                        <h4 style="margin: 0 0 6px 0; font-size: 11px; font-weight: 900; color: #000; text-transform: uppercase; font-family: sans-serif;">BILL FROM/SHIP FROM:</h4>
                         <p style="margin: 2px 0; line-height: 1.35; color: #222;"><strong>{{ $seller->store_name }}</strong></p>
                         <p style="margin: 2px 0; line-height: 1.35; color: #222;">{{ $seller->street }}</p>
                         <p style="margin: 2px 0; line-height: 1.35; color: #222;">{{ $seller->city_name }}{{ $seller->state ? ', ' . $seller->state : '' }}</p>

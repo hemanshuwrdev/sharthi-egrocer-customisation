@@ -893,6 +893,11 @@ class CommonHelper
      * and who has no active distributor_subscriptions row is dropped from every
      * seller_id list used to pull products/offers for shoppers. Login is
      * unaffected — this is the sole enforcement point for subscription status.
+     *
+     * A seller that is not Active (registered / rejected / deactivated / blocked /
+     * removed) is dropped too, even if it still holds a live subscription: callers
+     * build their seller list from brand_distributor_mappings, which never looks at
+     * sellers.status, so without this an inactive distributor's products stay visible.
      */
     public static function filterEligibleSellerIds($sellerIds)
     {
@@ -905,7 +910,9 @@ class CommonHelper
         // eligibility = active subscription only.
         // $trialDays = (int) (Setting::get_value('distributor_trial_days') ?: 0);
 
-        $sellers = Seller::whereIn('id', $sellerIds)->get(['id', 'created_at']);
+        $sellers = Seller::whereIn('id', $sellerIds)
+            ->where('status', Seller::$statusActive)
+            ->get(['id', 'created_at']);
 
         $activeSubscriptionSellerIds = \App\Models\DistributorSubscription::whereIn('seller_id', $sellerIds)
             ->where('status', 'active')
@@ -2986,7 +2993,8 @@ class CommonHelper
             'products.id as product_id',
             DB::raw('COALESCE(products.return_status, seller_products.return_status) as return_status'),
             DB::raw('COALESCE(products.return_days, seller_products.return_days) as return_days'),
-            DB::raw('COALESCE(products.cancelable_status, seller_products.cancelable_status) as cancelable_status'),
+            // A scheme's free item is never cancelable on its own.
+            DB::raw('IF(order_items.is_free_item = 1, 0, COALESCE(products.cancelable_status, seller_products.cancelable_status)) as cancelable_status'),
             'master_product_variants.master_product_id',
             // Legacy products.image first, falling back to the master-catalog variant's
             // own image, then the master product's image — master-catalog order_items
@@ -3038,7 +3046,8 @@ class CommonHelper
                 'products.id as product_id',
                 DB::raw('COALESCE(products.return_status, seller_products.return_status) as return_status'),
                 DB::raw('COALESCE(products.return_days, seller_products.return_days) as return_days'),
-                DB::raw('COALESCE(products.cancelable_status, seller_products.cancelable_status) as cancelable_status'),
+                // A scheme's free item is never cancelable on its own.
+                DB::raw('IF(order_items.is_free_item = 1, 0, COALESCE(products.cancelable_status, seller_products.cancelable_status)) as cancelable_status'),
                 'master_product_variants.master_product_id',
                 DB::raw('COALESCE(
                     CONCAT("' . asset('storage/') . '", "/", products.image),
@@ -3654,6 +3663,11 @@ class CommonHelper
 
     public static function sendMail($to, $subject, $data)
     {
+        // Retailers (and some sellers/admins) may have no email on file — there is nobody to mail, and
+        // Swift throws on an empty address, which breaks the request when the mail job runs after the response.
+        if (empty($to)) {
+            return;
+        }
 
         $mailer = Setting::get_value('mailer') ?: 'smtp';
         $config = [
@@ -5535,6 +5549,12 @@ JSON:
                 $q->where('role', '!=', $role)->orWhere('role_id', '!=', $roleId);
             })
             ->first();
+        // A claim whose owning record was deleted outside the app (e.g. straight from the DB)
+        // would block this number forever - drop it and let the new owner claim it.
+        if ($conflict && $conflict->isOrphaned()) {
+            $conflict->delete();
+            $conflict = null;
+        }
         if ($conflict) {
             $label = \App\Models\MobileRegistry::$roleLabels[$conflict->role] ?? $conflict->role;
             return "This mobile number is already registered with an existing {$label}.";

@@ -1571,6 +1571,11 @@ class OrderApiController extends Controller
                     return CommonHelper::responseError('delivered_order_cannot_be_cancelled');
                 }
 
+                // A free item from a scheme can't be cancelled on its own.
+                if ((int) $order_item->is_free_item === 1) {
+                    return CommonHelper::responseError('free_item_cannot_be_cancelled');
+                }
+
                 // Once a loading slip has been generated for this order, it's already
                 // staged for dispatch physically — cancellation is only allowed before that.
                 if (!empty($order->loading_slip_id)) {
@@ -2127,7 +2132,8 @@ class OrderApiController extends Controller
 
                 // Once a loading slip has been generated for this order, it's staged for
                 // dispatch physically and can no longer be cancelled — hide the button.
-                if (!empty($row->loading_slip_id)) {
+                // A free item from a scheme is never cancelled on its own, either.
+                if (!empty($row->loading_slip_id) || (int) $item->is_free_item === 1) {
                     $items[$subkey]->cancelable_status = 0;
                 } elseif (($item->cancelable_status == 1) && intval($row->active_status) <= intval($item->till_status) && in_array($row->active_status, $cancelableStatusList)) {
                     $items[$subkey]->cancelable_status = 1;

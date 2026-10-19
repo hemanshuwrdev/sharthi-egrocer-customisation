@@ -541,6 +541,10 @@ class OrdersApiController extends Controller
                     return CommonHelper::responseError('invalid_cancellation_reason');
                 }
                 $reasonNote = trim((string) $request->input('reason_note', ''));
+                // orders.delivery_reason is a 255-char column ("key: note"), so a long note would fail the save.
+                if (mb_strlen($reasonNote) > 200) {
+                    return CommonHelper::responseError('The reason note may not be greater than 200 characters.');
+                }
                 $cancelOrderReason = $reasonNote !== '' ? $reasonKey . ': ' . $reasonNote : $reasonKey;
                 $label = __('delivery_reason_' . $reasonKey);
                 $cancelItemReason = $reasonNote !== '' ? $label . ': ' . $reasonNote : $label;
@@ -1046,6 +1050,9 @@ class OrdersApiController extends Controller
             foreach ($ids as $id) {
                 $checkItem = OrderItem::find($id);
                 if (!$checkItem) continue;
+                if ((int) $checkItem->is_free_item === 1) {
+                    return CommonHelper::responseError('free_item_cannot_be_cancelled');
+                }
                 $checkOrder = Order::find($checkItem->order_id);
                 if (CommonHelper::isDeliveredFinal($checkItem->active_status)
                     || ($checkOrder && CommonHelper::isDeliveredFinal($checkOrder->active_status))) {
@@ -1322,6 +1329,11 @@ class OrdersApiController extends Controller
 
         if ($order_item->active_status == OrderStatusList::$cancelled) {
             return CommonHelper::responseError('order_item_is_already_cancelled');
+        }
+
+        // A free item from a scheme can't be cancelled on its own.
+        if ((int) $order_item->is_free_item === 1) {
+            return CommonHelper::responseError('free_item_cannot_be_cancelled');
         }
 
         if ($order_item->active_status == OrderStatusList::$delivered || $order_item->active_status == OrderStatusList::$returned) {

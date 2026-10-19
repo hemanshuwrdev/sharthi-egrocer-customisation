@@ -155,7 +155,9 @@
                         <div class="dropdown">
                             <a href="#" class="user-chip text-decoration-none" data-bs-toggle="dropdown"
                                 aria-expanded="false">
-                                <img :src="profile_url" alt="profile">
+                                <div class="user-avatar-wrap">
+                                    <img :src="profile_url" alt="profile" class="user-avatar-img" @error="onAvatarError($event)">
+                                </div>
                                 <span class="d-none d-lg-flex flex-column text-start">
                                     <span class="user-chip-name">{{ user.username }}</span>
                                     <span class="user-chip-role">{{ role === 'Seller' ? __('seller') : role }}</span>
@@ -341,6 +343,9 @@ export default {
     methods: {
         navIcon(name) {
             return lucideIcon(name);
+        },
+        onAvatarError(event) {
+            event.target.src = this.$baseUrl + '/images/admin_logo.png';
         },
         toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -830,5 +835,28 @@ export default {
 .hdr-accent-btn:hover {
     background: rgba(var(--brand-rgb, 4, 42, 95), 0.12);
     color: var(--brand, #042A5F);
+}
+
+.user-avatar-wrap {
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    overflow: hidden;
+    position: relative;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 1.5px #e2e8f0, 0 1px 2px rgba(15, 23, 42, 0.08);
+    background-color: #f8fafc;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 9999px;
+    display: block;
 }
 </style>

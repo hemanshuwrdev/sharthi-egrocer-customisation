@@ -15,11 +15,13 @@ use App\Models\OrderStatusList;
 use App\Models\RetailerProfile;
 use App\Models\Salesman;
 use App\Models\Seller;
+use App\Models\SellerProduct;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\UserAddress;
 use App\Models\UserToken;
 use App\Services\SchemeEngine;
+use App\Services\SchemeListing;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -943,6 +945,41 @@ class SalesmanAppApiController extends Controller
         $paged = $items->slice($offset, $limit)->values();
 
         return CommonHelper::responseWithData($paged, $total);
+    }
+
+    /**
+     * GET /api/salesman/schemes
+     * Query: type, filter (name search), page, per_page
+     *
+     * Running schemes of the salesman's own distributor, so he can pitch them to a retailer. Limited to
+     * products in his catalog (listProducts rules, incl. his assigned brands) — a scheme he cannot add
+     * to a cart is not listed.
+     */
+    public function listSchemes(Request $request)
+    {
+        $salesman = $this->currentSalesman();
+        if (!$salesman) {
+            return CommonHelper::responseError('salesman_not_found');
+        }
+
+        $limit  = max(1, (int) $request->input('per_page', 25));
+        $page   = max((int) $request->input('page', 1), 1);
+        $offset = ($page - 1) * $limit;
+
+        $assignedBrands = array_map('intval', (array) $salesman->brands);
+        $isOrderable = fn (SellerProduct $sp) => SchemeListing::isLive($sp)
+            && (empty($assignedBrands) || in_array((int) $sp->masterProductVariant->masterProduct->brand_id, $assignedBrands, true));
+
+        $schemes = SchemeListing::runningQuery(
+            [(int) $salesman->seller_id],
+            trim((string) $request->input('type', '')) ?: null,
+            trim((string) $request->input('filter', ''))
+        )->get()
+            ->map(fn ($s) => SchemeListing::format($s, $isOrderable))
+            ->filter()
+            ->values();
+
+        return CommonHelper::responseWithData($schemes->slice($offset, $limit)->values(), $schemes->count());
     }
 
     /**

@@ -434,6 +434,14 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -783,26 +791,87 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       if (!orderRow || orderRow.active_status == null) return false;
       return parseInt(orderRow.active_status) === 2;
     },
+    // Distributor can cancel an order that has not been delivered yet. update_status refuses a seller
+    // moving an order "backwards" past Cancelled, so only Received / Processed / Shipped / Out For
+    // Delivery / Rescheduled (2, 3, 4, 5, 12) qualify.
+    canCancelOrder: function canCancelOrder(orderRow) {
+      if (!orderRow || orderRow.active_status == null) return false;
+      return [2, 3, 4, 5, 12].includes(parseInt(orderRow.active_status));
+    },
+    // The reason is optional. update_status takes a reason as a key + note, so a typed reason goes
+    // in as "other" + reason_note (kept to 200 chars: orders.delivery_reason is a 255-char column).
+    cancelOrder: function cancelOrder(orderRow) {
+      var _this3 = this;
+      this.$swal.fire({
+        title: this.__('cancel_order') + ' #' + orderRow.id + '?',
+        text: this.__('cancel_order_warning'),
+        icon: 'warning',
+        input: 'textarea',
+        inputLabel: this.__('cancellation_reason_optional'),
+        inputPlaceholder: this.__('enter_cancellation_reason'),
+        inputAttributes: {
+          maxlength: 200
+        },
+        showCancelButton: true,
+        confirmButtonText: this.__('yes_cancel_order'),
+        cancelButtonText: this.__('keep_order'),
+        confirmButtonColor: '#d33',
+        showLoaderOnConfirm: true,
+        allowOutsideClick: function allowOutsideClick() {
+          return !_this3.$swal.isLoading();
+        },
+        preConfirm: function preConfirm(reason) {
+          var note = (reason || '').trim();
+          var postData = {
+            order_id: orderRow.id,
+            status_id: 7
+          }; // 7 = Cancelled
+          if (note) {
+            postData.delivery_reason = 'other';
+            postData.reason_note = note;
+          }
+          return axios__WEBPACK_IMPORTED_MODULE_3___default().post(_this3.$sellerApiUrl + '/update_status', postData).then(function (response) {
+            var data = response.data;
+            if (data.status !== 1) {
+              // keep the dialog open so the reason is not lost
+              _this3.$swal.showValidationMessage(data.message || 'Something went wrong!');
+              return false;
+            }
+            return data;
+          })["catch"](function (error) {
+            var msg = error.response && error.response.data && error.response.data.message;
+            _this3.$swal.showValidationMessage(msg || 'Something went wrong!');
+            return false;
+          });
+        }
+      }).then(function (result) {
+        if (result.isConfirmed && result.value) {
+          _this3.showMessage('success', result.value.message);
+          _this3.getOrders();
+        }
+      });
+    },
     editingRowSubtotal: function editingRowSubtotal(row) {
       var q = parseFloat(row.quantity) || 0;
       var p = parseFloat(row.price) || 0;
       return (q * p).toFixed(2);
     },
     openEditOrderItems: function openEditOrderItems(orderRow) {
-      var _this3 = this;
+      var _this4 = this;
       this.editingOrderId = orderRow.id;
       this.editingItems = [];
       this.editOrderModalShow = true;
 
       // If items aren't loaded yet (row not expanded), fetch them
       var seed = function seed(items) {
-        _this3.editingItems = items.filter(function (i) {
+        _this4.editingItems = items.filter(function (i) {
           return parseInt(i.active_status) !== 7 && parseInt(i.active_status) !== 8;
         }).map(function (i) {
           return {
             order_item_id: i.id,
             product_name: i.product_name,
             variant_name: i.variant_name,
+            is_free_item: parseInt(i.is_free_item) === 1,
             price: parseFloat(i.price) || 0,
             original_quantity: parseFloat(i.quantity) || 0,
             quantity: parseFloat(i.quantity) || 0
@@ -815,18 +884,18 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       }
       this.editingOrderItemsLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_3___default().get(this.$apiUrl + '/orders/view/' + orderRow.id).then(function (response) {
-        _this3.editingOrderItemsLoading = false;
+        _this4.editingOrderItemsLoading = false;
         var data = response.data;
         if (data.status === 1) {
           seed(data.data.order_items || []);
         } else {
-          _this3.showError(data.message);
-          _this3.editOrderModalShow = false;
+          _this4.showError(data.message);
+          _this4.editOrderModalShow = false;
         }
       })["catch"](function () {
-        _this3.editingOrderItemsLoading = false;
-        _this3.showError('Failed to load order items');
-        _this3.editOrderModalShow = false;
+        _this4.editingOrderItemsLoading = false;
+        _this4.showError('Failed to load order items');
+        _this4.editOrderModalShow = false;
       });
     },
     onEditOrderModalHide: function onEditOrderModalHide() {
@@ -834,7 +903,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       this.editingOrderId = null;
     },
     saveEditedOrderItems: function saveEditedOrderItems() {
-      var _this4 = this;
+      var _this5 = this;
       var changed = this.editingItems.filter(function (r) {
         return parseFloat(r.quantity) !== r.original_quantity;
       }).map(function (r) {
@@ -869,23 +938,23 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         items: changed
       };
       axios__WEBPACK_IMPORTED_MODULE_3___default().post(this.$apiUrl + '/orders/update_items', postData).then(function (response) {
-        _this4.isSavingEdit = false;
+        _this5.isSavingEdit = false;
         var data = response.data;
         if (data.status === 1) {
-          _this4.editOrderModalShow = false;
-          _this4.editingItems = [];
-          _this4.editingOrderId = null;
-          _this4.showMessage('success', data.message);
-          _this4.getOrders();
+          _this5.editOrderModalShow = false;
+          _this5.editingItems = [];
+          _this5.editingOrderId = null;
+          _this5.showMessage('success', data.message);
+          _this5.getOrders();
         } else {
-          _this4.showError(data.message);
+          _this5.showError(data.message);
         }
       })["catch"](function (error) {
-        _this4.isSavingEdit = false;
+        _this5.isSavingEdit = false;
         if (error.response && error.response.data && error.response.data.message) {
-          _this4.showError(error.response.data.message);
+          _this5.showError(error.response.data.message);
         } else {
-          _this4.showError('Something went wrong!');
+          _this5.showError('Something went wrong!');
         }
       });
     },
@@ -962,23 +1031,23 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       return key ? this.__(key) : String(val);
     },
     getOrderStatus: function getOrderStatus() {
-      var _this5 = this;
+      var _this6 = this;
       var vm = this;
       axios__WEBPACK_IMPORTED_MODULE_3___default().get(this.$apiUrl + '/order_statuses').then(function (response) {
-        _this5.isLoading = false;
+        _this6.isLoading = false;
         // Payment Pending (id 1) never applies to Sarthi's COD-only distributor flow;
         // Shipped (id 4) is unused in this flow too
-        _this5.statuses = response.data.data.filter(function (status) {
+        _this6.statuses = response.data.data.filter(function (status) {
           return status.id != 1 && status.id != 4;
         });
       })["catch"](function (error) {
         vm.isLoading = false;
         if (error.request.statusText) {
-          _this5.showError(error.request.statusText);
+          _this6.showError(error.request.statusText);
         } else if (error.message) {
-          _this5.showError(error.message);
+          _this6.showError(error.message);
         } else {
-          _this5.showError("Something went wrong!");
+          _this6.showError("Something went wrong!");
         }
       });
     },
@@ -1034,7 +1103,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       this.getOrders();
     },
     getOrders: function getOrders() {
-      var _this6 = this;
+      var _this7 = this;
       this.isLoading = true;
       var offset = (this.currentPage - 1) * this.perPage;
       var item_offset = (this.itemCurrentPage - 1) * this.itemPerPage;
@@ -1053,46 +1122,46 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       axios__WEBPACK_IMPORTED_MODULE_3___default().get(this.$sellerApiUrl + '/orders', {
         params: param
       }).then(function (response) {
-        _this6.isLoading = false;
-        _this6.orders = response.data.data.orders;
-        _this6.statusCounts = response.data.data.status_order_count || [];
-        _this6.totalOrderRows = response.data.total;
-        _this6.total_amount = _this6.orders.map(function (item) {
+        _this7.isLoading = false;
+        _this7.orders = response.data.data.orders;
+        _this7.statusCounts = response.data.data.status_order_count || [];
+        _this7.totalOrderRows = response.data.total;
+        _this7.total_amount = _this7.orders.map(function (item) {
           return parseFloat(item.total) || 0;
         }).reduce(function (prev, curr) {
           return prev + curr;
         }, 0).toFixed(2);
-        _this6.delivery_charge = _this6.orders.map(function (item) {
+        _this7.delivery_charge = _this7.orders.map(function (item) {
           return parseFloat(item.delivery_charge) || 0;
         }).reduce(function (prev, curr) {
           return prev + curr;
         }, 0).toFixed(2);
-        _this6.remaining_final = _this6.orders.map(function (item) {
+        _this7.remaining_final = _this7.orders.map(function (item) {
           return parseFloat(item.remaining_final) || 0;
         }).reduce(function (prev, curr) {
           return prev + curr;
         }, 0).toFixed(2);
-        _this6.order_items = response.data.data.order_items;
-        _this6.totalOrderItemRows = response.data.data.total_order_item;
-        _this6.order_items_total_sum = _this6.order_items.map(function (item) {
+        _this7.order_items = response.data.data.order_items;
+        _this7.totalOrderItemRows = response.data.data.total_order_item;
+        _this7.order_items_total_sum = _this7.order_items.map(function (item) {
           return parseFloat(item.total) || 0;
         }).reduce(function (prev, curr) {
           return prev + curr;
         }, 0).toFixed(2);
-        _this6.orders.forEach(function (order) {
-          _this6.$set(order, 'order_items', []);
-          _this6.$set(order, 'itemsLoading', false);
+        _this7.orders.forEach(function (order) {
+          _this7.$set(order, 'order_items', []);
+          _this7.$set(order, 'itemsLoading', false);
         });
       });
     },
     toggleOrder: function toggleOrder(row) {
-      var _this7 = this;
+      var _this8 = this;
       if (row.detailsShowing) {
         row.toggleDetails();
       } else {
         this.orders.forEach(function (o) {
           if (o.id !== row.item.id) {
-            _this7.$set(o, '_showDetails', false);
+            _this8.$set(o, '_showDetails', false);
           }
         });
         if (row.item.order_items.length === 0) {
@@ -1106,7 +1175,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
             row.item.itemsLoading = false;
           })["catch"](function (error) {
             row.item.itemsLoading = false;
-            _this7.showError(error.message || "Failed to fetch order items");
+            _this8.showError(error.message || "Failed to fetch order items");
           });
         }
         row.toggleDetails();
@@ -1216,7 +1285,7 @@ __webpack_require__.r(__webpack_exports__);
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 ___CSS_LOADER_EXPORT___.i(_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue2_daterange_picker_dist_vue2_daterange_picker_css__WEBPACK_IMPORTED_MODULE_1__["default"]);
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n/* ---------- tokens ---------- */\n.ord-scope[data-v-3bbeeb7f] {\n    --ord-card: #ffffff;\n    --ord-border: #e5eaf2;\n    --ord-text: #0f172a;\n    --ord-muted: #64748b;\n    --ord-soft: #f4f7fb;\n    --ord-primary: #1e3a8a;\n    --ord-primary-hover: #172d6e;\n    --ord-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 6px 20px rgba(15, 23, 42, 0.04);\n\n    --ord-green-bg: #e7f7ef;  --ord-green-fg: #047857;  --ord-green: #10b981;\n    --ord-amber-bg: #fff6e0;  --ord-amber-fg: #b45309;  --ord-amber: #f59e0b;\n    --ord-red-bg: #fdecec;    --ord-red-fg: #b91c1c;    --ord-red: #ef4444;\n    --ord-blue-bg: #e8f0fe;   --ord-blue-fg: #1d4ed8;   --ord-blue: #3b82f6;\n    --ord-purple-bg: #f1eafe; --ord-purple-fg: #6d28d9; --ord-purple: #8b5cf6;\n    --ord-slate-bg: #eef1f6;  --ord-slate-fg: #475569;  --ord-slate: #94a3b8;\n\n    color: var(--ord-text);\n    font-variant-numeric: tabular-nums;\n}\n.theme-dark .ord-scope[data-v-3bbeeb7f] {\n    --ord-card: #1e1e2d;\n    --ord-border: #2f2f45;\n    --ord-text: #eef2f7;\n    --ord-muted: #9aa5b8;\n    --ord-soft: #262639;\n    --ord-primary: #3d5fd6;\n    --ord-primary-hover: #5373e6;\n    --ord-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);\n\n    --ord-green-bg: rgba(16, 185, 129, 0.16);  --ord-green-fg: #4ade9f;\n    --ord-amber-bg: rgba(245, 158, 11, 0.16);  --ord-amber-fg: #fbbf4a;\n    --ord-red-bg: rgba(239, 68, 68, 0.16);     --ord-red-fg: #f87171;\n    --ord-blue-bg: rgba(59, 130, 246, 0.18);   --ord-blue-fg: #7fb0ff;\n    --ord-purple-bg: rgba(139, 92, 246, 0.18); --ord-purple-fg: #b69cff;\n    --ord-slate-bg: rgba(148, 163, 184, 0.14); --ord-slate-fg: #b6c0d1;\n}\n.ord[data-v-3bbeeb7f] { padding: 24px;\n}\n.ord-tone--green[data-v-3bbeeb7f]  { --tone-bg: var(--ord-green-bg);  --tone-fg: var(--ord-green-fg);\n}\n.ord-tone--amber[data-v-3bbeeb7f]  { --tone-bg: var(--ord-amber-bg);  --tone-fg: var(--ord-amber-fg);\n}\n.ord-tone--red[data-v-3bbeeb7f]    { --tone-bg: var(--ord-red-bg);    --tone-fg: var(--ord-red-fg);\n}\n.ord-tone--blue[data-v-3bbeeb7f]   { --tone-bg: var(--ord-blue-bg);   --tone-fg: var(--ord-blue-fg);\n}\n.ord-tone--purple[data-v-3bbeeb7f] { --tone-bg: var(--ord-purple-bg); --tone-fg: var(--ord-purple-fg);\n}\n.ord-tone--slate[data-v-3bbeeb7f]  { --tone-bg: var(--ord-slate-bg);  --tone-fg: var(--ord-slate-fg);\n}\n\n/* ---------- header ---------- */\n.ord-head[data-v-3bbeeb7f] { display: flex; align-items: baseline; gap: 14px; margin-bottom: 16px;\n}\n.ord-eyebrow[data-v-3bbeeb7f] { padding-right: 14px; border-right: 1px solid var(--ord-border); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ord-muted);\n}\n.ord-head h1[data-v-3bbeeb7f] { margin: 0; font-size: 28px; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em; color: var(--ord-text);\n}\n\n/* ---------- shared ---------- */\n.ord-card[data-v-3bbeeb7f] { background: var(--ord-card); border: 1px solid var(--ord-border); border-radius: 18px; box-shadow: var(--ord-shadow);\n}\n.ord-btn[data-v-3bbeeb7f] {\n    display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 12px;\n    border: 1px solid var(--ord-border); background: var(--ord-card); color: var(--ord-text); font-size: 13.5px; font-weight: 600; cursor: pointer;\n}\n.ord-btn[data-v-3bbeeb7f]:hover { background: var(--ord-soft);\n}\n.ord-iconbtn[data-v-3bbeeb7f] {\n    width: 38px; height: 38px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; padding: 0;\n    border-radius: 10px; border: 1px solid var(--ord-border); background: var(--ord-card); color: var(--ord-muted);\n    font-size: 14px; cursor: pointer; text-decoration: none !important; transition: background-color 0.15s ease, color 0.15s ease;\n}\n.ord-iconbtn[data-v-3bbeeb7f]:hover { background: var(--ord-soft); color: var(--ord-primary);\n}\n.ord-pill[data-v-3bbeeb7f] {\n    display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px;\n    font-size: 12px; font-weight: 600; line-height: 1.2; white-space: nowrap; background: var(--tone-bg); color: var(--tone-fg);\n}\n.ord-dot[data-v-3bbeeb7f] { width: 7px; height: 7px; border-radius: 50%; background: currentColor;\n}\n.ord-tag[data-v-3bbeeb7f] { display: inline-block; padding: 3px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; background: var(--ord-soft); color: var(--ord-muted); border: 1px solid var(--ord-border);\n}\n.ord-tile[data-v-3bbeeb7f] { flex-shrink: 0; width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 19px; background: var(--tone-bg); color: var(--tone-fg);\n}\n.ord-dash[data-v-3bbeeb7f] { color: var(--ord-slate);\n}\n.ord-hint[data-v-3bbeeb7f] { border-bottom: 1px dotted currentColor; cursor: help;\n}\n\n/* ---------- status cards ---------- */\n.ord-cards[data-v-3bbeeb7f] { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px;\n}\n.ord-stat[data-v-3bbeeb7f] {\n    display: flex; align-items: center; gap: 14px; padding: 16px 18px; text-align: left; width: 100%;\n    cursor: pointer; font: inherit; color: inherit; transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;\n}\n.ord-stat[data-v-3bbeeb7f]:hover { box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08); transform: translateY(-2px);\n}\n.ord-stat--on[data-v-3bbeeb7f] { border-color: var(--ord-primary); box-shadow: 0 0 0 3px var(--ord-blue-bg), var(--ord-shadow);\n}\n.ord-stat__body[data-v-3bbeeb7f] { display: flex; flex-direction: column; min-width: 0; gap: 2px;\n}\n.ord-stat__label[data-v-3bbeeb7f] { font-size: 13px; color: var(--ord-muted);\n}\n.ord-stat__value[data-v-3bbeeb7f] { font-size: 26px; line-height: 1.1; font-weight: 800; letter-spacing: -0.02em; color: var(--ord-text);\n}\n\n/* ---------- filters (one line) ---------- */\n.ord-filters[data-v-3bbeeb7f] { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 12px 14px; margin-bottom: 16px;\n}\n.ord-search[data-v-3bbeeb7f] { position: relative; flex: 1 1 220px; min-width: 200px;\n}\n.ord-search > .fa-search[data-v-3bbeeb7f] { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--ord-slate); font-size: 14px; pointer-events: none;\n}\n.ord-search input[data-v-3bbeeb7f] {\n    width: 100%; height: 42px; padding: 0 38px 0 40px; border-radius: 12px; border: 1px solid var(--ord-border);\n    background: var(--ord-soft); color: var(--ord-text); font-size: 14px; outline: none;\n    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;\n}\n.ord-search input[data-v-3bbeeb7f]::-moz-placeholder { color: var(--ord-muted);\n}\n.ord-search input[data-v-3bbeeb7f]::placeholder { color: var(--ord-muted);\n}\n.ord-search input[data-v-3bbeeb7f]:focus { background: var(--ord-card); border-color: var(--ord-blue); box-shadow: 0 0 0 3px var(--ord-blue-bg);\n}\n.ord-search__clear[data-v-3bbeeb7f] { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 26px; height: 26px; border: 0; border-radius: 50%; background: transparent; color: var(--ord-muted); cursor: pointer;\n}\n.ord-search__clear[data-v-3bbeeb7f]:hover { background: var(--ord-slate-bg);\n}\n.ord-field__control[data-v-3bbeeb7f] { display: flex; align-items: center; gap: 6px;\n}\n.ord-select[data-v-3bbeeb7f] {\n    height: 42px; min-width: 150px; padding: 0 34px 0 14px; border-radius: 12px; border: 1px solid var(--ord-border);\n    background-color: var(--ord-soft); color: var(--ord-text); font-size: 14px; outline: none; cursor: pointer;\n}\n.ord-select[data-v-3bbeeb7f]:focus { border-color: var(--ord-blue); box-shadow: 0 0 0 3px var(--ord-blue-bg);\n}\n.ord-clear[data-v-3bbeeb7f] { width: 30px; height: 30px; border: 0; border-radius: 50%; background: var(--ord-slate-bg); color: var(--ord-slate-fg); cursor: pointer; font-size: 12px;\n}\n.ord-clear[data-v-3bbeeb7f]:hover { background: var(--ord-red-bg); color: var(--ord-red-fg);\n}\n.ord-linkbtn[data-v-3bbeeb7f] { height: 42px; border: 0; background: transparent; color: var(--ord-blue-fg); font-size: 13px; font-weight: 600; cursor: pointer; padding: 0 4px; white-space: nowrap;\n}\n.ord-linkbtn[data-v-3bbeeb7f]:hover { text-decoration: underline;\n}\n\n/* date range pickers (vue2-daterange-picker renders its own markup) */\n[data-v-3bbeeb7f] .ord-field__control .vue-daterange-picker { display: block; min-width: 215px;\n}\n[data-v-3bbeeb7f] .ord-field__control .vue-daterange-picker .form-control.reportrange-text {\n    height: 42px; display: flex; align-items: center; border-radius: 12px; border: 1px solid var(--ord-border);\n    background: var(--ord-soft); color: var(--ord-text); font-size: 14px; padding: 0 14px; gap: 8px;\n}\n.ord-placeholder[data-v-3bbeeb7f] { color: var(--ord-muted);\n}\n.ord-picked[data-v-3bbeeb7f] { font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ord-muted);\n}\n[data-v-3bbeeb7f] .ord-field__control .reportrange-text .fa-calendar-alt { color: var(--ord-slate);\n}\n\n/* ---------- panel ---------- */\n.ord-panel[data-v-3bbeeb7f] { overflow: hidden;\n}\n.ord-panel__head[data-v-3bbeeb7f] { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 16px 20px; border-bottom: 1px solid var(--ord-border);\n}\n.ord-seg[data-v-3bbeeb7f] { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--ord-slate-bg);\n}\n.ord-seg__btn[data-v-3bbeeb7f] {\n    display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border: 0; border-radius: 9px;\n    background: transparent; color: var(--ord-muted); font-size: 13.5px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;\n}\n.ord-seg__btn span[data-v-3bbeeb7f] { padding: 1px 8px; border-radius: 999px; font-size: 12px; background: var(--ord-card); color: var(--ord-slate-fg);\n}\n.ord-seg__btn[data-v-3bbeeb7f]:hover { color: var(--ord-text);\n}\n.ord-seg__btn--on[data-v-3bbeeb7f] { background: var(--ord-card); color: var(--ord-text); box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);\n}\n.ord-seg__btn--on span[data-v-3bbeeb7f] { background: var(--ord-primary); color: #fff;\n}\n.ord-sums[data-v-3bbeeb7f] { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; font-size: 13px; color: var(--ord-muted);\n}\n.ord-sums__cap[data-v-3bbeeb7f] { font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;\n}\n.ord-sum[data-v-3bbeeb7f] { padding: 6px 12px; border-radius: 10px; background: var(--ord-soft); border: 1px solid var(--ord-border);\n}\n.ord-sum strong[data-v-3bbeeb7f] { margin-left: 4px; color: var(--ord-text);\n}\n.ord-sum--strong[data-v-3bbeeb7f] { background: var(--ord-green-bg); border-color: transparent; color: var(--ord-green-fg);\n}\n.ord-sum--strong strong[data-v-3bbeeb7f] { color: var(--ord-green-fg);\n}\n\n/* ---------- table (b-table renders its own markup, hence the deep selectors) ---------- */\n.ord-tablewrap[data-v-3bbeeb7f] { margin: 0;\n}\n[data-v-3bbeeb7f] .ord-table { margin: 0; color: var(--ord-text);\n}\n[data-v-3bbeeb7f] .ord-table thead th {\n    padding: 12px 16px; border: 0; background: var(--ord-soft); color: var(--ord-muted); white-space: nowrap; vertical-align: middle;\n    font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;\n}\n[data-v-3bbeeb7f] .ord-table tbody td { padding: 14px 16px; vertical-align: middle; border-top: 1px solid var(--ord-border); color: var(--ord-text);\n}\n[data-v-3bbeeb7f] .ord-table tbody tr:first-child > td { border-top: 0;\n}\n[data-v-3bbeeb7f] .ord-table.table-hover tbody tr:hover > td { background: var(--ord-soft);\n}\n[data-v-3bbeeb7f] .ord-table .ord-num { text-align: right; white-space: nowrap;\n}\n[data-v-3bbeeb7f] .ord-table .ord-actions-col { text-align: right; width: 1%; white-space: nowrap;\n}\n[data-v-3bbeeb7f] .ord-table tr.ord-row--off > td { opacity: 0.6;\n}\n[data-v-3bbeeb7f] .ord-table tr.b-table-details > td { padding: 0 16px 16px; background: var(--ord-soft); border-top: 0;\n}\n[data-v-3bbeeb7f] .ord-table tr.b-table-has-details > td { background: var(--ord-soft);\n}\n.ord-id[data-v-3bbeeb7f] { display: flex; align-items: center; gap: 10px;\n}\n.ord-toggle[data-v-3bbeeb7f] {\n    width: 26px; height: 26px; flex-shrink: 0; border: 0; border-radius: 8px; background: var(--ord-slate-bg); color: var(--ord-slate-fg);\n    font-size: 11px; cursor: pointer; transition: transform 0.15s ease, background-color 0.15s ease;\n}\n.ord-toggle[data-v-3bbeeb7f]:hover { background: var(--ord-blue-bg); color: var(--ord-blue-fg);\n}\n.ord-toggle.is-open[data-v-3bbeeb7f] { transform: rotate(90deg); background: var(--ord-blue-bg); color: var(--ord-blue-fg);\n}\n.ord-id__text[data-v-3bbeeb7f] { display: flex; flex-direction: column; gap: 2px; min-width: 0;\n}\n.ord-id__text strong[data-v-3bbeeb7f] { font-size: 14px; font-weight: 700; color: var(--ord-text);\n}\n.ord-id__text span[data-v-3bbeeb7f] { font-size: 12px; color: var(--ord-muted); white-space: nowrap;\n}\n.ord-shop[data-v-3bbeeb7f] { display: flex; align-items: center; gap: 12px; min-width: 190px;\n}\n.ord-avatar[data-v-3bbeeb7f] {\n    width: 38px; height: 38px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center;\n    font-size: 13px; font-weight: 700; background: var(--tone-bg); color: var(--tone-fg);\n}\n.ord-shop__text[data-v-3bbeeb7f] { display: flex; flex-direction: column; gap: 1px; min-width: 0;\n}\n.ord-shop__text strong[data-v-3bbeeb7f] { font-size: 14px; font-weight: 700; color: var(--ord-text); max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;\n}\n.ord-shop__text span[data-v-3bbeeb7f] { font-size: 12px; color: var(--ord-muted);\n}\n.ord-when[data-v-3bbeeb7f] { display: flex; flex-direction: column; gap: 2px;\n}\n.ord-when strong[data-v-3bbeeb7f] { font-size: 13.5px; font-weight: 600; color: var(--ord-text); white-space: nowrap;\n}\n.ord-when span[data-v-3bbeeb7f] { font-size: 12px; color: var(--ord-muted); white-space: nowrap;\n}\n.ord-actions[data-v-3bbeeb7f] { display: inline-flex; gap: 8px;\n}\n.ord-busy[data-v-3bbeeb7f] { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 36px 0; color: var(--ord-muted); font-size: 14px;\n}\n.ord-empty[data-v-3bbeeb7f] { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 52px 24px;\n}\n.ord-empty__icon[data-v-3bbeeb7f] { width: 68px; height: 68px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 6px; background: var(--ord-blue-bg); color: var(--ord-blue-fg);\n}\n.ord-empty h3[data-v-3bbeeb7f] { margin: 0; font-size: 18px; font-weight: 700; color: var(--ord-text);\n}\n.ord-empty p[data-v-3bbeeb7f] { margin: 0 0 10px; max-width: 360px; font-size: 14px; color: var(--ord-muted);\n}\n.ord-empty-inline[data-v-3bbeeb7f] { margin: 0; padding: 16px 0; text-align: center; font-size: 13.5px; color: var(--ord-muted);\n}\n\n/* expanded order lines */\n.ord-details[data-v-3bbeeb7f] { padding-top: 4px;\n}\n.ord-lines[data-v-3bbeeb7f] { list-style: none; margin: 0; padding: 0; border: 1px solid var(--ord-border); border-radius: 14px; background: var(--ord-card); overflow: hidden;\n}\n.ord-lines li[data-v-3bbeeb7f] { display: flex; align-items: center; gap: 14px; padding: 12px 16px;\n}\n.ord-lines li + li[data-v-3bbeeb7f] { border-top: 1px dashed var(--ord-border);\n}\n.ord-lines__img[data-v-3bbeeb7f] { width: 44px; height: 44px; flex-shrink: 0; border-radius: 10px; -o-object-fit: cover; object-fit: cover; background: var(--ord-soft); border: 1px solid var(--ord-border);\n}\n.ord-lines__img--blank[data-v-3bbeeb7f] { display: flex; align-items: center; justify-content: center; color: var(--ord-slate);\n}\n.ord-lines__name[data-v-3bbeeb7f] { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;\n}\n.ord-lines__name strong[data-v-3bbeeb7f] { font-size: 13.5px; font-weight: 600; color: var(--ord-text);\n}\n.ord-lines__name span[data-v-3bbeeb7f] { font-size: 12px; color: var(--ord-muted);\n}\n.ord-lines__qty[data-v-3bbeeb7f] { font-size: 13px; font-weight: 700; padding: 2px 10px; border-radius: 8px; background: var(--ord-soft); color: var(--ord-text);\n}\n.ord-lines__amt[data-v-3bbeeb7f] { min-width: 80px; text-align: right; font-size: 14px; color: var(--ord-text);\n}\n\n/* ---------- footer ---------- */\n.ord-foot[data-v-3bbeeb7f] { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 14px 20px; border-top: 1px solid var(--ord-border);\n}\n.ord-foot__size[data-v-3bbeeb7f] { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ord-muted);\n}\n.ord-foot__size label[data-v-3bbeeb7f] { margin: 0;\n}\n.ord-foot__size .form-select[data-v-3bbeeb7f] { width: auto; min-width: 72px;\n}\n.ord-foot__count[data-v-3bbeeb7f] { flex: 1; font-size: 13px; color: var(--ord-muted); white-space: nowrap;\n}\n\n/* ---------- responsive ---------- */\n@media (max-width: 1199px) {\n.ord-cards[data-v-3bbeeb7f] { grid-template-columns: repeat(2, minmax(0, 1fr));\n}\n}\n@media (max-width: 767px) {\n.ord[data-v-3bbeeb7f] { padding: 16px;\n}\n.ord-head h1[data-v-3bbeeb7f] { font-size: 24px;\n}\n.ord-cards[data-v-3bbeeb7f] { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;\n}\n.ord-stat[data-v-3bbeeb7f] { padding: 12px; gap: 10px;\n}\n.ord-tile[data-v-3bbeeb7f] { width: 38px; height: 38px; font-size: 16px;\n}\n.ord-stat__value[data-v-3bbeeb7f] { font-size: 22px;\n}\n.ord-search[data-v-3bbeeb7f] { flex-basis: 100%;\n}\n.ord-select[data-v-3bbeeb7f] { flex: 1 1 0; min-width: 0;\n}\n.ord-panel__head[data-v-3bbeeb7f] { padding: 12px;\n}\n.ord-seg[data-v-3bbeeb7f] { width: 100%;\n}\n.ord-seg__btn[data-v-3bbeeb7f] { flex: 1; justify-content: center;\n}\n.ord-foot__count[data-v-3bbeeb7f] { flex: none; margin-left: auto;\n}\n.ord-foot .pagination[data-v-3bbeeb7f] { width: 100%; justify-content: center;\n}\n.ord-lines li[data-v-3bbeeb7f] { flex-wrap: wrap;\n}\n.ord-seg__btn[data-v-3bbeeb7f] { white-space: nowrap; padding: 0 10px; gap: 6px;\n}\n.ord-field__control[data-v-3bbeeb7f] { flex: 1 1 100%;\n}\n[data-v-3bbeeb7f] .ord-field__control .vue-daterange-picker { flex: 1; min-width: 0;\n}\n\n    /* bootstrap-vue stacks each table row into labelled lines below md; turn every order into a card */\n[data-v-3bbeeb7f] .ord-table.b-table-stacked-md > tbody > tr {\n        display: block; margin: 12px; border: 1px solid var(--ord-border); border-radius: 14px; overflow: hidden; background: var(--ord-card);\n}\n[data-v-3bbeeb7f] .ord-table.b-table-stacked-md > tbody > tr > [data-label] { padding: 9px 14px; border-top: 1px dashed var(--ord-border);\n}\n[data-v-3bbeeb7f] .ord-table.b-table-stacked-md > tbody > tr > [data-label]:first-child { border-top: 0; padding-top: 14px;\n}\n[data-v-3bbeeb7f] .ord-table.b-table-stacked-md > tbody > tr > [data-label]::before {\n        text-align: left; font-weight: 600; font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ord-muted);\n}\n[data-v-3bbeeb7f] .ord-table.b-table-stacked-md > tbody > tr.b-table-details { margin: -4px 12px 12px; border-style: dashed;\n}\n[data-v-3bbeeb7f] .ord-table.b-table-stacked-md > tbody > tr.b-table-details > td { padding: 12px;\n}\n[data-v-3bbeeb7f] .ord-table .ord-actions-col { width: auto; white-space: normal; text-align: left;\n}\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n/* ---------- tokens ---------- */\n.ord-scope[data-v-3bbeeb7f] {\n    --ord-card: #ffffff;\n    --ord-border: #e5eaf2;\n    --ord-text: #0f172a;\n    --ord-muted: #64748b;\n    --ord-soft: #f4f7fb;\n    --ord-primary: #1e3a8a;\n    --ord-primary-hover: #172d6e;\n    --ord-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 6px 20px rgba(15, 23, 42, 0.04);\n\n    --ord-green-bg: #e7f7ef;  --ord-green-fg: #047857;  --ord-green: #10b981;\n    --ord-amber-bg: #fff6e0;  --ord-amber-fg: #b45309;  --ord-amber: #f59e0b;\n    --ord-red-bg: #fdecec;    --ord-red-fg: #b91c1c;    --ord-red: #ef4444;\n    --ord-blue-bg: #e8f0fe;   --ord-blue-fg: #1d4ed8;   --ord-blue: #3b82f6;\n    --ord-purple-bg: #f1eafe; --ord-purple-fg: #6d28d9; --ord-purple: #8b5cf6;\n    --ord-slate-bg: #eef1f6;  --ord-slate-fg: #475569;  --ord-slate: #94a3b8;\n\n    color: var(--ord-text);\n    font-variant-numeric: tabular-nums;\n}\n.theme-dark .ord-scope[data-v-3bbeeb7f] {\n    --ord-card: #1e1e2d;\n    --ord-border: #2f2f45;\n    --ord-text: #eef2f7;\n    --ord-muted: #9aa5b8;\n    --ord-soft: #262639;\n    --ord-primary: #3d5fd6;\n    --ord-primary-hover: #5373e6;\n    --ord-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);\n\n    --ord-green-bg: rgba(16, 185, 129, 0.16);  --ord-green-fg: #4ade9f;\n    --ord-amber-bg: rgba(245, 158, 11, 0.16);  --ord-amber-fg: #fbbf4a;\n    --ord-red-bg: rgba(239, 68, 68, 0.16);     --ord-red-fg: #f87171;\n    --ord-blue-bg: rgba(59, 130, 246, 0.18);   --ord-blue-fg: #7fb0ff;\n    --ord-purple-bg: rgba(139, 92, 246, 0.18); --ord-purple-fg: #b69cff;\n    --ord-slate-bg: rgba(148, 163, 184, 0.14); --ord-slate-fg: #b6c0d1;\n}\n.ord[data-v-3bbeeb7f] { padding: 24px;\n}\n.ord-tone--green[data-v-3bbeeb7f]  { --tone-bg: var(--ord-green-bg);  --tone-fg: var(--ord-green-fg);\n}\n.ord-tone--amber[data-v-3bbeeb7f]  { --tone-bg: var(--ord-amber-bg);  --tone-fg: var(--ord-amber-fg);\n}\n.ord-tone--red[data-v-3bbeeb7f]    { --tone-bg: var(--ord-red-bg);    --tone-fg: var(--ord-red-fg);\n}\n.ord-tone--blue[data-v-3bbeeb7f]   { --tone-bg: var(--ord-blue-bg);   --tone-fg: var(--ord-blue-fg);\n}\n.ord-tone--purple[data-v-3bbeeb7f] { --tone-bg: var(--ord-purple-bg); --tone-fg: var(--ord-purple-fg);\n}\n.ord-tone--slate[data-v-3bbeeb7f]  { --tone-bg: var(--ord-slate-bg);  --tone-fg: var(--ord-slate-fg);\n}\n\n/* ---------- header ---------- */\n.ord-head[data-v-3bbeeb7f] { display: flex; align-items: baseline; gap: 14px; margin-bottom: 16px;\n}\n.ord-eyebrow[data-v-3bbeeb7f] { padding-right: 14px; border-right: 1px solid var(--ord-border); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ord-muted);\n}\n.ord-head h1[data-v-3bbeeb7f] { margin: 0; font-size: 28px; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em; color: var(--ord-text);\n}\n\n/* ---------- shared ---------- */\n.ord-card[data-v-3bbeeb7f] { background: var(--ord-card); border: 1px solid var(--ord-border); border-radius: 18px; box-shadow: var(--ord-shadow);\n}\n.ord-btn[data-v-3bbeeb7f] {\n    display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 12px;\n    border: 1px solid var(--ord-border); background: var(--ord-card); color: var(--ord-text); font-size: 13.5px; font-weight: 600; cursor: pointer;\n}\n.ord-btn[data-v-3bbeeb7f]:hover { background: var(--ord-soft);\n}\n.ord-iconbtn[data-v-3bbeeb7f] {\n    width: 38px; height: 38px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; padding: 0;\n    border-radius: 10px; border: 1px solid var(--ord-border); background: var(--ord-card); color: var(--ord-muted);\n    font-size: 14px; cursor: pointer; text-decoration: none !important; transition: background-color 0.15s ease, color 0.15s ease;\n}\n.ord-iconbtn[data-v-3bbeeb7f]:hover { background: var(--ord-soft); color: var(--ord-primary);\n}\n.ord-iconbtn--danger[data-v-3bbeeb7f]:hover { background: var(--ord-red-bg); color: var(--ord-red-fg); border-color: var(--ord-red);\n}\n.ord-pill[data-v-3bbeeb7f] {\n    display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px;\n    font-size: 12px; font-weight: 600; line-height: 1.2; white-space: nowrap; background: var(--tone-bg); color: var(--tone-fg);\n}\n.ord-dot[data-v-3bbeeb7f] { width: 7px; height: 7px; border-radius: 50%; background: currentColor;\n}\n/* Used inside the Edit Quantity modal, which renders outside .ord-scope, so the\n   tokens fall back to literal colours there. */\n.ord-free-tag[data-v-3bbeeb7f] {\n    display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 6px; vertical-align: middle;\n    font-size: 11px; font-weight: 700; line-height: 1.5; letter-spacing: 0.04em; text-transform: uppercase;\n    background: var(--ord-red-bg, #fdecec); color: var(--ord-red-fg, #b91c1c); border: 1px solid rgba(185, 28, 28, 0.25);\n}\n.theme-dark .ord-free-tag[data-v-3bbeeb7f] { background: rgba(239, 68, 68, 0.16); color: #f87171; border-color: rgba(248, 113, 113, 0.3);\n}\n.ord-tag[data-v-3bbeeb7f] { display: inline-block; padding: 3px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; background: var(--ord-soft); color: var(--ord-muted); border: 1px solid var(--ord-border);\n}\n.ord-tile[data-v-3bbeeb7f] { flex-shrink: 0; width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 19px; background: var(--tone-bg); color: var(--tone-fg);\n}\n.ord-dash[data-v-3bbeeb7f] { color: var(--ord-slate);\n}\n.ord-hint[data-v-3bbeeb7f] { border-bottom: 1px dotted currentColor; cursor: help;\n}\n\n/* ---------- status cards ---------- */\n.ord-cards[data-v-3bbeeb7f] { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px;\n}\n.ord-stat[data-v-3bbeeb7f] {\n    display: flex; align-items: center; gap: 14px; padding: 16px 18px; text-align: left; width: 100%;\n    cursor: pointer; font: inherit; color: inherit; transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;\n}\n.ord-stat[data-v-3bbeeb7f]:hover { box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08); transform: translateY(-2px);\n}\n.ord-stat--on[data-v-3bbeeb7f] { border-color: var(--ord-primary); box-shadow: 0 0 0 3px var(--ord-blue-bg), var(--ord-shadow);\n}\n.ord-stat__body[data-v-3bbeeb7f] { display: flex; flex-direction: column; min-width: 0; gap: 2px;\n}\n.ord-stat__label[data-v-3bbeeb7f] { font-size: 13px; color: var(--ord-muted);\n}\n.ord-stat__value[data-v-3bbeeb7f] { font-size: 26px; line-height: 1.1; font-weight: 800; letter-spacing: -0.02em; color: var(--ord-text);\n}\n\n/* ---------- filters (one line) ---------- */\n.ord-filters[data-v-3bbeeb7f] { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 12px 14px; margin-bottom: 16px;\n}\n.ord-search[data-v-3bbeeb7f] { position: relative; flex: 1 1 220px; min-width: 200px;\n}\n.ord-search > .fa-search[data-v-3bbeeb7f] { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--ord-slate); font-size: 14px; pointer-events: none;\n}\n.ord-search input[data-v-3bbeeb7f] {\n    width: 100%; height: 42px; padding: 0 38px 0 40px; border-radius: 12px; border: 1px solid var(--ord-border);\n    background: var(--ord-soft); color: var(--ord-text); font-size: 14px; outline: none;\n    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;\n}\n.ord-search input[data-v-3bbeeb7f]::-moz-placeholder { color: var(--ord-muted);\n}\n.ord-search input[data-v-3bbeeb7f]::placeholder { color: var(--ord-muted);\n}\n.ord-search input[data-v-3bbeeb7f]:focus { background: var(--ord-card); border-color: var(--ord-blue); box-shadow: 0 0 0 3px var(--ord-blue-bg);\n}\n.ord-search__clear[data-v-3bbeeb7f] { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 26px; height: 26px; border: 0; border-radius: 50%; background: transparent; color: var(--ord-muted); cursor: pointer;\n}\n.ord-search__clear[data-v-3bbeeb7f]:hover { background: var(--ord-slate-bg);\n}\n.ord-field__control[data-v-3bbeeb7f] { display: flex; align-items: center; gap: 6px;\n}\n.ord-select[data-v-3bbeeb7f] {\n    height: 42px; min-width: 150px; padding: 0 34px 0 14px; border-radius: 12px; border: 1px solid var(--ord-border);\n    background-color: var(--ord-soft); color: var(--ord-text); font-size: 14px; outline: none; cursor: pointer;\n}\n.ord-select[data-v-3bbeeb7f]:focus { border-color: var(--ord-blue); box-shadow: 0 0 0 3px var(--ord-blue-bg);\n}\n.ord-clear[data-v-3bbeeb7f] { width: 30px; height: 30px; border: 0; border-radius: 50%; background: var(--ord-slate-bg); color: var(--ord-slate-fg); cursor: pointer; font-size: 12px;\n}\n.ord-clear[data-v-3bbeeb7f]:hover { background: var(--ord-red-bg); color: var(--ord-red-fg);\n}\n.ord-linkbtn[data-v-3bbeeb7f] { height: 42px; border: 0; background: transparent; color: var(--ord-blue-fg); font-size: 13px; font-weight: 600; cursor: pointer; padding: 0 4px; white-space: nowrap;\n}\n.ord-linkbtn[data-v-3bbeeb7f]:hover { text-decoration: underline;\n}\n\n/* date range pickers (vue2-daterange-picker renders its own markup) */\n[data-v-3bbeeb7f] .ord-field__control .vue-daterange-picker { display: block; min-width: 215px;\n}\n[data-v-3bbeeb7f] .ord-field__control .vue-daterange-picker .form-control.reportrange-text {\n    height: 42px; display: flex; align-items: center; border-radius: 12px; border: 1px solid var(--ord-border);\n    background: var(--ord-soft); color: var(--ord-text); font-size: 14px; padding: 0 14px; gap: 8px;\n}\n.ord-placeholder[data-v-3bbeeb7f] { color: var(--ord-muted);\n}\n.ord-picked[data-v-3bbeeb7f] { font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ord-muted);\n}\n[data-v-3bbeeb7f] .ord-field__control .reportrange-text .fa-calendar-alt { color: var(--ord-slate);\n}\n\n/* ---------- panel ---------- */\n.ord-panel[data-v-3bbeeb7f] { overflow: hidden;\n}\n.ord-panel__head[data-v-3bbeeb7f] { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 16px 20px; border-bottom: 1px solid var(--ord-border);\n}\n.ord-seg[data-v-3bbeeb7f] { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--ord-slate-bg);\n}\n.ord-seg__btn[data-v-3bbeeb7f] {\n    display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border: 0; border-radius: 9px;\n    background: transparent; color: var(--ord-muted); font-size: 13.5px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;\n}\n.ord-seg__btn span[data-v-3bbeeb7f] { padding: 1px 8px; border-radius: 999px; font-size: 12px; background: var(--ord-card); color: var(--ord-slate-fg);\n}\n.ord-seg__btn[data-v-3bbeeb7f]:hover { color: var(--ord-text);\n}\n.ord-seg__btn--on[data-v-3bbeeb7f] { background: var(--ord-card); color: var(--ord-text); box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);\n}\n.ord-seg__btn--on span[data-v-3bbeeb7f] { background: var(--ord-primary); color: #fff;\n}\n.ord-sums[data-v-3bbeeb7f] { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; font-size: 13px; color: var(--ord-muted);\n}\n.ord-sums__cap[data-v-3bbeeb7f] { font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;\n}\n.ord-sum[data-v-3bbeeb7f] { padding: 6px 12px; border-radius: 10px; background: var(--ord-soft); border: 1px solid var(--ord-border);\n}\n.ord-sum strong[data-v-3bbeeb7f] { margin-left: 4px; color: var(--ord-text);\n}\n.ord-sum--strong[data-v-3bbeeb7f] { background: var(--ord-green-bg); border-color: transparent; color: var(--ord-green-fg);\n}\n.ord-sum--strong strong[data-v-3bbeeb7f] { color: var(--ord-green-fg);\n}\n\n/* ---------- table (b-table renders its own markup, hence the deep selectors) ---------- */\n.ord-tablewrap[data-v-3bbeeb7f] { margin: 0;\n}\n[data-v-3bbeeb7f] .ord-table { margin: 0; color: var(--ord-text);\n}\n[data-v-3bbeeb7f] .ord-table thead th {\n    padding: 12px 16px; border: 0; background: var(--ord-soft); color: var(--ord-muted); white-space: nowrap; vertical-align: middle;\n    font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;\n}\n[data-v-3bbeeb7f] .ord-table tbody td { padding: 14px 16px; vertical-align: middle; border-top: 1px solid var(--ord-border); color: var(--ord-text);\n}\n[data-v-3bbeeb7f] .ord-table tbody tr:first-child > td { border-top: 0;\n}\n[data-v-3bbeeb7f] .ord-table.table-hover tbody tr:hover > td { background: var(--ord-soft);\n}\n[data-v-3bbeeb7f] .ord-table .ord-num { text-align: right; white-space: nowrap;\n}\n[data-v-3bbeeb7f] .ord-table .ord-actions-col { text-align: right; width: 1%; white-space: nowrap;\n}\n[data-v-3bbeeb7f] .ord-table tr.ord-row--off > td { opacity: 0.6;\n}\n[data-v-3bbeeb7f] .ord-table tr.b-table-details > td { padding: 0 16px 16px; background: var(--ord-soft); border-top: 0;\n}\n[data-v-3bbeeb7f] .ord-table tr.b-table-has-details > td { background: var(--ord-soft);\n}\n.ord-id[data-v-3bbeeb7f] { display: flex; align-items: center; gap: 10px;\n}\n.ord-toggle[data-v-3bbeeb7f] {\n    width: 26px; height: 26px; flex-shrink: 0; border: 0; border-radius: 8px; background: var(--ord-slate-bg); color: var(--ord-slate-fg);\n    font-size: 11px; cursor: pointer; transition: transform 0.15s ease, background-color 0.15s ease;\n}\n.ord-toggle[data-v-3bbeeb7f]:hover { background: var(--ord-blue-bg); color: var(--ord-blue-fg);\n}\n.ord-toggle.is-open[data-v-3bbeeb7f] { transform: rotate(90deg); background: var(--ord-blue-bg); color: var(--ord-blue-fg);\n}\n.ord-id__text[data-v-3bbeeb7f] { display: flex; flex-direction: column; gap: 2px; min-width: 0;\n}\n.ord-id__text strong[data-v-3bbeeb7f] { font-size: 14px; font-weight: 700; color: var(--ord-text);\n}\n.ord-id__text span[data-v-3bbeeb7f] { font-size: 12px; color: var(--ord-muted); white-space: nowrap;\n}\n.ord-shop[data-v-3bbeeb7f] { display: flex; align-items: center; gap: 12px; min-width: 190px;\n}\n.ord-avatar[data-v-3bbeeb7f] {\n    width: 38px; height: 38px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center;\n    font-size: 13px; font-weight: 700; background: var(--tone-bg); color: var(--tone-fg);\n}\n.ord-shop__text[data-v-3bbeeb7f] { display: flex; flex-direction: column; gap: 1px; min-width: 0;\n}\n.ord-shop__text strong[data-v-3bbeeb7f] { font-size: 14px; font-weight: 700; color: var(--ord-text); max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;\n}\n.ord-shop__text span[data-v-3bbeeb7f] { font-size: 12px; color: var(--ord-muted);\n}\n.ord-when[data-v-3bbeeb7f] { display: flex; flex-direction: column; gap: 2px;\n}\n.ord-when strong[data-v-3bbeeb7f] { font-size: 13.5px; font-weight: 600; color: var(--ord-text); white-space: nowrap;\n}\n.ord-when span[data-v-3bbeeb7f] { font-size: 12px; color: var(--ord-muted); white-space: nowrap;\n}\n.ord-actions[data-v-3bbeeb7f] { display: inline-flex; gap: 8px;\n}\n.ord-busy[data-v-3bbeeb7f] { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 36px 0; color: var(--ord-muted); font-size: 14px;\n}\n.ord-empty[data-v-3bbeeb7f] { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 52px 24px;\n}\n.ord-empty__icon[data-v-3bbeeb7f] { width: 68px; height: 68px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 6px; background: var(--ord-blue-bg); color: var(--ord-blue-fg);\n}\n.ord-empty h3[data-v-3bbeeb7f] { margin: 0; font-size: 18px; font-weight: 700; color: var(--ord-text);\n}\n.ord-empty p[data-v-3bbeeb7f] { margin: 0 0 10px; max-width: 360px; font-size: 14px; color: var(--ord-muted);\n}\n.ord-empty-inline[data-v-3bbeeb7f] { margin: 0; padding: 16px 0; text-align: center; font-size: 13.5px; color: var(--ord-muted);\n}\n\n/* expanded order lines */\n.ord-details[data-v-3bbeeb7f] { padding-top: 4px;\n}\n.ord-lines[data-v-3bbeeb7f] { list-style: none; margin: 0; padding: 0; border: 1px solid var(--ord-border); border-radius: 14px; background: var(--ord-card); overflow: hidden;\n}\n.ord-lines li[data-v-3bbeeb7f] { display: flex; align-items: center; gap: 14px; padding: 12px 16px;\n}\n.ord-lines li + li[data-v-3bbeeb7f] { border-top: 1px dashed var(--ord-border);\n}\n.ord-lines__img[data-v-3bbeeb7f] { width: 44px; height: 44px; flex-shrink: 0; border-radius: 10px; -o-object-fit: cover; object-fit: cover; background: var(--ord-soft); border: 1px solid var(--ord-border);\n}\n.ord-lines__img--blank[data-v-3bbeeb7f] { display: flex; align-items: center; justify-content: center; color: var(--ord-slate);\n}\n.ord-lines__name[data-v-3bbeeb7f] { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;\n}\n.ord-lines__name strong[data-v-3bbeeb7f] { font-size: 13.5px; font-weight: 600; color: var(--ord-text);\n}\n.ord-lines__name span[data-v-3bbeeb7f] { font-size: 12px; color: var(--ord-muted);\n}\n.ord-lines__qty[data-v-3bbeeb7f] { font-size: 13px; font-weight: 700; padding: 2px 10px; border-radius: 8px; background: var(--ord-soft); color: var(--ord-text);\n}\n.ord-lines__amt[data-v-3bbeeb7f] { min-width: 80px; text-align: right; font-size: 14px; color: var(--ord-text);\n}\n\n/* ---------- footer ---------- */\n.ord-foot[data-v-3bbeeb7f] { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 14px 20px; border-top: 1px solid var(--ord-border);\n}\n.ord-foot__size[data-v-3bbeeb7f] { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ord-muted);\n}\n.ord-foot__size label[data-v-3bbeeb7f] { margin: 0;\n}\n.ord-foot__size .form-select[data-v-3bbeeb7f] { width: auto; min-width: 72px;\n}\n.ord-foot__count[data-v-3bbeeb7f] { flex: 1; font-size: 13px; color: var(--ord-muted); white-space: nowrap;\n}\n\n/* ---------- responsive ---------- */\n@media (max-width: 1199px) {\n.ord-cards[data-v-3bbeeb7f] { grid-template-columns: repeat(2, minmax(0, 1fr));\n}\n}\n@media (max-width: 767px) {\n.ord[data-v-3bbeeb7f] { padding: 16px;\n}\n.ord-head h1[data-v-3bbeeb7f] { font-size: 24px;\n}\n.ord-cards[data-v-3bbeeb7f] { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;\n}\n.ord-stat[data-v-3bbeeb7f] { padding: 12px; gap: 10px;\n}\n.ord-tile[data-v-3bbeeb7f] { width: 38px; height: 38px; font-size: 16px;\n}\n.ord-stat__value[data-v-3bbeeb7f] { font-size: 22px;\n}\n.ord-search[data-v-3bbeeb7f] { flex-basis: 100%;\n}\n.ord-select[data-v-3bbeeb7f] { flex: 1 1 0; min-width: 0;\n}\n.ord-panel__head[data-v-3bbeeb7f] { padding: 12px;\n}\n.ord-seg[data-v-3bbeeb7f] { width: 100%;\n}\n.ord-seg__btn[data-v-3bbeeb7f] { flex: 1; justify-content: center;\n}\n.ord-foot__count[data-v-3bbeeb7f] { flex: none; margin-left: auto;\n}\n.ord-foot .pagination[data-v-3bbeeb7f] { width: 100%; justify-content: center;\n}\n.ord-lines li[data-v-3bbeeb7f] { flex-wrap: wrap;\n}\n.ord-seg__btn[data-v-3bbeeb7f] { white-space: nowrap; padding: 0 10px; gap: 6px;\n}\n.ord-field__control[data-v-3bbeeb7f] { flex: 1 1 100%;\n}\n[data-v-3bbeeb7f] .ord-field__control .vue-daterange-picker { flex: 1; min-width: 0;\n}\n\n    /* bootstrap-vue stacks each table row into labelled lines below md; turn every order into a card */\n[data-v-3bbeeb7f] .ord-table.b-table-stacked-md > tbody > tr {\n        display: block; margin: 12px; border: 1px solid var(--ord-border); border-radius: 14px; overflow: hidden; background: var(--ord-card);\n}\n[data-v-3bbeeb7f] .ord-table.b-table-stacked-md > tbody > tr > [data-label] { padding: 9px 14px; border-top: 1px dashed var(--ord-border);\n}\n[data-v-3bbeeb7f] .ord-table.b-table-stacked-md > tbody > tr > [data-label]:first-child { border-top: 0; padding-top: 14px;\n}\n[data-v-3bbeeb7f] .ord-table.b-table-stacked-md > tbody > tr > [data-label]::before {\n        text-align: left; font-weight: 600; font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ord-muted);\n}\n[data-v-3bbeeb7f] .ord-table.b-table-stacked-md > tbody > tr.b-table-details { margin: -4px 12px 12px; border-style: dashed;\n}\n[data-v-3bbeeb7f] .ord-table.b-table-stacked-md > tbody > tr.b-table-details > td { padding: 12px;\n}\n[data-v-3bbeeb7f] .ord-table .ord-actions-col { width: auto; white-space: normal; text-align: left;\n}\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -2202,6 +2271,30 @@ var render = function () {
                                   )
                                 : _vm._e(),
                               _vm._v(" "),
+                              _vm.canCancelOrder(row.item)
+                                ? _c(
+                                    "b-button",
+                                    {
+                                      directives: [
+                                        {
+                                          name: "b-tooltip",
+                                          rawName: "v-b-tooltip.hover",
+                                          modifiers: { hover: true },
+                                        },
+                                      ],
+                                      staticClass:
+                                        "ord-iconbtn ord-iconbtn--danger",
+                                      attrs: { title: _vm.__("cancel_order") },
+                                      on: {
+                                        click: function ($event) {
+                                          return _vm.cancelOrder(row.item)
+                                        },
+                                      },
+                                    },
+                                    [_c("i", { staticClass: "fa fa-ban" })]
+                                  )
+                                : _vm._e(),
+                              _vm._v(" "),
                               row.item.active_status == _vm.$delivered ||
                               row.item.active_status == 6
                                 ? _c(
@@ -2987,7 +3080,20 @@ var render = function () {
                             _vm._l(_vm.editingItems, function (row) {
                               return _c("tr", { key: row.order_item_id }, [
                                 _c("td", [
-                                  _c("div", [_vm._v(_vm._s(row.product_name))]),
+                                  _c("div", [
+                                    _vm._v(
+                                      "\n                                            " +
+                                        _vm._s(row.product_name) +
+                                        "\n                                            "
+                                    ),
+                                    row.is_free_item
+                                      ? _c(
+                                          "span",
+                                          { staticClass: "ord-free-tag" },
+                                          [_vm._v(_vm._s(_vm.__("free")))]
+                                        )
+                                      : _vm._e(),
+                                  ]),
                                   _vm._v(" "),
                                   row.variant_name
                                     ? _c(

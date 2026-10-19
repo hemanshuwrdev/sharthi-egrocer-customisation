@@ -22,7 +22,7 @@
                         <template v-for="item in sidebarItems">
 
                             <li class="sidebar-item"
-                                :class="{ 'active': isActive(item.url) || subIsActive(item), 'has-sub': isHasSub(item) }"
+                                :class="{ 'active': !isHasSub(item) && isActive(item.url), 'has-sub': isHasSub(item), 'open': subIsActive(item) }"
                                 v-if="item.role == true ? ($role('Super Admin') && (item.name == 'Role' || item.name == 'System Users')) : (item.permission || $can(item.permission))">
 
                                 <template v-if="isHasSub(item)">
@@ -609,7 +609,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
 .fade-enter-active,
 .fade-leave-active {
     transition: opacity 0.3s;
@@ -618,5 +618,120 @@ export default {
 .fade-enter,
 .fade-leave-to {
     opacity: 0;
+}
+
+/* Modern High-End SaaS Sidebar Polish */
+.sidebar-wrapper {
+    background-color: #ffffff !important;
+    border-right: 1px solid #f1f5f9;
+}
+
+.sidebar-wrapper .menu {
+    padding: 0 1rem !important;
+}
+
+.sidebar-wrapper .menu .sidebar-item {
+    margin-top: 3px !important;
+    margin-bottom: 3px !important;
+}
+
+.sidebar-wrapper .menu .sidebar-link {
+    border-radius: 12px !important;
+    padding: 8px 12px !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: #475569 !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.sidebar-wrapper .menu .sidebar-link:hover {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+}
+
+/* Standalone active link (e.g. Dashboard, Orders) gets the sleek dark SaaS pill */
+.sidebar-wrapper .menu .sidebar-item.active:not(.has-sub) > .sidebar-link {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.2), 0 2px 4px -1px rgba(15, 23, 42, 0.08) !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+}
+
+.sidebar-wrapper .menu .sidebar-item.active:not(.has-sub) > .sidebar-link span {
+    color: #ffffff !important;
+}
+
+.sidebar-wrapper .menu .sidebar-item.active:not(.has-sub) > .sidebar-link .sidebar-icon svg,
+.sidebar-wrapper .menu .sidebar-item.active:not(.has-sub) > .sidebar-link .sidebar-icon i {
+    color: #60a5fa !important;
+    fill: none !important;
+}
+
+/* Parent menu with submenus (e.g. Products, Drivers, Settings) stays transparent & readable */
+.sidebar-wrapper .menu .sidebar-item.has-sub > .sidebar-link,
+.sidebar-wrapper .menu .sidebar-item.has-sub.active > .sidebar-link,
+.sidebar-wrapper .menu .sidebar-item.has-sub.open > .sidebar-link {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    color: #475569 !important;
+}
+
+.sidebar-wrapper .menu .sidebar-item.has-sub.active > .sidebar-link,
+.sidebar-wrapper .menu .sidebar-item.has-sub.open > .sidebar-link {
+    color: #0f172a !important;
+    font-weight: 600 !important;
+}
+
+.sidebar-wrapper .menu .sidebar-item.has-sub.active > .sidebar-link span,
+.sidebar-wrapper .menu .sidebar-item.has-sub.open > .sidebar-link span {
+    color: #0f172a !important;
+    font-weight: 600 !important;
+}
+
+.sidebar-wrapper .menu .sidebar-item.has-sub.active > .sidebar-link .sidebar-icon svg,
+.sidebar-wrapper .menu .sidebar-item.has-sub.active > .sidebar-link .sidebar-icon i,
+.sidebar-wrapper .menu .sidebar-item.has-sub.open > .sidebar-link .sidebar-icon svg,
+.sidebar-wrapper .menu .sidebar-item.has-sub.open > .sidebar-link .sidebar-icon i {
+    color: #2563eb !important;
+    fill: none !important;
+}
+
+.sidebar-wrapper .menu .sidebar-item.has-sub > .sidebar-link:hover {
+    background: #f8fafc !important;
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+}
+
+.sidebar-wrapper .menu .sidebar-item.has-sub.active > .sidebar-link:after,
+.sidebar-wrapper .menu .sidebar-item.has-sub.open > .sidebar-link:after {
+    content: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="%23475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-down"><path d="m6 9 6 6 6-6"/></svg>') !important;
+}
+
+.sidebar-wrapper .menu .submenu {
+    padding-left: 0.5rem !important;
+}
+
+.sidebar-wrapper .menu .submenu .submenu-item a {
+    border-radius: 8px !important;
+    padding: 6px 12px 6px 1.75rem !important;
+    font-size: 0.825rem !important;
+    color: #64748b !important;
+    transition: all 0.15s ease !important;
+}
+
+.sidebar-wrapper .menu .submenu .submenu-item a:hover {
+    color: #0f172a !important;
+    background-color: #f1f5f9 !important;
+}
+
+.sidebar-wrapper .menu .submenu .submenu-item.active > a {
+    color: #2563eb !important;
+    background-color: #eff6ff !important;
+    font-weight: 600 !important;
 }
 </style>

@@ -116,6 +116,19 @@ class RetailerCartOrderApiController extends Controller
     }
 
     /**
+     * The scheme the cart screen shows as applied (groups[].applied_scheme), per distributor —
+     * [seller_id => scheme array|null]. Lets other screens (product detail) show exactly the
+     * same result without re-implementing the cart's pricing/scheme evaluation.
+     */
+    public function appliedSchemesBySeller($user): array
+    {
+        return collect($this->buildCartPayload($user)['groups'])
+            ->filter(fn ($group) => isset($group['seller_id']))
+            ->mapWithKeys(fn ($group) => [(int) $group['seller_id'] => $group['applied_scheme'] ?? null])
+            ->all();
+    }
+
+    /**
      * Same grouped/priced/scheme-evaluated cart payload as getCart — shared so
      * add/remove return the fresh cart state in one call instead of making the app
      * do a second round-trip to /cart after every mutation.

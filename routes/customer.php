@@ -30,6 +30,7 @@ Route::group(['middleware' => ['auth.customer']], function () {
     Route::get('categories', [\App\Http\Controllers\API\Customer\BasicApiController::class, 'getCategories']);
     Route::get('categories/get_seo_things', [\App\Http\Controllers\API\Customer\BasicApiController::class, 'getSeoThings']);
     Route::get('shop', [\App\Http\Controllers\API\Customer\ShopApiController::class, 'getShopData']);
+    Route::get('schemes', [\App\Http\Controllers\API\Customer\RetailerSchemeApiController::class, 'listSchemes']);
     Route::get('brands', [\App\Http\Controllers\API\Customer\BasicApiController::class, 'getBrands']);
     Route::get('countries', [\App\Http\Controllers\API\Customer\BasicApiController::class, 'getCountries']);
     Route::get('sellers', [\App\Http\Controllers\API\Customer\BasicApiController::class, 'getSellers']);

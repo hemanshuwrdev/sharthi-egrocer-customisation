@@ -199,6 +199,11 @@
                                     @click="openEditOrderItems(row.item)">
                                     <i class="fa fa-pencil-alt"></i>
                                 </b-button>
+                                <b-button v-if="canCancelOrder(row.item)" v-b-tooltip.hover
+                                    :title="__('cancel_order')" class="ord-iconbtn ord-iconbtn--danger"
+                                    @click="cancelOrder(row.item)">
+                                    <i class="fa fa-ban"></i>
+                                </b-button>
                                 <router-link
                                     v-if="row.item.active_status == $delivered || row.item.active_status == 6"
                                     :to="{ name: 'SellerInvoiceOrder', params: { id: row.item.id } }"
@@ -371,7 +376,10 @@
                                 <tbody>
                                     <tr v-for="row in editingItems" :key="row.order_item_id">
                                         <td>
-                                            <div>{{ row.product_name }}</div>
+                                            <div>
+                                                {{ row.product_name }}
+                                                <span v-if="row.is_free_item" class="ord-free-tag">{{ __('free') }}</span>
+                                            </div>
                                             <small class="text-muted" v-if="row.variant_name">({{ row.variant_name }})</small>
                                         </td>
                                         <td>
@@ -643,6 +651,60 @@ export default {
             if (!orderRow || orderRow.active_status == null) return false;
             return parseInt(orderRow.active_status) === 2;
         },
+        // Distributor can cancel an order that has not been delivered yet. update_status refuses a seller
+        // moving an order "backwards" past Cancelled, so only Received / Processed / Shipped / Out For
+        // Delivery / Rescheduled (2, 3, 4, 5, 12) qualify.
+        canCancelOrder(orderRow) {
+            if (!orderRow || orderRow.active_status == null) return false;
+            return [2, 3, 4, 5, 12].includes(parseInt(orderRow.active_status));
+        },
+        // The reason is optional. update_status takes a reason as a key + note, so a typed reason goes
+        // in as "other" + reason_note (kept to 200 chars: orders.delivery_reason is a 255-char column).
+        cancelOrder(orderRow) {
+            this.$swal.fire({
+                title: this.__('cancel_order') + ' #' + orderRow.id + '?',
+                text: this.__('cancel_order_warning'),
+                icon: 'warning',
+                input: 'textarea',
+                inputLabel: this.__('cancellation_reason_optional'),
+                inputPlaceholder: this.__('enter_cancellation_reason'),
+                inputAttributes: { maxlength: 200 },
+                showCancelButton: true,
+                confirmButtonText: this.__('yes_cancel_order'),
+                cancelButtonText: this.__('keep_order'),
+                confirmButtonColor: '#d33',
+                showLoaderOnConfirm: true,
+                allowOutsideClick: () => !this.$swal.isLoading(),
+                preConfirm: (reason) => {
+                    const note = (reason || '').trim();
+                    const postData = { order_id: orderRow.id, status_id: 7 }; // 7 = Cancelled
+                    if (note) {
+                        postData.delivery_reason = 'other';
+                        postData.reason_note = note;
+                    }
+                    return axios.post(this.$sellerApiUrl + '/update_status', postData)
+                        .then((response) => {
+                            const data = response.data;
+                            if (data.status !== 1) {
+                                // keep the dialog open so the reason is not lost
+                                this.$swal.showValidationMessage(data.message || 'Something went wrong!');
+                                return false;
+                            }
+                            return data;
+                        })
+                        .catch((error) => {
+                            const msg = error.response && error.response.data && error.response.data.message;
+                            this.$swal.showValidationMessage(msg || 'Something went wrong!');
+                            return false;
+                        });
+                },
+            }).then((result) => {
+                if (result.isConfirmed && result.value) {
+                    this.showMessage('success', result.value.message);
+                    this.getOrders();
+                }
+            });
+        },
         editingRowSubtotal(row) {
             const q = parseFloat(row.quantity) || 0;
             const p = parseFloat(row.price) || 0;
@@ -661,6 +723,7 @@ export default {
                         order_item_id: i.id,
                         product_name: i.product_name,
                         variant_name: i.variant_name,
+                        is_free_item: parseInt(i.is_free_item) === 1,
                         price: parseFloat(i.price) || 0,
                         original_quantity: parseFloat(i.quantity) || 0,
                         quantity: parseFloat(i.quantity) || 0,
@@ -996,11 +1059,20 @@ export default {
     font-size: 14px; cursor: pointer; text-decoration: none !important; transition: background-color 0.15s ease, color 0.15s ease;
 }
 .ord-iconbtn:hover { background: var(--ord-soft); color: var(--ord-primary); }
+.ord-iconbtn--danger:hover { background: var(--ord-red-bg); color: var(--ord-red-fg); border-color: var(--ord-red); }
 .ord-pill {
     display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px;
     font-size: 12px; font-weight: 600; line-height: 1.2; white-space: nowrap; background: var(--tone-bg); color: var(--tone-fg);
 }
 .ord-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+/* Used inside the Edit Quantity modal, which renders outside .ord-scope, so the
+   tokens fall back to literal colours there. */
+.ord-free-tag {
+    display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 6px; vertical-align: middle;
+    font-size: 11px; font-weight: 700; line-height: 1.5; letter-spacing: 0.04em; text-transform: uppercase;
+    background: var(--ord-red-bg, #fdecec); color: var(--ord-red-fg, #b91c1c); border: 1px solid rgba(185, 28, 28, 0.25);
+}
+.theme-dark .ord-free-tag { background: rgba(239, 68, 68, 0.16); color: #f87171; border-color: rgba(248, 113, 113, 0.3); }
 .ord-tag { display: inline-block; padding: 3px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; background: var(--ord-soft); color: var(--ord-muted); border: 1px solid var(--ord-border); }
 .ord-tile { flex-shrink: 0; width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 19px; background: var(--tone-bg); color: var(--tone-fg); }
 .ord-dash { color: var(--ord-slate); }

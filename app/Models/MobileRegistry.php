@@ -30,6 +30,27 @@ class MobileRegistry extends Model
         self::ROLE_RETAILER => 'Retailer',
     ];
 
+    public static $roleTables = [
+        self::ROLE_SALESMAN => 'salesmen',
+        self::ROLE_SELLER => 'sellers',
+        self::ROLE_DELIVERY_BOY => 'delivery_boys',
+        self::ROLE_RETAILER => 'users',
+    ];
+
+    /**
+     * True when the role record that holds this claim no longer exists. Plain table lookup
+     * (no model scopes) so a soft-deleted record still counts as existing.
+     */
+    public function isOrphaned(): bool
+    {
+        $table = self::$roleTables[$this->role] ?? null;
+        if (!$table) {
+            return false;
+        }
+
+        return !\Illuminate\Support\Facades\DB::table($table)->where('id', $this->role_id)->exists();
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

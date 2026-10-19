@@ -668,7 +668,13 @@
                     <!-- Bill to / Ship to -->
                     <div class="udaan-address-col">
                         <h4>Bill to/Ship to:</h4>
-                        <p><strong>{{ $order->customer_name }}</strong></p>
+                        @php
+                            // "Shop name - Area" (not the person's name); the party/person name is only the fallback
+                            // for a retailer with no shop name. Area is the retailer's own, else the order address's.
+                            $billToName = !empty($order->shop_name) ? $order->shop_name : $order->customer_name;
+                            $billToArea = !empty($order->retailer_area) ? $order->retailer_area : ($order->area_name ?? '');
+                        @endphp
+                        <p><strong>{{ $billToName }}{{ !empty($billToArea) ? ' - ' . $billToArea : '' }}</strong></p>
                         <p>{{ $order->customer_address }}</p>
                         <p>Mobile: {{ $order->customer_mobile }}</p>
                         @if (!empty($order->customer_gst))

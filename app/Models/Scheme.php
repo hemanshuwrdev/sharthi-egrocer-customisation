@@ -34,6 +34,11 @@ class Scheme extends Model
         'tax_option',
     ];
 
+    public function seller()
+    {
+        return $this->belongsTo(Seller::class);
+    }
+
     public function schemeProducts()
     {
         return $this->hasMany(SchemeProduct::class);

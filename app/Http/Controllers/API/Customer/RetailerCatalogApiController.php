@@ -6,6 +6,7 @@ use App\Helpers\CommonHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\BrandDistributorMapping;
+use App\Models\Cart;
 use App\Models\Favorite;
 use App\Models\MasterProduct;
 use App\Models\MasterProductVariant;
@@ -415,8 +416,9 @@ class RetailerCatalogApiController extends Controller
         $overlapAllowed = $brand && (int) $brand->is_overlap_allowed === 1;
 
         $nearestSchemesBySp = self::nearestSchemesForSellerProducts($sellerProducts->pluck('id'));
+        $appliedSchemesBySeller = self::appliedSchemesForVariant($request->user('api-customers'), $variant->id);
 
-        $offers = $sellerProducts->map(function ($sp) use ($nearestSchemesBySp, $variant) {
+        $offers = $sellerProducts->map(function ($sp) use ($nearestSchemesBySp, $appliedSchemesBySeller, $variant) {
             $sellerLogo = $sp->seller ? $sp->seller->logo : null;
             return [
                 'seller_id'        => $sp->seller_id,
@@ -447,6 +449,8 @@ class RetailerCatalogApiController extends Controller
                     'price' => (float) $s->price,
                 ])->values(),
                 'nearest_scheme' => $nearestSchemesBySp[$sp->id] ?? null,
+                // The scheme the cart already applies because of this product; {} when it is not in the cart.
+                'applied_scheme' => self::appliedSchemeFor($appliedSchemesBySeller[$sp->seller_id] ?? null, $sp->id),
             ];
         })->sortBy(fn($o) => $o['discounted_price'] !== null && $o['discounted_price'] > 0 ? $o['discounted_price'] : $o['selling_price'])
             ->values();
@@ -569,6 +573,57 @@ class RetailerCatalogApiController extends Controller
             $nearest = $candidates->sortBy('end_date')->first();
             return [$spId => self::formatNearestScheme($nearest)];
         });
+    }
+
+    /**
+     * [seller_id => applied scheme] for the distributors the retailer already holds this variant
+     * with in the cart — the cart's own evaluation (see RetailerCartOrderApiController::appliedSchemesBySeller).
+     * Empty for guests and when the variant is not in the cart, so the cart is only priced when it matters.
+     */
+    private static function appliedSchemesForVariant($user, int $variantId): array
+    {
+        if (!$user) {
+            return [];
+        }
+
+        $sellerIdsInCart = Cart::where('user_id', $user->id)
+            ->whereNull('placed_by_salesman_id')
+            ->where('save_for_later', 0)
+            ->where('master_product_variant_id', $variantId)
+            ->pluck('seller_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+        if (empty($sellerIdsInCart)) {
+            return [];
+        }
+
+        $applied = app(RetailerCartOrderApiController::class)->appliedSchemesBySeller($user);
+
+        return array_intersect_key(array_filter($applied), array_flip($sellerIdsInCart));
+    }
+
+    /**
+     * The cart's applied scheme, but only when it really involves this product (as the buy or free
+     * item, or one of the scheme's products) — otherwise a product sitting in the cart would show a
+     * scheme earned by a different product. No scheme -> empty object so the app always gets `{}`.
+     */
+    private static function appliedSchemeFor(?array $applied, int $sellerProductId)
+    {
+        if (!$applied) {
+            return new \stdClass();
+        }
+
+        $scheme = Scheme::with('schemeProducts:id,scheme_id,seller_product_id')->find($applied['scheme_id']);
+        if (!$scheme) {
+            return new \stdClass();
+        }
+
+        $involved = array_map('intval', array_merge(
+            [$scheme->buy_seller_product_id, $scheme->free_seller_product_id],
+            $scheme->schemeProducts->pluck('seller_product_id')->all()
+        ));
+
+        return in_array($sellerProductId, $involved, true) ? $applied : new \stdClass();
     }
 
     private static function formatNearestScheme(Scheme $s): array

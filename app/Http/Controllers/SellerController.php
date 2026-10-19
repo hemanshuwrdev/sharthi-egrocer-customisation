@@ -224,6 +224,574 @@ class SellerController extends BaseController
             })->values();
         }
 
+        // -------------------------------------------------------------
+        // Enhanced Distributor Dashboard Analytics (Reference UI Support)
+        // -------------------------------------------------------------
+        $endDate = $request->filled('endDate') ? Carbon::parse($request->endDate)->endOfDay() : Carbon::now()->endOfDay();
+        $startDate = $request->filled('startDate') ? Carbon::parse($request->startDate)->startOfDay() : Carbon::now()->subDays(29)->startOfDay();
+        $diffDays = max(1, $startDate->diffInDays($endDate) + 1);
+
+        $prevEndDate = (clone $startDate)->subDay()->endOfDay();
+        $prevStartDate = (clone $prevEndDate)->subDays($diffDays - 1)->startOfDay();
+
+        $calcGrowth = function ($current, $previous) {
+            if ($previous > 0) {
+                return round((($current - $previous) / $previous) * 100, 1);
+            }
+            return $current > 0 ? 100.0 : 0.0;
+        };
+
+        $sellerUser = auth()->user();
+        $sellerModel = $sellerUser->seller;
+
+        $currentOrderIds = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('order_items.seller_id', $seller_id)
+            ->whereNull('orders.deleted_at')
+            ->whereBetween('orders.created_at', [$startDate, $endDate])
+            ->distinct()
+            ->pluck('orders.id')
+            ->toArray();
+
+        $prevOrderIds = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('order_items.seller_id', $seller_id)
+            ->whereNull('orders.deleted_at')
+            ->whereBetween('orders.created_at', [$prevStartDate, $prevEndDate])
+            ->distinct()
+            ->pluck('orders.id')
+            ->toArray();
+
+        // 1. Hero KPIs
+        $currentSales = (float) (Order::whereIn('id', $currentOrderIds)->sum('final_total') ?? 0);
+        $prevSales = (float) (Order::whereIn('id', $prevOrderIds)->sum('final_total') ?? 0);
+        $salesGrowth = $calcGrowth($currentSales, $prevSales);
+
+        $currentInvoices = count($currentOrderIds);
+        $prevInvoices = count($prevOrderIds);
+        $invoicesGrowth = $calcGrowth($currentInvoices, $prevInvoices);
+
+        $currentCollections = (float) (OrderPayment::whereIn('order_id', function ($q) use ($seller_id) {
+            $q->select('order_id')->from('order_items')->where('seller_id', $seller_id);
+        })->whereBetween('created_at', [$startDate, $endDate])->sum('amount') ?? 0);
+
+        $prevCollections = (float) (OrderPayment::whereIn('order_id', function ($q) use ($seller_id) {
+            $q->select('order_id')->from('order_items')->where('seller_id', $seller_id);
+        })->whereBetween('created_at', [$prevStartDate, $prevEndDate])->sum('amount') ?? 0);
+
+        $collectionsGrowth = $calcGrowth($currentCollections, $prevCollections);
+        $collectionRate = $currentSales > 0 ? min(100, round(($currentCollections / $currentSales) * 100, 1)) : 0;
+
+        // Outstanding & Aging
+        $outstandingOrders = Order::whereIn('id', function ($q) use ($seller_id) {
+            $q->select('order_id')->from('order_items')->where('seller_id', $seller_id);
+        })
+            ->whereNotIn('active_status', [OrderStatusList::$cancelled, OrderStatusList::$returned])
+            ->whereNull('deleted_at')
+            ->select('id', 'user_id', 'final_total', 'created_at')
+            ->get();
+
+        $orderPaymentsSum = OrderPayment::whereIn('order_id', $outstandingOrders->pluck('id'))
+            ->selectRaw('order_id, SUM(amount) as total_paid')
+            ->groupBy('order_id')
+            ->pluck('total_paid', 'order_id');
+
+        $totalOutstanding = 0;
+        $retailerAging = [];
+
+        foreach ($outstandingOrders as $o) {
+            $paid = (float) ($orderPaymentsSum[$o->id] ?? 0);
+            $bal = max(0, (float) $o->final_total - $paid);
+            if ($bal > 1.0) {
+                $totalOutstanding += $bal;
+                if (!isset($retailerAging[$o->user_id])) {
+                    $retailerAging[$o->user_id] = [
+                        'user_id' => $o->user_id,
+                        'balance' => 0,
+                        'invoices_count' => 0,
+                        'oldest_date' => $o->created_at,
+                    ];
+                }
+                $retailerAging[$o->user_id]['balance'] += $bal;
+                $retailerAging[$o->user_id]['invoices_count']++;
+                if (strtotime($o->created_at) < strtotime($retailerAging[$o->user_id]['oldest_date'])) {
+                    $retailerAging[$o->user_id]['oldest_date'] = $o->created_at;
+                }
+            }
+        }
+        $outstandingRetailersCount = count($retailerAging);
+
+        // Daily series for Trend Combo Chart & Sparklines
+        $dailyOrders = Order::whereIn('id', $currentOrderIds)
+            ->selectRaw('DATE(created_at) as order_date, SUM(final_total) as daily_sales, COUNT(id) as daily_invoices')
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->get()
+            ->keyBy('order_date');
+
+        $dailyPayments = OrderPayment::whereIn('order_id', function ($q) use ($seller_id) {
+            $q->select('order_id')->from('order_items')->where('seller_id', $seller_id);
+        })
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->selectRaw('DATE(created_at) as pay_date, SUM(amount) as daily_amount')
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->get()
+            ->keyBy('pay_date');
+
+        $trendDates = [];
+        $trendSales = [];
+        $trendInvoices = [];
+        $sparkSales = [];
+        $sparkInvoices = [];
+        $sparkCollections = [];
+
+        $stepDate = (clone $startDate)->startOfDay();
+        while ($stepDate <= $endDate) {
+            $dateStr = $stepDate->format('Y-m-d');
+            $displayDate = $stepDate->format('d M');
+            $trendDates[] = $displayDate;
+
+            $daySale = (float) ($dailyOrders[$dateStr]->daily_sales ?? 0);
+            $dayInv = (int) ($dailyOrders[$dateStr]->daily_invoices ?? 0);
+            $dayColl = (float) ($dailyPayments[$dateStr]->daily_amount ?? 0);
+
+            $trendSales[] = round($daySale, 2);
+            $trendInvoices[] = $dayInv;
+            $sparkSales[] = round($daySale, 2);
+            $sparkInvoices[] = $dayInv;
+            $sparkCollections[] = round($dayColl, 2);
+
+            $stepDate->addDay();
+        }
+
+        // 2. Operational Stat Badges
+        $activeRetailersCount = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('order_items.seller_id', $seller_id)
+            ->whereNull('orders.deleted_at')
+            ->whereBetween('orders.created_at', [$startDate, $endDate])
+            ->distinct('orders.user_id')
+            ->count('orders.user_id');
+
+        $monthStart = Carbon::now()->startOfMonth();
+        $newRetailersThisMonth = DB::table('orders')
+            ->join('order_items', 'order_items.order_id', '=', 'orders.id')
+            ->where('order_items.seller_id', $seller_id)
+            ->whereNull('orders.deleted_at')
+            ->groupBy('orders.user_id')
+            ->havingRaw('MIN(orders.created_at) >= ?', [$monthStart])
+            ->pluck('orders.user_id')
+            ->count();
+
+        $activeSalesmenCount = \App\Models\Salesman::where('seller_id', $seller_id)->where('status', 1)->count();
+        $inactiveSalesmenCount = \App\Models\Salesman::where('seller_id', $seller_id)->where('status', 0)->count();
+        $activeDriversCount = DeliveryBoy::forSeller($seller_id)->where('status', 1)->count();
+
+        $todayStr = Carbon::today()->toDateString();
+        $threeDaysStr = Carbon::today()->addDays(3)->toDateString();
+        $schemesRunningCount = \App\Models\Scheme::where('seller_id', $seller_id)
+            ->where('status', 1)
+            ->whereDate('start_date', '<=', $todayStr)
+            ->whereDate('end_date', '>=', $todayStr)
+            ->count();
+        $schemesEndingSoonCount = \App\Models\Scheme::where('seller_id', $seller_id)
+            ->where('status', 1)
+            ->whereDate('start_date', '<=', $todayStr)
+            ->whereDate('end_date', '>=', $todayStr)
+            ->whereDate('end_date', '<=', $threeDaysStr)
+            ->count();
+
+        $pendingDeliveryStatus = [
+            OrderStatusList::$processed,
+            OrderStatusList::$shipped,
+            OrderStatusList::$outForDelivery,
+        ];
+        $pendingOrders = Order::whereIn('id', function ($q) use ($seller_id) {
+            $q->select('order_id')->from('order_items')->where('seller_id', $seller_id);
+        })
+            ->whereIn('active_status', $pendingDeliveryStatus)
+            ->whereNull('deleted_at');
+        $pendingDeliveriesCount = $pendingOrders->count();
+        $pendingDeliveriesValue = (float) $pendingOrders->sum('final_total');
+
+        // 3. Sales by Category
+        $categorySalesRaw = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->leftJoin('master_product_variants', 'master_product_variants.id', '=', 'order_items.master_product_variant_id')
+            ->leftJoin('master_products', 'master_products.id', '=', 'master_product_variants.master_product_id')
+            ->leftJoin('categories', 'categories.id', '=', 'master_products.category_id')
+            ->where('order_items.seller_id', $seller_id)
+            ->whereNull('orders.deleted_at')
+            ->whereBetween('orders.created_at', [$startDate, $endDate])
+            ->select(
+                DB::raw("COALESCE(categories.name, 'General') as category_name"),
+                DB::raw('SUM(order_items.sub_total) as category_sales'),
+                DB::raw('SUM(order_items.quantity) as category_units')
+            )
+            ->groupBy(DB::raw("COALESCE(categories.name, 'General')"))
+            ->orderBy('category_sales', 'DESC')
+            ->limit(5)
+            ->get();
+
+        $catLabels = [];
+        $catSeriesSales = [];
+        $catSeriesUnits = [];
+        $catSumSales = 0;
+        foreach ($categorySalesRaw as $cRow) {
+            $catLabels[] = $cRow->category_name;
+            $catSeriesSales[] = round((float) $cRow->category_sales, 2);
+            $catSeriesUnits[] = (float) $cRow->category_units;
+            $catSumSales += (float) $cRow->category_sales;
+        }
+        if ($currentSales > $catSumSales && ($currentSales - $catSumSales) > 10) {
+            $othersSales = round($currentSales - $catSumSales, 2);
+            $catLabels[] = 'Others';
+            $catSeriesSales[] = $othersSales;
+            $catSeriesUnits[] = 0;
+            $catSumSales += $othersSales;
+        }
+
+        // 4. Top 5 Products
+        $topProductsRaw = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->leftJoin('master_product_variants', 'master_product_variants.id', '=', 'order_items.master_product_variant_id')
+            ->leftJoin('master_products', 'master_products.id', '=', 'master_product_variants.master_product_id')
+            ->where('order_items.seller_id', $seller_id)
+            ->whereNull('orders.deleted_at')
+            ->whereBetween('orders.created_at', [$startDate, $endDate])
+            ->select(
+                'order_items.product_name',
+                'order_items.variant_name',
+                'master_products.image as product_image',
+                'master_product_variants.image as variant_image',
+                DB::raw('SUM(order_items.sub_total) as sales_amount'),
+                DB::raw('SUM(order_items.quantity) as units_sold')
+            )
+            ->groupBy('order_items.product_name', 'order_items.variant_name', 'master_products.image', 'master_product_variants.image')
+            ->orderBy('sales_amount', 'DESC')
+            ->limit(5)
+            ->get()
+            ->map(function ($row) {
+                $img = $row->product_image ?: $row->variant_image;
+                $imgUrl = null;
+                if ($img) {
+                    $imgUrl = str_starts_with($img, 'http') ? $img : asset('storage/' . $img);
+                }
+                return [
+                    'name' => $row->product_name . ($row->variant_name ? ' (' . $row->variant_name . ')' : ''),
+                    'image_url' => $imgUrl,
+                    'sales_amount' => round((float) $row->sales_amount, 2),
+                    'units_sold' => (float) $row->units_sold,
+                ];
+            });
+
+        // 5. Sales by Salesman (with Target, Achievement & Collections)
+        $salesmenRows = DB::table('orders')
+            ->join('salesmen', 'salesmen.id', '=', 'orders.placed_by_salesman_id')
+            ->whereIn('orders.id', $currentOrderIds)
+            ->select(
+                'salesmen.id',
+                'salesmen.name',
+                'salesmen.mobile',
+                DB::raw('SUM(orders.final_total) as total_sales'),
+                DB::raw('COUNT(orders.id) as invoices_count'),
+                DB::raw('COUNT(DISTINCT orders.user_id) as retailers_count')
+            )
+            ->groupBy('salesmen.id', 'salesmen.name', 'salesmen.mobile')
+            ->orderBy('total_sales', 'DESC')
+            ->limit(5)
+            ->get()
+            ->map(function ($sm) use ($currentSales, $startDate, $endDate) {
+                $coll = (float) OrderPayment::where('salesman_id', $sm->id)
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->sum('amount');
+                $share = $currentSales > 0 ? round(((float) $sm->total_sales / $currentSales) * 100, 1) : 0;
+                $smSales = (float) $sm->total_sales;
+                return [
+                    'id' => $sm->id,
+                    'name' => $sm->name,
+                    'sales' => round($smSales, 2),
+                    'invoices' => (int) $sm->invoices_count,
+                    'retailers' => (int) $sm->retailers_count,
+                    'collections' => round($coll, 2),
+                    'share_percent' => $share,
+                ];
+            });
+
+        // 6. Sales by Driver (Deliveries, Dispatched, Collected, Pending)
+        $driverRows = DB::table('orders')
+            ->join('delivery_boys', 'delivery_boys.id', '=', 'orders.delivery_boy_id')
+            ->whereIn('orders.id', $currentOrderIds)
+            ->select(
+                'delivery_boys.id',
+                'delivery_boys.name',
+                'delivery_boys.mobile',
+                DB::raw('COUNT(orders.id) as deliveries_count'),
+                DB::raw('SUM(orders.final_total) as total_amount')
+            )
+            ->groupBy('delivery_boys.id', 'delivery_boys.name', 'delivery_boys.mobile')
+            ->orderBy('total_amount', 'DESC')
+            ->limit(5)
+            ->get()
+            ->map(function ($dp) use ($startDate, $endDate) {
+                $coll = (float) OrderPayment::where('delivery_boy_id', $dp->id)
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->sum('amount');
+                $pending = max(0, (float) $dp->total_amount - $coll);
+                return [
+                    'id' => $dp->id,
+                    'name' => $dp->name,
+                    'deliveries' => (int) $dp->deliveries_count,
+                    'amount' => round((float) $dp->total_amount, 2),
+                    'collections' => round($coll, 2),
+                    'pending' => round($pending, 2),
+                ];
+            });
+
+        // 7. Retailer Activity
+        $retailerActivityRows = DB::table('orders')
+            ->leftJoin('retailer_profiles', 'retailer_profiles.user_id', '=', 'orders.user_id')
+            ->leftJoin('users', 'users.id', '=', 'orders.user_id')
+            ->whereIn('orders.id', $currentOrderIds)
+            ->select(
+                'orders.user_id',
+                DB::raw("COALESCE(NULLIF(TRIM(retailer_profiles.shop_name), ''), users.name, 'Retailer') as shop_name"),
+                DB::raw('SUM(orders.final_total) as total_sales'),
+                DB::raw('MAX(orders.created_at) as last_order_date')
+            )
+            ->groupBy('orders.user_id', 'retailer_profiles.shop_name', 'users.name')
+            ->orderBy('total_sales', 'DESC')
+            ->limit(5)
+            ->get()
+            ->map(function ($ra) {
+                $daysSinceOrder = Carbon::parse($ra->last_order_date)->diffInDays(Carbon::now());
+                return [
+                    'user_id' => $ra->user_id,
+                    'shop_name' => $ra->shop_name,
+                    'sales' => round((float) $ra->total_sales, 2),
+                    'last_order' => Carbon::parse($ra->last_order_date)->format('d M'),
+                    'status' => $daysSinceOrder <= 15 ? 'Active' : 'Inactive',
+                ];
+            });
+
+        // 8. Outstanding by Retailer Aging (Top 5)
+        $sortedAging = collect($retailerAging)->sortByDesc('balance')->take(5);
+        $agingUserIds = $sortedAging->pluck('user_id')->toArray();
+        $shopProfiles = DB::table('retailer_profiles')
+            ->leftJoin('users', 'users.id', '=', 'retailer_profiles.user_id')
+            ->whereIn('retailer_profiles.user_id', $agingUserIds)
+            ->select('retailer_profiles.user_id', DB::raw("COALESCE(NULLIF(TRIM(retailer_profiles.shop_name), ''), users.name) as name"))
+            ->pluck('name', 'user_id');
+
+        $outstandingByRetailer = $sortedAging->map(function ($ag) use ($shopProfiles) {
+            $days = Carbon::parse($ag['oldest_date'])->diffInDays(Carbon::now());
+            return [
+                'user_id' => $ag['user_id'],
+                'shop_name' => $shopProfiles[$ag['user_id']] ?? ('Retailer #' . $ag['user_id']),
+                'outstanding' => round((float) $ag['balance'], 2),
+                'invoices' => (int) $ag['invoices_count'],
+                'days' => $days,
+            ];
+        })->values();
+
+        // 9. Low Stock Products
+        $lowStockProducts = SellerProduct::where('seller_products.seller_id', $seller_id)
+            ->where('seller_products.status', 1)
+            ->where('seller_products.stock', '<=', $low_stock_limit)
+            ->join('master_product_variants', 'master_product_variants.id', '=', 'seller_products.master_product_variant_id')
+            ->join('master_products', 'master_products.id', '=', 'master_product_variants.master_product_id')
+            ->leftJoin('units', 'units.id', '=', 'master_product_variants.unit_id')
+            ->select(
+                'seller_products.id',
+                'master_products.name as product_name',
+                'seller_products.stock',
+                'units.short_code as unit_name'
+            )
+            ->orderBy('seller_products.stock', 'ASC')
+            ->limit(5)
+            ->get()
+            ->map(function ($p) use ($low_stock_limit) {
+                $unit = $p->unit_name ?: 'Units';
+                return [
+                    'id' => $p->id,
+                    'product_name' => $p->product_name,
+                    'current_stock' => $p->stock . ' ' . $unit,
+                    'reorder_level' => $low_stock_limit . ' ' . $unit,
+                ];
+            });
+
+        // 10. AI Insights & Recommendations (BETA)
+        $topCatName = optional($categorySalesRaw->first())->category_name ?? 'Products';
+        if ($salesGrowth >= 0) {
+            $insightGrowth = [
+                'type' => 'success',
+                'icon' => 'arrow-up',
+                'title' => "Sales are up {$salesGrowth}% this period",
+                'desc' => "{$topCatName} category grew strongly vs prior period.",
+                'action_label' => 'View Reports',
+                'action_link' => '/seller/sales_reports',
+            ];
+        } else {
+            $absGrowth = abs($salesGrowth);
+            $insightGrowth = [
+                'type' => 'warning',
+                'icon' => 'arrow-down',
+                'title' => "Sales dipped by {$absGrowth}% vs prior period",
+                'desc' => "Consider introducing trade schemes on {$topCatName} to drive volumes.",
+                'action_label' => 'View Schemes',
+                'action_link' => '/seller/schemes',
+            ];
+        }
+
+        $twentyDaysAgo = Carbon::now()->subDays(20);
+        $inactiveRetailersCount = DB::table('orders')
+            ->join('order_items', 'order_items.order_id', '=', 'orders.id')
+            ->where('order_items.seller_id', $seller_id)
+            ->whereNull('orders.deleted_at')
+            ->groupBy('orders.user_id')
+            ->havingRaw('MAX(orders.created_at) < ?', [$twentyDaysAgo])
+            ->pluck('orders.user_id')
+            ->count();
+
+        $insightRetention = [
+            'type' => 'warning',
+            'icon' => 'exclamation-triangle',
+            'title' => "{$inactiveRetailersCount} retailers have not ordered in 20+ days",
+            'desc' => "Reconnect to avoid losing business to competitors.",
+            'action_label' => 'View List',
+            'action_link' => '/seller/orders',
+        ];
+
+        $firstLowStock = $lowStockProducts->first();
+        $insightStock = [
+            'type' => 'info',
+            'icon' => 'lightbulb-o',
+            'title' => $firstLowStock ? "Consider increasing stock of {$firstLowStock['product_name']}" : "Inventory levels are healthy",
+            'desc' => $firstLowStock ? "Current stock is low ({$firstLowStock['current_stock']}) against reorder limit." : "All listed products currently meet the reorder threshold.",
+            'action_label' => 'View Stock',
+            'action_link' => '/seller/manage_stock',
+        ];
+
+        $topSalesman = $salesmenRows->first();
+        $topDriver = $driverRows->first();
+        if ($topSalesman) {
+            $insightPerformer = [
+                'type' => 'primary',
+                'icon' => 'star',
+                'title' => "{$topSalesman['name']} is top performer this period",
+                'desc' => "Generated " . number_format($topSalesman['sales'], 2) . " ({$topSalesman['share_percent']}% share) across {$topSalesman['retailers']} retailers.",
+                'action_label' => 'View Details',
+                'action_link' => '/seller/salesman',
+            ];
+        } elseif ($topDriver) {
+            $insightPerformer = [
+                'type' => 'primary',
+                'icon' => 'truck',
+                'title' => "{$topDriver['name']} completed {$topDriver['deliveries']} deliveries",
+                'desc' => "Collected " . number_format($topDriver['collections'], 2) . " on daily routes.",
+                'action_label' => 'View Drivers',
+                'action_link' => '/seller/delivery_boys',
+            ];
+        } else {
+            $insightPerformer = [
+                'type' => 'primary',
+                'icon' => 'trophy',
+                'title' => "Distributor portal active",
+                'desc' => "Track deliveries, collections and route orders in real-time.",
+                'action_label' => 'View Orders',
+                'action_link' => '/seller/orders',
+            ];
+        }
+
+        $data['period'] = [
+            'start_date' => $startDate->format('Y-m-d'),
+            'end_date' => $endDate->format('Y-m-d'),
+            'formatted' => $startDate->format('d M') . ' – ' . $endDate->format('d M Y'),
+            'days' => $diffDays,
+        ];
+        $data['distributor_info'] = [
+            'user_name' => $sellerUser->name ?? $sellerUser->username ?? 'Distributor',
+            'store_name' => $sellerModel->store_name ?? $sellerModel->name ?? 'Distributor',
+            'logo_url' => $sellerModel->logo_url ?? null,
+        ];
+        $data['hero_kpis'] = [
+            'sales' => [
+                'current' => $currentSales,
+                'previous' => $prevSales,
+                'growth' => $salesGrowth,
+                'trend' => $salesGrowth >= 0 ? 'up' : 'down',
+                'sparkline' => $sparkSales,
+            ],
+            'invoices' => [
+                'current' => $currentInvoices,
+                'previous' => $prevInvoices,
+                'growth' => $invoicesGrowth,
+                'trend' => $invoicesGrowth >= 0 ? 'up' : 'down',
+                'sparkline' => $sparkInvoices,
+            ],
+            'collections' => [
+                'current' => $currentCollections,
+                'previous' => $prevCollections,
+                'growth' => $collectionsGrowth,
+                'trend' => $collectionsGrowth >= 0 ? 'up' : 'down',
+                'rate' => $collectionRate,
+                'sparkline' => $sparkCollections,
+            ],
+            'outstanding' => [
+                'current' => $totalOutstanding,
+                'retailers_count' => $outstandingRetailersCount,
+                'sparkline' => array_slice($sparkSales, -7),
+            ],
+        ];
+        $data['operational_stats'] = [
+            'active_retailers' => [
+                'count' => $activeRetailersCount,
+                'sub' => '+' . $newRetailersThisMonth . ' this month',
+            ],
+            'active_salesmen' => [
+                'count' => $activeSalesmenCount,
+                'sub' => $inactiveSalesmenCount > 0 ? ($inactiveSalesmenCount . ' inactive') : 'All active',
+            ],
+            'active_drivers' => [
+                'count' => $activeDriversCount,
+                'sub' => 'All active',
+            ],
+            'products' => [
+                'count' => $data['product_count'],
+                'sub' => $data['low_stock_count'] . ' low stock',
+            ],
+            'schemes' => [
+                'count' => $schemesRunningCount,
+                'sub' => $schemesEndingSoonCount > 0 ? ($schemesEndingSoonCount . ' ending soon') : 'Active',
+            ],
+            'pending_deliveries' => [
+                'count' => $pendingDeliveriesCount,
+                'value' => $pendingDeliveriesValue,
+            ],
+        ];
+        $data['sales_trend'] = [
+            'dates' => $trendDates,
+            'sales' => $trendSales,
+            'invoices' => $trendInvoices,
+        ];
+        $data['category_sales'] = [
+            'labels' => $catLabels,
+            'series_sales' => $catSeriesSales,
+            'series_units' => $catSeriesUnits,
+            'total_sales' => $catSumSales > 0 ? $catSumSales : $currentSales,
+        ];
+        $data['top_products'] = $topProductsRaw;
+        $data['sales_by_salesman'] = $salesmenRows;
+        $data['sales_by_driver'] = $driverRows;
+        $data['retailer_activity'] = $retailerActivityRows;
+        $data['outstanding_by_retailer'] = $outstandingByRetailer;
+        $data['low_stock_products'] = $lowStockProducts;
+        $data['ai_insights'] = [
+            $insightGrowth,
+            $insightRetention,
+            $insightStock,
+            $insightPerformer,
+        ];
+
         return CommonHelper::responseWithData($data);
     }
 
