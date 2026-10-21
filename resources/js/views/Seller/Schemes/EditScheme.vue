@@ -227,9 +227,64 @@
                                             <span class="text-muted small fw-semibold flex-shrink-0 ms-1">{{ t('off', 'off') }}</span>
                                         </div>
                                     </template>
+
+                                    <button v-if="!extraTiers.length" type="button" class="btn btn-outline-primary btn-sm flex-shrink-0 tier-add-btn" :title="t('add_tier', 'Add tier')" @click="addTier">
+                                        <i class="fa fa-plus"></i><span class="d-none d-xl-inline ms-1">{{ t('add_tier', 'Add tier') }}</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- More quantity tiers: only Min, Max and the amount change — qty basis and discount type stay as above -->
+                        <div v-for="(tier, ti) in extraTiers" :key="'ct' + ti" class="row g-3 align-items-center scheme-tier-row">
+                            <div class="col-lg-3 col-md-4 col-sm-6">
+                                <span class="badge bg-light text-dark border px-2 py-2"><i class="fa fa-layer-group me-1 text-primary"></i>{{ t('tier', 'Tier') }} {{ ti + 2 }}</span>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" min="0.01" step="any" v-model="tier.min_qty" class="form-control text-center fw-bold" placeholder="Min">
+                                    <span class="input-group-text bg-white text-muted px-2 small">{{ tierUnitLabel }}</span>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" min="0.01" step="any" v-model="tier.max_qty" class="form-control text-center" :placeholder="ti === extraTiers.length - 1 ? t('no_limit', 'No limit') : 'Max'">
+                                    <span class="input-group-text bg-white text-muted px-2 small">{{ tierUnitLabel }}</span>
+                                </div>
+                            </div>
+                            <div class="col-lg-5 col-md-12">
+                                <div class="d-flex align-items-center gap-2 flex-nowrap">
+                                    <div class="form-control form-control-sm bg-light text-muted tier-type-pill" style="width: 160px; flex-shrink: 0;">{{ tierTypeLabel }}</div>
+                                    <template v-if="tierDiscountType === 'flat'">
+                                        <div class="input-group input-group-sm flex-nowrap" style="width: 130px; flex-shrink: 0;">
+                                            <input type="number" step="0.01" min="0.01" v-model="tier.discount_value" class="form-control text-center fw-bold" placeholder="Amount">
+                                            <span class="input-group-text bg-white text-muted px-2">₹</span>
+                                        </div>
+                                    </template>
+                                    <template v-else-if="tierDiscountType === 'free_product'">
+                                        <div class="d-flex align-items-center gap-1 flex-nowrap flex-shrink-0">
+                                            <input type="number" step="1" min="1" v-model="tier.free_qty" class="form-control form-control-sm text-center fw-bold" style="width: 55px; flex-shrink: 0;" placeholder="1">
+                                            <span class="text-muted small">{{ tierFreeBasisLabel }}</span>
+                                            <span class="badge bg-success text-white ms-1">{{ t('free', 'FREE') }}</span>
+                                        </div>
+                                    </template>
+                                    <template v-else>
+                                        <div class="input-group input-group-sm flex-nowrap" style="width: 120px; flex-shrink: 0;">
+                                            <input type="number" step="0.01" min="0.01" max="100" v-model="tier.discount_value" class="form-control text-center fw-bold" placeholder="%">
+                                            <span class="input-group-text bg-white text-muted px-2">%</span>
+                                        </div>
+                                        <span v-if="tierDiscountType === 'discounted_product'" class="text-muted small fw-semibold flex-shrink-0">{{ t('off', 'off') }}</span>
+                                    </template>
+                                    <button type="button" class="btn btn-sm btn-outline-danger action-trash-btn flex-shrink-0" :title="t('remove_tier', 'Remove tier')" @click="removeTier(ti)">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                    <button v-if="ti === extraTiers.length - 1" type="button" class="btn btn-outline-primary btn-sm flex-shrink-0 tier-add-btn" :title="t('add_tier', 'Add tier')" @click="addTier">
+                                        <i class="fa fa-plus"></i><span class="d-none d-xl-inline ms-1">{{ t('add_tier', 'Add tier') }}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <p v-if="extraTiers.length" class="text-muted small mb-0 mt-2"><i class="fa fa-info-circle me-1"></i>{{ t('tiers_hint', 'Only the tier the quantity falls in applies. The last tier can leave Max empty (no upper limit); quantities outside every tier get no discount.') }}</p>
                     </div>
 
                     <!-- Products Table -->
@@ -340,10 +395,67 @@
                                                     <span class="text-muted small fw-semibold flex-shrink-0 ms-1">{{ __('off', 'off') }}</span>
                                                 </div>
                                             </template>
+
+                                            <button v-if="!extraTiers.length" type="button" class="btn btn-outline-primary btn-sm flex-shrink-0 tier-add-btn" :title="t('add_tier', 'Add tier')" @click="addTier">
+                                                <i class="fa fa-plus"></i><span class="ms-1">{{ t('add_tier', 'Add tier') }}</span>
+                                            </button>
                                         </div>
                                     </td>
                                     <td class="text-center">
                                         <button type="button" class="btn btn-sm btn-outline-danger action-trash-btn" @click="removeProductRow(index)" title="Remove Product">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <!-- More quantity tiers of the single product: only Min, Max and the amount change -->
+                                <tr v-for="(tier, ti) in (record.products.length === 1 ? extraTiers : [])" :key="'st' + ti" class="scheme-tier-row">
+                                    <td class="text-center text-muted small">{{ ti + 2 }}</td>
+                                    <td colspan="3">
+                                        <span class="badge bg-light text-dark border px-2 py-2"><i class="fa fa-layer-group me-1 text-primary"></i>{{ t('tier', 'Tier') }} {{ ti + 2 }}</span>
+                                        <span class="text-muted small ms-2">{{ t('tier_same_settings', 'Same product, qty basis and discount type') }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" min="0.01" step="any" v-model="tier.min_qty" class="form-control text-center" placeholder="Min">
+                                            <span class="input-group-text bg-light text-muted px-2 small">{{ tierUnitLabel }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" min="0.01" step="any" v-model="tier.max_qty" class="form-control text-center" :placeholder="ti === extraTiers.length - 1 ? t('no_limit', 'No limit') : 'Max'">
+                                            <span class="input-group-text bg-light text-muted px-2 small">{{ tierUnitLabel }}</span>
+                                        </div>
+                                    </td>
+                                    <td style="width: 440px;">
+                                        <div class="d-flex align-items-center gap-2 flex-nowrap">
+                                            <div class="form-control form-control-sm bg-light text-muted tier-type-pill" style="width: 155px; flex-shrink: 0;">{{ tierTypeLabel }}</div>
+                                            <template v-if="tierDiscountType === 'flat'">
+                                                <div class="input-group input-group-sm flex-nowrap" style="width: 120px; flex-shrink: 0;">
+                                                    <input type="number" step="0.01" min="0.01" v-model="tier.discount_value" class="form-control text-center" placeholder="Amount">
+                                                    <span class="input-group-text bg-light text-muted px-2">₹</span>
+                                                </div>
+                                            </template>
+                                            <template v-else-if="tierDiscountType === 'free_product'">
+                                                <div class="d-flex align-items-center gap-1 flex-nowrap flex-shrink-0">
+                                                    <input type="number" step="1" min="1" v-model="tier.free_qty" class="form-control form-control-sm text-center" style="width: 55px; flex-shrink: 0;" placeholder="1">
+                                                    <span class="text-muted small">{{ tierFreeBasisLabel }}</span>
+                                                    <span class="badge bg-success text-white ms-1">{{ t('free', 'FREE') }}</span>
+                                                </div>
+                                            </template>
+                                            <template v-else>
+                                                <div class="input-group input-group-sm flex-nowrap" style="width: 110px; flex-shrink: 0;">
+                                                    <input type="number" step="0.01" min="0.01" max="100" v-model="tier.discount_value" class="form-control text-center" placeholder="%">
+                                                    <span class="input-group-text bg-light text-muted px-2">%</span>
+                                                </div>
+                                                <span v-if="tierDiscountType === 'discounted_product'" class="text-muted small fw-semibold flex-shrink-0">{{ t('off', 'off') }}</span>
+                                            </template>
+                                            <button v-if="ti === extraTiers.length - 1" type="button" class="btn btn-outline-primary btn-sm flex-shrink-0 tier-add-btn" :title="t('add_tier', 'Add tier')" @click="addTier">
+                                                <i class="fa fa-plus"></i><span class="ms-1">{{ t('add_tier', 'Add tier') }}</span>
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-outline-danger action-trash-btn" :title="t('remove_tier', 'Remove tier')" @click="removeTier(ti)">
                                             <i class="fa fa-trash"></i>
                                         </button>
                                     </td>
@@ -535,6 +647,10 @@ export default {
             global_discount_value: 10,
             global_free_qty: 1,
             global_free_qty_basis: 'inner',
+            // Quantity tiers AFTER the first. Tier 1 is the Min / Max / discount already on screen (the shared
+            // fields of a combined scheme, or the single product's row); each extra tier only changes the
+            // range and the amount — qty basis and discount type stay the scheme's own.
+            extraTiers: [],
             availableProducts: [],
             isLoading: false,
             showProductModal: false,
@@ -550,6 +666,31 @@ export default {
                 + '- e.g. a flat \u20b9100 discount at 5% GST saves the customer \u20b9105 in total. '
                 + 'After tax: measured on the final Total that already includes GST, and GST is not changed '
                 + '- e.g. a flat \u20b9100 discount saves the customer \u20b9100.';
+        },
+        // What the extra tiers are measured in: the scheme's own discount type, qty basis and units.
+        tierDiscountType() {
+            if (this.record.products.length > 1) return this.global_discount_type;
+            return this.record.products[0] ? this.record.products[0].discount_type : 'percentage';
+        },
+        tierTypeLabel() {
+            const labels = {
+                percentage: this.t('discount_percentage', 'Discount %'),
+                flat: this.t('flat_amount', 'Flat (₹)'),
+                free_product: this.t('free_product', 'Free Product'),
+                discounted_product: this.t('discounted_product', 'Discounted Product')
+            };
+            return labels[this.tierDiscountType] || '';
+        },
+        tierFreeBasisLabel() {
+            const basis = this.record.products.length > 1 ? this.global_free_qty_basis : (this.record.products[0] || {}).free_qty_basis;
+            return basis === 'outer' ? this.t('outer', 'Outer') : this.t('inner', 'Inner');
+        },
+        tierUnitLabel() {
+            if (this.record.products.length > 1) {
+                return this.global_qty_basis === 'outer' ? this.t('outer', 'Outer') : this.t('inner', 'Inner');
+            }
+            const p = this.record.products[0] || {};
+            return p.qty_basis === 'outer' ? (p.secondary_unit || 'Outer') : (p.uom || 'Units');
         },
         // Products a retailer can actually buy. A "free item only" product can't be bought, so it can
         // never trigger a scheme — keep it out of the Buy picker and the group-discount modal. (The
@@ -624,6 +765,10 @@ export default {
                         this.record.status = r.status;
                         this.record.buy_product = this.availableProducts.find(p => p.id == r.buy_seller_product_id) || null;
                         this.record.free_product = this.availableProducts.find(p => p.id == r.free_seller_product_id) || null;
+
+                        this.extraTiers = (r.tiers && r.tiers.length > 1)
+                            ? r.tiers.slice(1).map(t => ({ min_qty: t.min_qty, max_qty: t.max_qty, discount_value: t.discount_value, free_qty: t.free_qty }))
+                            : [];
 
                         if (r.products && r.products.length > 0) {
                             if (r.products.length > 1) {
@@ -760,7 +905,70 @@ export default {
                 p.qty_basis = basis;
             });
         },
+        // The extra tiers hold an amount in the OLD discount type (₹ vs % vs free qty) — meaningless after a
+        // type change, so they go back to empty for the distributor to fill in.
+        resetTierAmounts() {
+            this.extraTiers.forEach(t => {
+                t.discount_value = null;
+                t.free_qty = this.tierDiscountType === 'free_product' ? 1 : null;
+            });
+        },
+        // Tier 1 = what is already on screen (shared fields of a combined scheme, or the single product's row).
+        firstTier() {
+            if (this.record.products.length > 1) {
+                return { min_qty: this.global_min_qty, max_qty: this.global_max_qty, discount_value: this.global_discount_value, free_qty: this.global_free_qty };
+            }
+            const p = this.record.products[0] || {};
+            return { min_qty: p.min_qty, max_qty: p.max_qty, discount_value: p.discount_value, free_qty: p.free_qty };
+        },
+        addTier() {
+            if (this.extraTiers.length >= 9) {
+                this.showError(this.t('tier_limit', 'A scheme can have at most 10 tiers.'));
+                return;
+            }
+            const last = this.extraTiers.length ? this.extraTiers[this.extraTiers.length - 1] : this.firstTier();
+            if (!last.max_qty || Number(last.max_qty) <= 0) {
+                this.showError(this.t('tier_set_max_first', 'Enter the Max Quantity of the last tier before adding another tier.'));
+                return;
+            }
+            this.extraTiers.push({
+                min_qty: Number(last.max_qty) + 1,
+                max_qty: null,
+                discount_value: null,
+                free_qty: this.tierDiscountType === 'free_product' ? 1 : null
+            });
+        },
+        removeTier(index) {
+            this.extraTiers.splice(index, 1);
+        },
+        // First problem in the tier list (tier 1 included) as a message, or '' when it is fine. Mirrors the
+        // server rules: every tier needs Min and an amount, only the last may have no Max, ranges never overlap.
+        validateTiers() {
+            if (!this.extraTiers.length) return '';
+            const rows = [this.firstTier(), ...this.extraTiers];
+            const type = this.tierDiscountType;
+            const blank = v => v === null || v === undefined || v === '';
+            for (let i = 0; i < rows.length; i++) {
+                const r = rows[i];
+                const n = i + 1;
+                const isLast = i === rows.length - 1;
+                if (blank(r.min_qty) || Number(r.min_qty) <= 0) return 'Tier ' + n + ': please enter a valid Min Quantity.';
+                if (!blank(r.max_qty) && Number(r.max_qty) < Number(r.min_qty)) return 'Tier ' + n + ': Max Quantity cannot be less than Min Quantity.';
+                if (!isLast && (blank(r.max_qty) || Number(r.max_qty) <= 0)) return 'Tier ' + n + ': Max Quantity is required - only the last tier can have no upper limit.';
+                if (i > 0) {
+                    if (Number(r.min_qty) <= Number(rows[i - 1].max_qty)) return 'Tier ' + n + ": Min Quantity must be more than Tier " + (n - 1) + "'s Max Quantity.";
+                    if (type === 'free_product') {
+                        if (blank(r.free_qty) || Number(r.free_qty) < 1) return 'Tier ' + n + ': please enter the free quantity.';
+                    } else {
+                        if (blank(r.discount_value) || Number(r.discount_value) <= 0) return 'Tier ' + n + ': please enter the discount amount.';
+                        if ((type === 'percentage' || type === 'discounted_product') && Number(r.discount_value) > 100) return 'Tier ' + n + ': discount percentage cannot exceed 100%.';
+                    }
+                }
+            }
+            return '';
+        },
         onGlobalDiscountTypeChange() {
+            this.resetTierAmounts();
             if (this.global_discount_type === 'discounted_product') {
                 if (!this.global_free_qty || this.global_free_qty < 1) this.global_free_qty = 1;
                 if (!this.global_free_qty_basis) this.global_free_qty_basis = 'outer';
@@ -775,6 +983,7 @@ export default {
             }
         },
         onDiscountTypeChange(item) {
+            this.resetTierAmounts();
             if (item.discount_type === 'discounted_product') {
                 if (!item.free_qty || item.free_qty < 1) item.free_qty = 1;
                 if (!item.free_qty_basis) item.free_qty_basis = 'outer';
@@ -862,6 +1071,14 @@ export default {
                 }
             }
 
+            if (this.record.type !== 'buy_x_get_y') {
+                const tierError = this.validateTiers();
+                if (tierError) {
+                    this.showError(tierError);
+                    return;
+                }
+            }
+
             this.isLoading = true;
             let url = this.$sellerApiUrl + '/schemes/' + (this.id ? 'update' : 'save');
             let payload = {
@@ -896,6 +1113,15 @@ export default {
                     free_qty: p.free_qty,
                     free_qty_basis: p.free_qty_basis
                 }));
+                // Always sent (empty = a plain single-rule scheme) so the server knows this form handles tiers.
+                payload.tiers = this.extraTiers.length
+                    ? [this.firstTier(), ...this.extraTiers].map(t => ({
+                        min_qty: t.min_qty,
+                        max_qty: (t.max_qty === '' || t.max_qty === undefined) ? null : t.max_qty,
+                        discount_value: t.discount_value,
+                        free_qty: t.free_qty
+                    }))
+                    : [];
             }
 
             axios.post(url, payload)
@@ -967,6 +1193,15 @@ export default {
 }
 .cursor-pointer {
     cursor: pointer;
+}
+.scheme-tier-row {
+    margin-top: 0;
+    padding-top: 10px;
+    border-top: 1px dashed #cbd5e1;
+}
+.tier-type-pill {
+    cursor: default;
+    user-select: none;
 }
 .hover-bg:hover {
     background-color: #f8fafc;

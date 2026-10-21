@@ -850,6 +850,9 @@ class RetailerCartOrderApiController extends Controller
         $currency = Setting::get_value('currency') ?? '$';
         $retailerName = trim((string) ($user->name ?? '')) !== '' ? $user->name : (string) ($user->mobile ?? '');
         foreach ($createdOrders as $row) {
+            // The retailer's own in-app Notifications entry for this order (never throws).
+            \App\Services\CustomerNotificationService::orderPlaced($row['order_id']);
+
             try {
                 $seller = Seller::select('sellers.admin_id')
                     ->where('sellers.id', $row['seller_id'])

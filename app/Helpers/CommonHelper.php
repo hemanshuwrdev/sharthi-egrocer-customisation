@@ -4270,6 +4270,13 @@ class CommonHelper
         // Notify customer (order_status_customer)
         $user_id = $order->user_id;
         if (isset($user_id) && $user_id != "") {
+            // The in-app Notifications list (customer/notifications): keep a record of every order-level status
+            // change, whether or not this customer has the push switched on — the list is their history.
+            // (An item-level update, e.g. one item cancelled, is not an order event.)
+            if (!$orderItem) {
+                \App\Services\CustomerNotificationService::orderStatusChanged($order, (int) $status_id);
+            }
+
             if (self::checkOrderMailSendable($user_id, $status_id, 0, "Notification")) {
                 $userTokens = UserToken::where('user_id', $user_id)->where('type', 'customer')->get();
                 $placeholders = [

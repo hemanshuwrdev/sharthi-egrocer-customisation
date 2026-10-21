@@ -31,7 +31,9 @@ class NotificationsApiController extends Controller
             ->makeHidden(['translations', 'image_url', 'has_child', 'has_active_child'])
             ->toArray();
         $products = Product::where('status', 1)->where('is_approved', 1)->select('id', 'name')->orderBy('id', 'DESC')->get()->makeHidden('translations')->toArray();
-        $notifications = Notification::orderBy('id', 'DESC')->get();
+        // Only what was sent from this screen — the automatic order / payment / OTP rows (event set) are one per
+        // order event per retailer and would bury them.
+        $notifications = Notification::whereNull('event')->orderBy('id', 'DESC')->get();
         $data = array(
             "users" => $users,
             "delivery_boys" => $delivery_boys,

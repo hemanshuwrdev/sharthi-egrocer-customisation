@@ -117,6 +117,9 @@
                     <span>{{ __('total_weight') }} <strong>{{ totalFilteredWeight }} {{ __('kg') }}</strong></span>
                     <span>{{ __('orders') }} <strong>{{ orders.length }}</strong></span>
                     <span>{{ __('total_value') }} <strong>₹{{ totalFilteredValue }}</strong></span>
+                    <span v-if="hiddenSelectedCount" class="clp-list-foot__hidden">
+                        <strong>{{ hiddenSelectedCount }}</strong> {{ __('selected orders are hidden by the filters but stay in the slip') }}
+                    </span>
                 </div>
             </section>
 
@@ -294,6 +297,8 @@ export default {
     data() {
         return {
             orders: [],
+            // every order loaded so far, by id — the ticked orders stay counted (weight, value) while a filter hides them
+            knownOrders: {},
             areas: [],
             vehicles: [],
             drivers: [],
@@ -364,6 +369,11 @@ export default {
             let sum = this.orders.reduce((acc, order) => acc + parseFloat(order.final_total || 0), 0);
             return sum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         },
+        // ticked orders the current filters are not listing — still part of the slip
+        hiddenSelectedCount() {
+            const listed = new Set(this.orders.map(o => o.id));
+            return this.selectedOrderIds.filter(id => !listed.has(id)).length;
+        },
         barClass() {
             if (this.loadPercent > 100) return 'bg-danger';
             if (this.loadPercent > 85) return 'bg-warning';
@@ -385,9 +395,8 @@ export default {
             return parseFloat((parseFloat(this.selectedVehicle.capacity || 0) - this.totalSelectedWeight).toFixed(2));
         },
         selectedValue() {
-            const sum = this.orders
-                .filter(order => this.selectedOrderIds.includes(order.id))
-                .reduce((acc, order) => acc + parseFloat(order.final_total || 0), 0);
+            const sum = this.selectedOrderIds
+                .reduce((acc, id) => acc + parseFloat((this.knownOrders[id] || {}).final_total || 0), 0);
             return sum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         },
         // purely informational: what is still missing before a slip can be generated
@@ -416,7 +425,7 @@ export default {
     },
     watch: {
         selectedProductIds() {
-            this.getOrders();
+            this.refreshAreasAndOrders();
         },
     },
     methods: {
@@ -428,13 +437,26 @@ export default {
                     }
                 });
         },
+        // Only areas that have orders left to load under the Rescheduled / Product filters. Returns the
+        // request so callers can reload the orders once the options (and a possibly dropped area) are settled.
         getAreas() {
-            axios.get(this.apiBase + '/loading_slips/areas')
+            const params = {};
+            if (this.selectedRescheduled !== '') params.is_rescheduled = this.selectedRescheduled;
+            if (this.selectedProductIds.length) params.product_ids = this.selectedProductIds;
+            return axios.get(this.apiBase + '/loading_slips/areas', { params })
                 .then(res => {
                     if (res.data.status === 1) {
                         this.areas = res.data.data || [];
+                        // the chosen area may have no orders under the new filters — fall back to all areas
+                        if (this.selectedArea && !this.areas.some(a => a.id == this.selectedArea)) {
+                            this.selectedArea = '';
+                        }
                     }
-                });
+                })
+                .catch(() => {});
+        },
+        refreshAreasAndOrders() {
+            this.getAreas().then(() => this.getOrders());
         },
         getVehicles() {
             axios.get(this.apiBase + '/vehicles/active')
@@ -471,8 +493,11 @@ export default {
             axios.get(this.apiBase + '/loading_slips/orders', { params }).then(res => {
                 if (res.data.status === 1) {
                     this.orders = res.data.data;
-                    this.selectedOrderIds = [];
-                    this.selectAll = false;
+                    const known = { ...this.knownOrders };
+                    this.orders.forEach(o => { known[o.id] = o; });
+                    this.knownOrders = known;
+                    // ticked orders are kept across filter changes (area, rescheduled, products) — only the
+                    // list on screen changes, so orders picked under another filter are not lost
                     this.calculateWeightSum();
                 }
             });
@@ -491,21 +516,20 @@ export default {
             this.calculateWeightSum();
         },
         toggleSelectAll() {
+            // acts on the orders listed now; ticks made under another filter stay as they are
+            const visibleIds = this.orders.map(o => o.id);
             if (this.selectAll) {
-                this.selectedOrderIds = this.orders.map(o => o.id);
+                this.selectedOrderIds = [...new Set([...this.selectedOrderIds, ...visibleIds])];
             } else {
-                this.selectedOrderIds = [];
+                this.selectedOrderIds = this.selectedOrderIds.filter(id => !visibleIds.includes(id));
             }
             this.calculateWeightSum();
         },
         calculateWeightSum() {
-            let sum = 0;
-            this.orders.forEach(order => {
-                if (this.selectedOrderIds.includes(order.id)) {
-                    sum += parseFloat(order.weight || 0);
-                }
-            });
+            const sum = this.selectedOrderIds.reduce((acc, id) => acc + parseFloat((this.knownOrders[id] || {}).weight || 0), 0);
             this.totalSelectedWeight = parseFloat(sum.toFixed(2));
+            // header checkbox = every listed order is ticked
+            this.selectAll = this.orders.length > 0 && this.orders.every(o => this.selectedOrderIds.includes(o.id));
             
             const capacity = parseFloat(this.selectedVehicle?.capacity || 0);
             if (this.selectedVehicle && capacity > 0) {
@@ -517,7 +541,7 @@ export default {
         // Rescheduled filter as buttons: sets the same selectedRescheduled value ('' | '1' | '0') the old select did
         setRescheduled(value) {
             this.selectedRescheduled = value;
-            this.getOrders();
+            this.refreshAreasAndOrders();
         },
         // whole amounts stay compact (4,000); fractional ones always show paise (8,336.30)
         formatMoney(value) {
@@ -702,6 +726,9 @@ export default {
 
 .clp-list-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; padding: 14px 20px; border-top: 1px solid var(--ui-border); font-size: 13px; color: var(--ui-muted); }
 .clp-list-foot strong { margin-left: 6px; color: var(--ui-text); font-size: 14px; }
+/* ticked orders a filter is hiding: its own full-width line under the totals */
+.clp-list-foot__hidden { flex-basis: 100%; }
+.clp-list-foot__hidden strong { margin: 0 4px 0 0; }
 
 /* ---------- planner ---------- */
 .clp-form { padding: 8px 20px 20px; }

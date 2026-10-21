@@ -622,6 +622,9 @@ class OrdersApiController extends Controller
                 return CommonHelper::responseError("Something went wrong while rescheduling the order.");
             }
 
+            // In-app Notifications for the retailer (never throws).
+            \App\Services\CustomerNotificationService::orderStatusChanged($order, OrderStatusList::$rescheduled);
+
             return CommonHelper::responseSuccess(__('order_rescheduled_successfully'));
         }
 
@@ -706,6 +709,9 @@ class OrdersApiController extends Controller
                 Log::error("Partial delivery via update_status error: " . $e->getMessage());
                 return CommonHelper::responseError("Something went wrong while marking partial delivery.");
             }
+
+            // In-app Notifications for the retailer (never throws).
+            \App\Services\CustomerNotificationService::orderStatusChanged($order, OrderStatusList::$partialDelivery);
 
             return CommonHelper::responseSuccess(__('order_marked_as_partial_delivery'));
         }
@@ -1880,6 +1886,9 @@ class OrdersApiController extends Controller
             Log::error("Reschedule order error: " . $e->getMessage());
             return CommonHelper::responseError("Something went wrong while rescheduling the order.");
         }
+
+        // In-app Notifications for the retailer (never throws).
+        \App\Services\CustomerNotificationService::orderStatusChanged($order, OrderStatusList::$rescheduled);
 
         return CommonHelper::responseSuccess(__('order_rescheduled_successfully'));
     }

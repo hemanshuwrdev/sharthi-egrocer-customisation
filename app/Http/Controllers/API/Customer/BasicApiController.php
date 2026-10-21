@@ -797,56 +797,179 @@ class BasicApiController extends Controller
         }
     }
 
+    /**
+     * GET customer/notifications — the retailer's Notifications screen.
+     *
+     * Public route (broadcasts show for a guest too); with a customer token it also returns that customer's
+     * own notifications — panel-sent ones and the order / payment / OTP events written by
+     * CustomerNotificationService — plus their read state.
+     *
+     * Query: limit, offset, search, sort (id|date_sent|title), order (asc|desc), and the additive filters
+     *   category = orders | payments | otp   (the All / Orders / Payments / OTP tabs; omit for All)
+     *   unread   = 1                          (only the ones not yet read)
+     *
+     * Each row keeps its old keys and adds: category ('general' for panel-sent), event, order_id, is_read,
+     * date_sent_iso and data (the card's facts — see CustomerNotificationService::context(); null for
+     * panel-sent). The response adds a top-level unread_count (all categories, ignoring the filters above).
+     */
     public function getNotifications(Request $request)
     {
         $limit = ($request->limit) ?? 10;
         $offset = ($request->offset) ?? 0;
-        $sort = ($request->sort) ?? 'id';
-        $order = ($request->sort) ?? 'DESC';
-        $where = '';
-        if (isset($request->search) && $request->search != '') {
-            $search = $request->search;
-            $where = " `id` like '%" . $search . "%' OR `title` like '%" . $search . "%' OR `message` like '%" . $search . "%' OR `image` like '%" . $search . "%' OR `date_sent` like '%" . $search . "%' ";
-        }
+        $sort = in_array($request->sort, ['id', 'date_sent', 'title'], true) ? $request->sort : 'id';
+        $direction = strtolower((string) $request->order) === 'asc' ? 'asc' : 'desc';
 
         $authUser = $request->user('api-customers');
-        $user_id = $authUser ? $authUser->id : '';
-        if ($user_id) {
-            $sql = Notification::where(function ($q) use ($user_id) {
-                $q->where(function ($inner) use ($user_id) {
-                    $inner->where('type', 'user')->where('type_id', $user_id);
-                })->orWhereNotIn('type', ['user', 'seller', 'delivery_boy']);
-            });
-            if ($authUser->created_at) {
-                $sql = $sql->where('date_sent', '>=', $authUser->created_at);
-            }
-        } else {
-            $sql = Notification::whereNotIn('type', ['user', 'seller', 'delivery_boy']);
-        }
-        if ($where != "") {
-            $sql = $sql->whereRaw($where);
-        }
-        $total = $sql->count();
-        $notifications = $sql->orderBy($sort, $order)->skip($offset)->take($limit)->get();
+        $sql = $this->customerNotificationsQuery($authUser);
 
-        if (!empty($notifications)) {
-            $rows = array();
-            foreach ($notifications as $row) {
-                $tempRow = array();
-                $tempRow['id'] = $row->id;
-                $tempRow['title'] = $row->title;
-                $tempRow['message'] = $row->message;
-                $tempRow['type'] = $row->type;
-                $tempRow['type_id'] = $row->type_id;
-                $tempRow['image_url'] = CommonHelper::getImage($row->image);
-                $tempRow['link_url'] = $row->type_link;
-                $tempRow['date_sent'] = CommonHelper::formatDateTime($row->date_sent);
-                $rows[] = $tempRow;
-            }
-            return CommonHelper::responseWithData($rows, $total);
-        } else {
-            return CommonHelper::responseError('no_notification_found');
+        if (isset($request->search) && $request->search != '') {
+            $search = '%' . $request->search . '%';
+            $sql->where(function ($q) use ($search) {
+                $q->where('notifications.id', 'like', $search)
+                    ->orWhere('notifications.title', 'like', $search)
+                    ->orWhere('notifications.message', 'like', $search)
+                    ->orWhere('notifications.image', 'like', $search)
+                    ->orWhere('notifications.date_sent', 'like', $search);
+            });
         }
+
+        if (in_array($request->category, \App\Services\CustomerNotificationService::CATEGORIES, true)) {
+            $sql->where('notifications.category', $request->category);
+        }
+        if ($authUser && filter_var($request->unread, FILTER_VALIDATE_BOOLEAN)) {
+            $this->whereNotificationUnread($sql, $authUser->id);
+        }
+
+        $total = $sql->count();
+
+        // is_read for this customer; a guest has no read state.
+        if ($authUser) {
+            $sql->selectRaw(
+                'notifications.*, EXISTS(SELECT 1 FROM notification_reads nr WHERE nr.notification_id = notifications.id AND nr.user_id = ?) AS is_read',
+                [$authUser->id]
+            );
+        } else {
+            $sql->selectRaw('notifications.*, 0 AS is_read');
+        }
+        $notifications = $sql->orderBy('notifications.' . $sort, $direction)->skip($offset)->take($limit)->get();
+
+        $rows = array();
+        foreach ($notifications as $row) {
+            $tempRow = array();
+            $tempRow['id'] = $row->id;
+            $tempRow['title'] = $row->title;
+            $tempRow['message'] = $row->message;
+            $tempRow['type'] = $row->type;
+            $tempRow['type_id'] = $row->type_id;
+            $tempRow['image_url'] = CommonHelper::getImage($row->image);
+            $tempRow['link_url'] = $row->type_link;
+            $tempRow['date_sent'] = CommonHelper::formatDateTime($row->date_sent);
+            // Additive keys for the Orders / Payments / OTP screen.
+            $tempRow['category'] = $row->category ?: 'general';
+            $tempRow['event'] = $row->event;
+            $tempRow['order_id'] = $row->order_id ? (int) $row->order_id : null;
+            $tempRow['is_read'] = (bool) $row->is_read;
+            $tempRow['date_sent_iso'] = $row->date_sent ? Carbon::parse($row->date_sent)->toIso8601String() : null;
+            $tempRow['data'] = $row->data ?: null;
+            $rows[] = $tempRow;
+        }
+
+        $payload = CommonHelper::responseWithData($rows, $total)->getData(true);
+        $payload['unread_count'] = $authUser ? $this->unreadNotificationsCount($authUser) : 0;
+        return response()->json($payload);
+    }
+
+    /**
+     * POST customer/notifications/mark_read (customer token required).
+     * Body: ids[] — mark just those; or all=1 — mark everything unread (optionally only one `category`).
+     * Returns { marked, unread_count }.
+     */
+    public function markNotificationsRead(Request $request)
+    {
+        $authUser = $request->user('api-customers');
+        if (!$authUser) {
+            return CommonHelper::responseError('unauthorized');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'ids'      => 'nullable|array',
+            'ids.*'    => 'integer',
+            'all'      => 'nullable|boolean',
+            'category' => 'nullable|in:' . implode(',', \App\Services\CustomerNotificationService::CATEGORIES),
+        ]);
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        $ids = array_values(array_filter((array) $request->input('ids', []), 'is_numeric'));
+        $all = filter_var($request->input('all'), FILTER_VALIDATE_BOOLEAN);
+        if (empty($ids) && !$all) {
+            return CommonHelper::responseError('Send ids[] or all=1.');
+        }
+
+        // Only what this customer can actually see, and only what is still unread.
+        $query = $this->customerNotificationsQuery($authUser)->select('notifications.id');
+        $this->whereNotificationUnread($query, $authUser->id);
+        if (!empty($ids)) {
+            $query->whereIn('notifications.id', array_map('intval', $ids));
+        } elseif ($request->filled('category')) {
+            $query->where('notifications.category', $request->category);
+        }
+
+        $now = now();
+        $marked = 0;
+        foreach ($query->pluck('notifications.id')->chunk(500) as $chunk) {
+            $marked += DB::table('notification_reads')->insertOrIgnore(
+                $chunk->map(fn ($id) => ['notification_id' => $id, 'user_id' => $authUser->id, 'read_at' => $now])->all()
+            );
+        }
+
+        return CommonHelper::responseWithData([
+            'marked'       => $marked,
+            'unread_count' => $this->unreadNotificationsCount($authUser),
+        ]);
+    }
+
+    /**
+     * What a customer's Notifications list is made of: their own (type user, their id) plus broadcasts
+     * (anything not addressed to a user / seller / delivery boy), from the day their account was created.
+     * A guest (null) sees broadcasts only.
+     */
+    private function customerNotificationsQuery($authUser)
+    {
+        if (!$authUser) {
+            return Notification::whereNotIn('notifications.type', ['user', 'seller', 'delivery_boy']);
+        }
+
+        $query = Notification::where(function ($q) use ($authUser) {
+            $q->where(function ($inner) use ($authUser) {
+                $inner->where('notifications.type', 'user')->where('notifications.type_id', $authUser->id);
+            })->orWhereNotIn('notifications.type', ['user', 'seller', 'delivery_boy']);
+        });
+        if ($authUser->created_at) {
+            $query->where('notifications.date_sent', '>=', $authUser->created_at);
+        }
+
+        return $query;
+    }
+
+    /** Narrow a notifications query to the ones this customer has not read yet. */
+    private function whereNotificationUnread($query, $userId): void
+    {
+        $query->whereNotExists(function ($sub) use ($userId) {
+            $sub->select(DB::raw(1))
+                ->from('notification_reads')
+                ->whereColumn('notification_reads.notification_id', 'notifications.id')
+                ->where('notification_reads.user_id', $userId);
+        });
+    }
+
+    private function unreadNotificationsCount($authUser): int
+    {
+        $query = $this->customerNotificationsQuery($authUser);
+        $this->whereNotificationUnread($query, $authUser->id);
+
+        return (int) $query->count();
     }
 
     public function getBrands(Request $request)

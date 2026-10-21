@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Helpers\CommonHelper;
 use App\Models\Scheme;
+use App\Models\SchemeTier;
 use App\Models\SellerProduct;
 use Carbon\Carbon;
 use Closure;
@@ -24,7 +25,7 @@ class SchemeListing
     {
         $productChain = 'masterProductVariant.masterProduct';
 
-        return [
+        return array_merge([
             'seller:id,name,store_name,logo',
             'schemeProducts.sellerProduct.' . $productChain,
             'schemeProducts.sellerProduct.masterProductVariant.unit',
@@ -36,7 +37,7 @@ class SchemeListing
             'freeProduct.' . $productChain,
             'freeProduct.masterProductVariant.unit',
             'freeProduct.masterProductVariant.secondaryUnit',
-        ];
+        ], SchemeTier::tableExists() ? ['schemeTiers'] : []);
     }
 
     /** Running schemes (status on, today within start..end) of the given distributors, soonest-ending first. */
@@ -110,6 +111,7 @@ class SchemeListing
             'is_multi_combo' => $f['is_multi_combo'],
             'conditions'     => $f['is_multi_combo'] ? $f['combo_condition'] : ($row['conditions'] ?? ''),
             'reward'         => $f['is_multi_combo'] ? $f['combo_reward'] : ($row['reward'] ?? ''),
+            'tiers'          => $f['tiers'],
         ];
     }
 
@@ -218,6 +220,30 @@ class SchemeListing
             }
         }
 
+        // Quantity tiers: every range with its own wording — empty unless the scheme has 2+. The product rows
+        // above (and conditions / reward / combo_*) describe tier 1 only, which is all an older app shows.
+        $tiers = [];
+        if (!$isBxgy && $s->isTiered() && ($firstRow = $s->schemeProducts->first())) {
+            foreach ($s->schemeTiers as $t) {
+                $tierRow = (object) [
+                    'qty_basis'      => $firstRow->qty_basis,
+                    'min_qty'        => $t->min_qty,
+                    'max_qty'        => $t->max_qty,
+                    'discount_type'  => $firstRow->discount_type,
+                    'discount_value' => $t->discount_value ?? $firstRow->discount_value,
+                    'free_qty'       => $t->free_qty ?? $firstRow->free_qty,
+                    'free_qty_basis' => $firstRow->free_qty_basis,
+                ];
+                $tierProduct = $isMultiCombo ? null : $firstRow->sellerProduct;
+                $tiers[] = [
+                    'min_qty'    => (float) $t->min_qty,
+                    'max_qty'    => $t->max_qty !== null ? (float) $t->max_qty : null,
+                    'conditions' => self::conditions($tierRow, $tierProduct, $isMultiCombo ? 'Combined ' : ''),
+                    'reward'     => self::reward($tierRow, $tierProduct),
+                ];
+            }
+        }
+
         $seller = $s->seller;
 
         return [
@@ -242,6 +268,7 @@ class SchemeListing
             'is_multi_combo'  => $isMultiCombo,
             'combo_condition' => $comboCondition,
             'combo_reward'    => $comboReward,
+            'tiers'           => $tiers,
             'products'        => $products,
             // Slab threshold meaning: 'amount' = basket value in ₹, 'qty' = basket quantity.
             'slab_basis'      => $isBxgy || $s->schemeSlabs->isEmpty() ? null : ($s->type === Scheme::TYPE_GROUP_DISCOUNT_QTY ? 'qty' : 'amount'),

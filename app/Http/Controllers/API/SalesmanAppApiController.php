@@ -1637,6 +1637,9 @@ class SalesmanAppApiController extends Controller
         $currency = Setting::get_value('currency') ?? '$';
         $shopName = $retailer->retailerProfile->shop_name ?? ($retailer->name ?? '');
         foreach ($createdOrders as $row) {
+            // The retailer's in-app Notifications entry — "placed for you by <salesman>" (never throws).
+            \App\Services\CustomerNotificationService::orderPlaced($row['order_id'], $salesman->name ?? null);
+
             // To distributor — reuse existing template
             try {
                 $seller = Seller::select('admin_id')->where('id', $row['seller_id'])->first();
@@ -1956,7 +1959,7 @@ class SalesmanAppApiController extends Controller
 
     /**
      * GET /api/salesman/notifications
-     * Returns the latest 50 notifications sent to this salesman (via admin_id).
+     * This salesman's notifications, newest first, in the same structure as the retailer app's list.
      */
     public function notifications(Request $request)
     {
@@ -1965,21 +1968,24 @@ class SalesmanAppApiController extends Controller
             return CommonHelper::responseError('salesman_not_found');
         }
 
-        $notifications = DB::table('salesman_notifications')
-            ->where('salesman_id', $salesman->id)
-            ->orderByDesc('created_at')
-            ->limit(50)
-            ->get();
+        // The list structure shared with the retailer app (see NotificationFeed): { total, unread_count, data: [cards] },
+        // with the category / unread / search / limit / offset filters. (It used to be the latest 50 as
+        // { unread_count, notifications }.)
+        return \App\Services\NotificationFeed::salesmanList($request, $salesman);
+    }
 
-        $unreadCount = DB::table('salesman_notifications')
-            ->where('salesman_id', $salesman->id)
-            ->whereNull('read_at')
-            ->count();
+    /**
+     * POST /api/salesman/notifications/mark_read — body: ids[] | all=1 [, category].
+     * Same request/response as the retailer's mark_read (the older mark-read below marks everything).
+     */
+    public function markNotificationsReadV2(Request $request)
+    {
+        $salesman = $this->currentSalesman();
+        if (!$salesman) {
+            return CommonHelper::responseError('salesman_not_found');
+        }
 
-        return CommonHelper::responseWithData([
-            'unread_count'  => $unreadCount,
-            'notifications' => $notifications,
-        ]);
+        return \App\Services\NotificationFeed::salesmanMarkRead($request, $salesman);
     }
 
     /**

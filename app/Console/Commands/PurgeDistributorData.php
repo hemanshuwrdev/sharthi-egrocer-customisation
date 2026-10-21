@@ -188,6 +188,9 @@ class PurgeDistributorData extends Command
         $spIds = DB::table('seller_products')->whereIn('seller_id', $S)->pluck('id')->all();
         $this->del('scheme_products', 'scheme_products', fn ($q) => $q->where(fn ($w) => $w->whereIn('scheme_id', $schemeIds)->orWhereIn('seller_product_id', $spIds)));
         $this->del('scheme_slabs', 'scheme_slabs', fn ($q) => $q->whereIn('scheme_id', $schemeIds));
+        if (\Illuminate\Support\Facades\Schema::hasTable('scheme_tiers')) {
+            $this->del('scheme_tiers', 'scheme_tiers', fn ($q) => $q->whereIn('scheme_id', $schemeIds));
+        }
         $this->del('schemes', 'schemes', fn ($q) => $q->whereIn('id', $schemeIds), 'Scheme');
         $this->del('seller_product_slab_prices', 'seller_product_slab_prices', fn ($q) => $q->whereIn('seller_product_id', $spIds));
         $this->del('seller_products (listings, prices, stock)', 'seller_products', fn ($q) => $q->whereIn('id', $spIds), 'SellerProduct');

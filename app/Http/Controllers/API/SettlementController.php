@@ -708,6 +708,9 @@ class SettlementController extends Controller
             return CommonHelper::responseError('something_went_wrong');
         }
 
+        // The retailer's in-app Notifications: payment recorded (never throws).
+        \App\Services\CustomerNotificationService::paymentRecorded($order, $payment);
+
         return CommonHelper::responseWithData([
             'payment_id'           => $payment->id,
             'status'               => 'pending',
@@ -1323,6 +1326,9 @@ class SettlementController extends Controller
             Log::error('salesmanCollectPayment failed: ' . $e->getMessage());
             return CommonHelper::responseError('something_went_wrong');
         }
+
+        // The retailer's in-app Notifications: payment recorded (never throws).
+        \App\Services\CustomerNotificationService::paymentRecorded($order, $payment);
 
         return CommonHelper::responseWithData(['payment_id' => $payment->id, 'status' => 'pending']);
     }

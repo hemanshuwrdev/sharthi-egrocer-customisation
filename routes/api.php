@@ -73,6 +73,8 @@ Route::middleware('auth:api')->group(function () {
     Route::get('dashboard', [\App\Http\Controllers\Controller::class, 'index']);
     Route::get('get_top_notifications', [\App\Http\Controllers\Controller::class, 'getTopNotifications']);
     Route::get('notification_read', [\App\Http\Controllers\Controller::class, 'markAsReadNotifications']);
+    // Superseded by seller/notifications/mark_read and delivery_boy/notifications/mark_read; kept so nothing built on it breaks.
+    Route::post('notification_mark_read', [\App\Http\Controllers\Controller::class, 'markNotificationsRead']);
     Route::get('create_slug/{text}', [\App\Http\Controllers\Controller::class, 'createSlug']);
 
     // Sarthi DDOS Super Admin Customizations
@@ -635,6 +637,9 @@ Route::middleware('auth:api')->group(function () {
     Route::group(['prefix' => 'seller'], function () {
         /*Dashboard*/
         Route::get('dashboard', [\App\Http\Controllers\SellerController::class, 'index']);
+        // Notifications — the same list structure and mark_read as the retailer and salesman apps (see NotificationFeed).
+        Route::get('notifications', [\App\Http\Controllers\Controller::class, 'notificationsFeed']);
+        Route::post('notifications/mark_read', [\App\Http\Controllers\Controller::class, 'markNotificationsRead']);
         // Sarthi: master-catalog-aware list (replaces legacy seller-owned product list)
         Route::get('get_products', [\App\Http\Controllers\API\SellerProductApiController::class, 'getMyProducts']);
         Route::post('update_seller_status', [\App\Http\Controllers\API\SellerApiController::class, 'updateStatus'])->name('sellers.update_seller_status');
@@ -860,6 +865,9 @@ Route::middleware('auth:api')->group(function () {
 
     Route::group(['prefix' => 'delivery_boy'], function () {
         Route::get('dashboard', [\App\Http\Controllers\DeliveryBoyController::class, 'index']);
+        // Notifications — the same list structure and mark_read as the retailer and salesman apps (see NotificationFeed).
+        Route::get('notifications', [\App\Http\Controllers\Controller::class, 'notificationsFeed']);
+        Route::post('notifications/mark_read', [\App\Http\Controllers\Controller::class, 'markNotificationsRead']);
         Route::get('route_list', [\App\Http\Controllers\DeliveryBoyController::class, 'getRouteList']);
         Route::get('orders', [\App\Http\Controllers\DeliveryBoyController::class, 'getOrders']);
         Route::get('order_by_id', [\App\Http\Controllers\DeliveryBoyController::class, 'getOrder']);
@@ -956,6 +964,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('dashboard', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'dashboard'])->name('salesman.dashboard');
         Route::get('notifications', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'notifications'])->name('salesman.notifications');
         Route::post('notifications/mark-read', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'markNotificationsRead'])->name('salesman.notifications.mark_read');
+        Route::post('notifications/mark_read', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'markNotificationsReadV2'])->name('salesman.notifications.mark_read_v2');
 
         // Sarthi: retailer address change re-verification
         Route::get('address-change-requests',              [\App\Http\Controllers\API\RetailerAddressChangeController::class, 'pendingRequests'])->name('salesman.address_change.list');

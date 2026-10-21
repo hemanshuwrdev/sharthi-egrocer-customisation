@@ -82,21 +82,15 @@ class LoadingSlipsApiController extends Controller
         return CommonHelper::responseWithData($slips, $total);
     }
 
-    public function getOrdersForAssignment(Request $request)
+    /**
+     * What "an order to proceed" means on the create-slip screen: a doorstep order that is not on a loading
+     * slip yet, in an open status and — for a distributor — holding at least one of its items. Joined to
+     * everything the screen shows or filters on. The order list and the Filter By Area options both build on
+     * this, so they can never disagree about which orders exist.
+     */
+    private function assignableOrdersQuery()
     {
-        $cityId = $request->input('city_id', '');
-        $areaId = $request->input('area_id', '');
-        $isRescheduled = $request->input('is_rescheduled', '');
-
-        $query = Order::select(
-                'orders.*',
-                DB::raw('COALESCE(rp.shop_name, rp.party_name, users.name) as user_name'),
-                'cities.zone as city_zone',
-                // area_id isn't always stamped on the order itself (older orders, or the
-                // salesman-placed flow) — fall back to the delivery address's area, then
-                // the retailer's own profile area, so the loading slip screen isn't blank.
-                DB::raw('COALESCE(areas.name, ua_areas.name, rp_areas.name) as area_name')
-            )
+        $query = Order::query()
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
             ->leftJoin('retailer_profiles as rp', 'orders.user_id', '=', 'rp.user_id')
             ->leftJoin('user_addresses', 'orders.address_id', '=', 'user_addresses.id')
@@ -112,6 +106,35 @@ class LoadingSlipsApiController extends Controller
                 OrderStatusList::$shipped,
                 OrderStatusList::$rescheduled
             ]);
+
+        if (auth()->user() && auth()->user()->seller) {
+            $sellerId = auth()->user()->seller->id;
+            $query->whereExists(function ($q) use ($sellerId) {
+                $q->select(DB::raw(1))
+                  ->from('order_items')
+                  ->whereColumn('order_items.order_id', 'orders.id')
+                  ->where('order_items.seller_id', $sellerId);
+            });
+        }
+
+        return $query;
+    }
+
+    /**
+     * The area an order belongs to. area_id isn't always stamped on the order itself (older orders, or the
+     * salesman-placed flow) — fall back to the delivery address's area, then the retailer's own profile area.
+     */
+    private const ORDER_AREA_SQL = 'COALESCE(orders.area_id, user_addresses.area_id, rp.area_id)';
+
+    /**
+     * The create-slip screen's filters other than area: city, rescheduled / regular, and products.
+     * Shared by the order list and the area options so the options only offer areas that still have orders
+     * under the other filters.
+     */
+    private function applyAssignmentFilters($query, Request $request)
+    {
+        $cityId = $request->input('city_id', '');
+        $isRescheduled = $request->input('is_rescheduled', '');
 
         if ($isRescheduled === '1' || $isRescheduled === 1) {
             $query->whereExists(function ($q) {
@@ -129,34 +152,8 @@ class LoadingSlipsApiController extends Controller
             });
         }
 
-        if (auth()->user() && auth()->user()->seller) {
-            $sellerId = auth()->user()->seller->id;
-            $query->whereExists(function ($q) use ($sellerId) {
-                $q->select(DB::raw(1))
-                  ->from('order_items')
-                  ->whereColumn('order_items.order_id', 'orders.id')
-                  ->where('order_items.seller_id', $sellerId);
-            });
-        }
-
         if ($cityId) {
             $query->where('user_addresses.city_id', $cityId);
-        }
-
-        if ($areaId) {
-            // Match the same area resolved for display (COALESCE above): orders.area_id
-            // first, falling back to the delivery address's area, then the retailer
-            // profile's area — otherwise orders showing "bhuj" via fallback never match
-            // a "bhuj" filter that only checked orders.area_id.
-            $query->where(function ($q) use ($areaId) {
-                $q->where('orders.area_id', $areaId)
-                  ->orWhere(function ($q2) use ($areaId) {
-                      $q2->whereNull('orders.area_id')->where('user_addresses.area_id', $areaId);
-                  })
-                  ->orWhere(function ($q3) use ($areaId) {
-                      $q3->whereNull('orders.area_id')->whereNull('user_addresses.area_id')->where('rp.area_id', $areaId);
-                  });
-            });
         }
 
         // Product filter: an order matches if it contains ANY of the selected products
@@ -170,6 +167,28 @@ class LoadingSlipsApiController extends Controller
                   ->whereColumn('order_items.order_id', 'orders.id')
                   ->whereIn('order_items.seller_product_id', $productIds);
             });
+        }
+
+        return $query;
+    }
+
+    public function getOrdersForAssignment(Request $request)
+    {
+        $areaId = $request->input('area_id', '');
+
+        $query = $this->applyAssignmentFilters($this->assignableOrdersQuery(), $request)
+            ->select(
+                'orders.*',
+                DB::raw('COALESCE(rp.shop_name, rp.party_name, users.name) as user_name'),
+                'cities.zone as city_zone',
+                DB::raw('COALESCE(areas.name, ua_areas.name, rp_areas.name) as area_name')
+            );
+
+        if ($areaId) {
+            // Same area resolved for display and for the Filter By Area options (ORDER_AREA_SQL) — otherwise
+            // orders showing "bhuj" via the address/profile fallback never match a "bhuj" filter that only
+            // checked orders.area_id.
+            $query->whereRaw(self::ORDER_AREA_SQL . ' = ?', [$areaId]);
         }
 
         // Add is_rescheduled flag via subquery — avoids N+1 per order
@@ -348,21 +367,21 @@ class LoadingSlipsApiController extends Controller
 
     /**
      * GET /seller/loading_slips/areas
-     * "Filter By Area" options on the create-slip screen — restricted to areas
-     * actually assigned to this distributor (distributor_areas), not every area
-     * in the system.
+     * "Filter By Area" options on the create-slip screen: only areas that have at least one order that can
+     * go on a slip right now (see assignableOrdersQuery) — not every area assigned to the distributor, and
+     * not every area in the system. Honours the screen's other filters (rescheduled, products, city), so an
+     * option never leads to an empty list. An order's area may be one the distributor has no assignment
+     * for (a new area, or a retailer with none picked); it is still listed, as it still has orders to load.
      */
-    public function getFilterAreas()
+    public function getFilterAreas(Request $request)
     {
-        $query = \App\Models\Area::query();
+        $areaIds = $this->applyAssignmentFilters($this->assignableOrdersQuery(), $request)
+            ->selectRaw(self::ORDER_AREA_SQL . ' as resolved_area_id')
+            ->distinct()
+            ->pluck('resolved_area_id')
+            ->filter();
 
-        if (auth()->user() && auth()->user()->seller) {
-            $areaIds = \App\Models\DistributorArea::where('seller_id', auth()->user()->seller->id)
-                ->pluck('area_id');
-            $query->whereIn('id', $areaIds);
-        }
-
-        $areas = $query->orderBy('name')->get(['id', 'name']);
+        $areas = \App\Models\Area::whereIn('id', $areaIds)->orderBy('name')->get(['id', 'name']);
 
         return CommonHelper::responseWithData($areas);
     }
@@ -737,6 +756,13 @@ class LoadingSlipsApiController extends Controller
             }
 
             DB::commit();
+
+            // The retailers' in-app Notifications ("Out for delivery" + the delivery OTP). After the commit, so a
+            // slip that failed to dispatch never tells anyone it is on its way; never throws.
+            foreach ($orders as $order) {
+                \App\Services\CustomerNotificationService::orderStatusChanged($order, OrderStatusList::$outForDelivery);
+            }
+
             return CommonHelper::responseSuccess('Loading slip dispatched and out-for-delivery successfully.');
         } catch (\Throwable $e) {
             DB::rollBack();

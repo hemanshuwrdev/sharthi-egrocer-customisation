@@ -141,6 +141,17 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -652,52 +663,74 @@ var render = function () {
                         ]
                       : row.item.is_multi_combo
                       ? [
-                          _c("div", { staticClass: "small mb-1 text-start" }, [
-                            _c(
-                              "span",
-                              {
-                                staticClass: "badge bg-primary text-white mb-1",
-                              },
-                              [
-                                _c("i", {
-                                  staticClass: "fa fa-layer-group me-1",
-                                }),
-                                _vm._v(
-                                  " " +
-                                    _vm._s(
-                                      _vm.t(
-                                        "multi_product_combo",
-                                        "Multi-Product Combo"
-                                      )
-                                    )
-                                ),
-                              ]
-                            ),
-                            _vm._v(" "),
-                            _c("div", [
-                              _c("strong", [
-                                _vm._v(_vm._s(row.item.combo_condition)),
-                              ]),
-                              _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "small mb-1 text-start" },
+                            [
                               _c(
                                 "span",
-                                { staticClass: "badge bg-success ms-1" },
-                                [_vm._v(_vm._s(row.item.combo_reward))]
+                                {
+                                  staticClass:
+                                    "badge bg-primary text-white mb-1",
+                                },
+                                [
+                                  _c("i", {
+                                    staticClass: "fa fa-layer-group me-1",
+                                  }),
+                                  _vm._v(
+                                    " " +
+                                      _vm._s(
+                                        _vm.t(
+                                          "multi_product_combo",
+                                          "Multi-Product Combo"
+                                        )
+                                      )
+                                  ),
+                                ]
                               ),
-                            ]),
-                            _vm._v(" "),
-                            _c(
-                              "div",
-                              { staticClass: "text-muted small mt-1" },
-                              [
-                                _vm._v(
-                                  _vm._s(_vm.t("any_mix_of", "Any mix of")) +
-                                    ": " +
-                                    _vm._s(row.item.products.join(", "))
-                                ),
-                              ]
-                            ),
-                          ]),
+                              _vm._v(" "),
+                              row.item.tiers && row.item.tiers.length
+                                ? _vm._l(row.item.tiers, function (tier, ti) {
+                                    return _c("div", { key: "tier" + ti }, [
+                                      _c("strong", [
+                                        _vm._v(_vm._s(tier.conditions)),
+                                      ]),
+                                      _vm._v(" "),
+                                      _c(
+                                        "span",
+                                        {
+                                          staticClass: "badge bg-success ms-1",
+                                        },
+                                        [_vm._v(_vm._s(tier.reward))]
+                                      ),
+                                    ])
+                                  })
+                                : _c("div", [
+                                    _c("strong", [
+                                      _vm._v(_vm._s(row.item.combo_condition)),
+                                    ]),
+                                    _vm._v(" "),
+                                    _c(
+                                      "span",
+                                      { staticClass: "badge bg-success ms-1" },
+                                      [_vm._v(_vm._s(row.item.combo_reward))]
+                                    ),
+                                  ]),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                { staticClass: "text-muted small mt-1" },
+                                [
+                                  _vm._v(
+                                    _vm._s(_vm.t("any_mix_of", "Any mix of")) +
+                                      ": " +
+                                      _vm._s(row.item.products.join(", "))
+                                  ),
+                                ]
+                              ),
+                            ],
+                            2
+                          ),
                         ]
                       : row.item.products_detail &&
                         row.item.products_detail.length
@@ -711,20 +744,58 @@ var render = function () {
                             [
                               _c("strong", [_vm._v(_vm._s(p.product))]),
                               _vm._v(" "),
-                              p.conditions
-                                ? _c("span", { staticClass: "text-muted" }, [
-                                    _vm._v(" (" + _vm._s(p.conditions) + ")"),
-                                  ])
-                                : _vm._e(),
-                              _vm._v(" "),
-                              p.reward
-                                ? _c(
-                                    "span",
-                                    { staticClass: "badge bg-success ms-1" },
-                                    [_vm._v(_vm._s(p.reward))]
-                                  )
-                                : _vm._e(),
-                            ]
+                              row.item.tiers && row.item.tiers.length
+                                ? _vm._l(row.item.tiers, function (tier, ti) {
+                                    return _c(
+                                      "div",
+                                      {
+                                        key: "ptier" + ti,
+                                        staticClass: "ms-2",
+                                      },
+                                      [
+                                        _c(
+                                          "span",
+                                          { staticClass: "text-muted" },
+                                          [_vm._v(_vm._s(tier.conditions))]
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "span",
+                                          {
+                                            staticClass:
+                                              "badge bg-success ms-1",
+                                          },
+                                          [_vm._v(_vm._s(tier.reward))]
+                                        ),
+                                      ]
+                                    )
+                                  })
+                                : [
+                                    p.conditions
+                                      ? _c(
+                                          "span",
+                                          { staticClass: "text-muted" },
+                                          [
+                                            _vm._v(
+                                              " (" + _vm._s(p.conditions) + ")"
+                                            ),
+                                          ]
+                                        )
+                                      : _vm._e(),
+                                    _vm._v(" "),
+                                    p.reward
+                                      ? _c(
+                                          "span",
+                                          {
+                                            staticClass:
+                                              "badge bg-success ms-1",
+                                          },
+                                          [_vm._v(_vm._s(p.reward))]
+                                        )
+                                      : _vm._e(),
+                                  ],
+                            ],
+                            2
                           )
                         })
                       : [

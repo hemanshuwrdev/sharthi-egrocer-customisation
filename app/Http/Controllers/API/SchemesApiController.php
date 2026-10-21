@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Scheme;
 use App\Models\SchemeProduct;
 use App\Models\SchemeSlab;
+use App\Models\SchemeTier;
 use App\Models\SellerProduct;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,7 +27,7 @@ class SchemesApiController extends Controller
             return CommonHelper::responseError('seller_not_found');
         }
 
-        $query = Scheme::with(['schemeProducts.sellerProduct.masterProductVariant.masterProduct', 'schemeSlabs', 'buyProduct.masterProductVariant.masterProduct', 'freeProduct.masterProductVariant.masterProduct'])
+        $query = Scheme::with(array_merge(['schemeProducts.sellerProduct.masterProductVariant.masterProduct', 'schemeSlabs', 'buyProduct.masterProductVariant.masterProduct', 'freeProduct.masterProductVariant.masterProduct'], SchemeTier::tableExists() ? ['schemeTiers'] : []))
             ->where('seller_id', $sellerId)
             ->orderBy('id', 'DESC');
 
@@ -44,12 +45,12 @@ class SchemesApiController extends Controller
     public function edit($id)
     {
         $sellerId = $this->currentSellerId();
-        $scheme = Scheme::with([
+        $scheme = Scheme::with(array_merge([
             'schemeProducts.sellerProduct.masterProductVariant.masterProduct',
             'schemeProducts.sellerProduct.masterProductVariant.unit',
             'schemeProducts.sellerProduct.masterProductVariant.secondaryUnit',
             'schemeSlabs',
-        ])
+        ], SchemeTier::tableExists() ? ['schemeTiers'] : []))
             ->where('id', $id)->where('seller_id', $sellerId)->first();
         if (!$scheme) {
             return CommonHelper::responseError('scheme_not_found');
@@ -99,6 +100,14 @@ class SchemesApiController extends Controller
                 ];
             })->values(),
             'product_ids'            => $scheme->schemeProducts->pluck('seller_product_id'),
+            // Quantity tiers, lowest first — only for a scheme with 2+ (empty = the plain min/max/discount on
+            // `products`). Tier 1 is also what `products` carries, so clients that don't know tiers still work.
+            'tiers'                  => $scheme->isTiered() ? $scheme->schemeTiers->map(fn ($t) => [
+                'min_qty'        => (float) $t->min_qty,
+                'max_qty'        => $t->max_qty !== null ? (float) $t->max_qty : null,
+                'discount_value' => $t->discount_value !== null ? (float) $t->discount_value : null,
+                'free_qty'       => $t->free_qty !== null ? (float) $t->free_qty : null,
+            ])->values() : [],
             'slabs'                  => $scheme->schemeSlabs->map(fn ($sl) => [
                 'min_value'      => $sl->min_value,
                 'discount_type'  => $sl->discount_type,
@@ -253,6 +262,31 @@ class SchemesApiController extends Controller
             }
         }
 
+        // Quantity tiers (2+). Fewer than two is just the plain rule on the product rows.
+        $tiers = [];
+        $tiersInput = $request->input('tiers');
+        if (is_string($tiersInput)) {
+            $tiersInput = json_decode($tiersInput, true);
+        }
+        if (!$isBxgy && is_array($tiersInput) && count($tiersInput) > 1) {
+            if (!SchemeTier::tableExists()) {
+                return CommonHelper::responseError('Quantity tiers are not available yet — the database update (php artisan migrate) has not been run.');
+            }
+            if (!is_array($productsInput) || count($productsInput) === 0) {
+                return CommonHelper::responseError('Please select at least one product.');
+            }
+            [$tiers, $tierError] = self::normaliseTiers($tiersInput, $productsInput[0]['discount_type'] ?? 'percentage');
+            if ($tierError) {
+                return CommonHelper::responseError($tierError);
+            }
+        }
+
+        // A client that predates tiers sends no `tiers` at all; saving its copy of a tiered scheme would
+        // silently drop every tier but the first. Refuse instead of corrupting it.
+        if ($scheme && !$isBxgy && !$request->has('tiers') && $scheme->isTiered()) {
+            return CommonHelper::responseError('This scheme has quantity tiers this app version cannot edit. Please edit it from the web panel.');
+        }
+
         // Percentage discount cannot exceed 100%
         if (is_array($productsInput)) {
             foreach ($productsInput as $p) {
@@ -299,7 +333,7 @@ class SchemesApiController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($request, $sellerId, $isBxgy, $productsInput, &$scheme) {
+            DB::transaction(function () use ($request, $sellerId, $isBxgy, $productsInput, $tiers, &$scheme) {
                 $data = [
                     'seller_id'              => $sellerId,
                     'name'                   => $request->name,
@@ -324,6 +358,9 @@ class SchemesApiController extends Controller
                     $scheme->update($data);
                     $scheme->schemeProducts()->delete();
                     $scheme->schemeSlabs()->delete();
+                    if (SchemeTier::tableExists()) {
+                        $scheme->schemeTiers()->delete();
+                    }
                 } else {
                     $scheme = Scheme::create($data);
                 }
@@ -331,6 +368,13 @@ class SchemesApiController extends Controller
                 if (!$isBxgy) {
                     if (is_array($productsInput) && count($productsInput) > 0) {
                         foreach ($productsInput as $p) {
+                            // Tiered: the product rows carry tier 1 (the lowest range), whatever the client sent.
+                            if (!empty($tiers)) {
+                                $p['min_qty']        = $tiers[0]['min_qty'];
+                                $p['max_qty']        = $tiers[0]['max_qty'];
+                                $p['discount_value'] = $tiers[0]['discount_value'];
+                                $p['free_qty']       = $tiers[0]['free_qty'] ?? ($p['free_qty'] ?? null);
+                            }
                             $spId = (int) ($p['seller_product_id'] ?? $p['id'] ?? 0);
                             if ($spId > 0) {
                                 SchemeProduct::create([
@@ -350,6 +394,10 @@ class SchemesApiController extends Controller
                         foreach (array_unique(array_map('intval', (array) $request->product_ids)) as $spId) {
                             SchemeProduct::create(['scheme_id' => $scheme->id, 'seller_product_id' => $spId]);
                         }
+                    }
+
+                    foreach ($tiers as $tier) {
+                        SchemeTier::create(['scheme_id' => $scheme->id] + $tier);
                     }
 
                     if ($request->filled('slabs') && is_array($request->slabs)) {
@@ -373,6 +421,112 @@ class SchemesApiController extends Controller
             'id'      => $scheme->id,
             'message' => __('scheme_saved_successfully'),
         ]);
+    }
+
+    /**
+     * Clean, sorted tiers from the request, or [null, error]. Every tier needs a Min and an amount; the Max
+     * may be blank only on the last tier (no upper limit), and ranges must not overlap. The amount is what
+     * the scheme's discount type measures: free quantity for Free Product, otherwise the % / ₹ value.
+     *
+     * @return array{0: array, 1: ?string}
+     */
+    private static function normaliseTiers(array $input, string $discountType): array
+    {
+        $isFree = $discountType === 'free_product';
+        $tiers  = [];
+
+        foreach (array_values($input) as $i => $t) {
+            $n   = $i + 1;
+            $min = isset($t['min_qty']) && $t['min_qty'] !== '' ? (float) $t['min_qty'] : 0.0;
+            $max = isset($t['max_qty']) && $t['max_qty'] !== '' ? (float) $t['max_qty'] : null;
+            if ($min <= 0) {
+                return [[], "Tier {$n}: please enter a valid Min Quantity."];
+            }
+            if ($max !== null && $max < $min) {
+                return [[], "Tier {$n}: Max Quantity cannot be less than Min Quantity."];
+            }
+
+            $value = isset($t['discount_value']) && $t['discount_value'] !== '' ? (float) $t['discount_value'] : null;
+            $free  = isset($t['free_qty']) && $t['free_qty'] !== '' ? (float) $t['free_qty'] : null;
+            if ($isFree) {
+                if ($free === null || $free < 1) {
+                    return [[], "Tier {$n}: please enter the free quantity."];
+                }
+                $value = null;
+            } else {
+                if ($value === null || $value <= 0) {
+                    return [[], "Tier {$n}: please enter the discount amount."];
+                }
+                if (in_array($discountType, ['percentage', 'discounted_product'], true) && $value > 100) {
+                    return [[], 'percentage_discount_cannot_exceed_100'];
+                }
+                $free = null;
+            }
+
+            $tiers[] = ['min_qty' => $min, 'max_qty' => $max, 'discount_value' => $value, 'free_qty' => $free];
+        }
+
+        usort($tiers, fn ($a, $b) => $a['min_qty'] <=> $b['min_qty']);
+
+        $last = count($tiers) - 1;
+        foreach ($tiers as $i => $t) {
+            if ($i === $last) {
+                break;
+            }
+            $n = $i + 1;
+            if ($t['max_qty'] === null) {
+                return [[], "Tier {$n}: Max Quantity is required — only the last tier can have no upper limit."];
+            }
+            if ($tiers[$i + 1]['min_qty'] <= $t['max_qty']) {
+                return [[], 'Tier ' . ($n + 1) . ": Min Quantity must be more than Tier {$n}'s Max Quantity."];
+            }
+        }
+
+        return [$tiers, null];
+    }
+
+    /** Reward wording for a discount type — "₹321 off", "10% off", "Get 1 outer free". */
+    private static function rewardText(?string $type, $discountValue, $freeQty, ?string $freeBasis): string
+    {
+        return match ($type) {
+            'percentage'         => "{$discountValue}% off",
+            'flat'               => "₹{$discountValue} off",
+            'free_product'       => "Get {$freeQty} {$freeBasis} free",
+            'discounted_product' => "Get {$freeQty} {$freeBasis} @ {$discountValue}% off",
+            default              => '',
+        };
+    }
+
+    /** One line per tier for the scheme list — empty unless the scheme has 2+ tiers. */
+    private static function tierLines(Scheme $s, bool $combined): array
+    {
+        if (!$s->isTiered()) {
+            return [];
+        }
+
+        $first = $s->schemeProducts->first();
+        if (!$first) {
+            return [];
+        }
+
+        return $s->schemeTiers->map(function ($t) use ($first, $combined) {
+            $cond = [($combined ? 'Combined ≥ ' : '≥ ') . (float) $t->min_qty . ' ' . $first->qty_basis];
+            if ($t->max_qty !== null) {
+                $cond[] = '≤ ' . (float) $t->max_qty . ' ' . $first->qty_basis;
+            }
+
+            return [
+                'min_qty'    => (float) $t->min_qty,
+                'max_qty'    => $t->max_qty !== null ? (float) $t->max_qty : null,
+                'conditions' => implode(', ', $cond),
+                'reward'     => self::rewardText(
+                    $first->discount_type,
+                    $t->discount_value !== null ? (float) $t->discount_value : $first->discount_value,
+                    $t->free_qty !== null ? (float) $t->free_qty : $first->free_qty,
+                    $first->free_qty_basis
+                ),
+            ];
+        })->values()->all();
     }
 
     private static function formatScheme(Scheme $s): array
@@ -452,6 +606,9 @@ class SchemesApiController extends Controller
             'is_multi_combo'  => $isMultiCombo,
             'combo_condition' => $comboCondition,
             'combo_reward'    => $comboReward,
+            // Every quantity tier, lowest first; empty unless the scheme has 2+ (then the fields above and
+            // `products_detail` show tier 1 only).
+            'tiers'           => !$isBxgy ? self::tierLines($s, $isMultiCombo) : [],
             // BXGY fields (null for group types)
             'buy_product'     => $isBxgy ? $productName($s->buyProduct)  : null,
             'buy_qty'         => $isBxgy ? $s->buy_qty                   : null,

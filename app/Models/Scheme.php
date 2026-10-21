@@ -49,6 +49,34 @@ class Scheme extends Model
         return $this->hasMany(SchemeSlab::class);
     }
 
+    /** Quantity tiers, lowest range first. Only schemes with two or more have rows — see isTiered(). */
+    public function schemeTiers()
+    {
+        return $this->hasMany(SchemeTier::class)->orderBy('min_qty');
+    }
+
+    /**
+     * Two or more quantity tiers. A scheme with one tier (or none) is just the min / max / discount on its
+     * product rows and behaves exactly as it always has; only a tiered scheme picks the tier that holds the
+     * quantity — and then the ranges are strict: outside every tier there is no discount.
+     */
+    public function isTiered(): bool
+    {
+        return SchemeTier::tableExists() && $this->schemeTiers->count() > 1;
+    }
+
+    /** The tier whose min..max holds $qty (blank max = no upper limit), or null when none does. */
+    public function tierForQty(float $qty): ?SchemeTier
+    {
+        foreach ($this->schemeTiers as $tier) {
+            if ($qty >= (float) $tier->min_qty && ($tier->max_qty === null || $qty <= (float) $tier->max_qty)) {
+                return $tier;
+            }
+        }
+
+        return null;
+    }
+
     public function buyProduct()
     {
         return $this->belongsTo(SellerProduct::class, 'buy_seller_product_id');

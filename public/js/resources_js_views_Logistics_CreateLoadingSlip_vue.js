@@ -14,6 +14,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var v_select2_component__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! v-select2-component */ "./node_modules/v-select2-component/dist/Select2.esm.js");
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter); }
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
@@ -305,6 +311,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
   data: function data() {
     return {
       orders: [],
+      // every order loaded so far, by id — the ticked orders stay counted (weight, value) while a filter hides them
+      knownOrders: {},
       areas: [],
       vehicles: [],
       drivers: [],
@@ -462,8 +470,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }).then(function (res) {
         if (res.data.status === 1) {
           _this5.orders = res.data.data;
-          _this5.selectedOrderIds = [];
-          _this5.selectAll = false;
+          var known = _objectSpread({}, _this5.knownOrders);
+          _this5.orders.forEach(function (o) {
+            known[o.id] = o;
+          });
+          _this5.knownOrders = known;
+          // ticked orders are kept across filter changes (area, rescheduled, products) — only the
+          // list on screen changes, so orders picked under another filter are not lost
           _this5.calculateWeightSum();
         }
       });
@@ -485,25 +498,30 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.calculateWeightSum();
     },
     toggleSelectAll: function toggleSelectAll() {
+      // acts on the orders listed now; ticks made under another filter stay as they are
+      var visibleIds = this.orders.map(function (o) {
+        return o.id;
+      });
       if (this.selectAll) {
-        this.selectedOrderIds = this.orders.map(function (o) {
-          return o.id;
-        });
+        this.selectedOrderIds = _toConsumableArray(new Set([].concat(_toConsumableArray(this.selectedOrderIds), _toConsumableArray(visibleIds))));
       } else {
-        this.selectedOrderIds = [];
+        this.selectedOrderIds = this.selectedOrderIds.filter(function (id) {
+          return !visibleIds.includes(id);
+        });
       }
       this.calculateWeightSum();
     },
     calculateWeightSum: function calculateWeightSum() {
       var _this7 = this,
         _this$selectedVehicle;
-      var sum = 0;
-      this.orders.forEach(function (order) {
-        if (_this7.selectedOrderIds.includes(order.id)) {
-          sum += parseFloat(order.weight || 0);
-        }
-      });
+      var sum = this.selectedOrderIds.reduce(function (acc, id) {
+        return acc + parseFloat((_this7.knownOrders[id] || {}).weight || 0);
+      }, 0);
       this.totalSelectedWeight = parseFloat(sum.toFixed(2));
+      // header checkbox = every listed order is ticked
+      this.selectAll = this.orders.length > 0 && this.orders.every(function (o) {
+        return _this7.selectedOrderIds.includes(o.id);
+      });
       var capacity = parseFloat(((_this$selectedVehicle = this.selectedVehicle) === null || _this$selectedVehicle === void 0 ? void 0 : _this$selectedVehicle.capacity) || 0);
       if (this.selectedVehicle && capacity > 0) {
         this.loadPercent = Math.min(this.totalSelectedWeight / capacity * 100, 120);

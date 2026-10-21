@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Scheme;
 use App\Models\SchemeSlab;
+use App\Models\SchemeTier;
 use App\Models\SellerProduct;
 
 class SchemeEngine
@@ -49,12 +50,12 @@ class SchemeEngine
 
         $schemes = Scheme::active()
             ->where('seller_id', $sellerId)
-            ->with([
+            ->with(array_merge([
                 'schemeProducts.sellerProduct.masterProductVariant.masterProduct',
                 'schemeProducts.sellerProduct.masterProductVariant.unit',
                 'schemeProducts.sellerProduct.masterProductVariant.secondaryUnit',
                 'schemeSlabs',
-            ])
+            ], SchemeTier::tableExists() ? ['schemeTiers'] : []))
             ->get();
 
         $results = [];
@@ -877,6 +878,19 @@ class SchemeEngine
                 ];
             }
 
+            // Tiered scheme: the tier holding the combined qty decides range and amount (the discount
+            // type and qty basis stay the scheme's own). No tier holds it = no discount.
+            if ($scheme->isTiered()) {
+                $tier = $scheme->tierForQty($combinedEffectiveQty);
+                if (!$tier) {
+                    return null;
+                }
+                $minQty  = (float) $tier->min_qty;
+                $maxQty  = $tier->max_qty !== null ? (float) $tier->max_qty : null;
+                $discVal = $tier->discount_value !== null ? (float) $tier->discount_value : $discVal;
+                $freeQty = $tier->free_qty !== null ? (float) $tier->free_qty : $freeQty;
+            }
+
             if ($minQty > 0 && $combinedEffectiveQty < $minQty) {
                 return null;
             }
@@ -976,12 +990,24 @@ class SchemeEngine
                     ? floor($cartQty / $secVal)
                     : $cartQty;
 
-                $minQty = (float) ($sp->min_qty ?? 0);
+                // Tiered scheme: the tier holding this qty decides range and amount (discount type and
+                // qty basis stay the row's own); no tier holds it = no discount for this row.
+                $tier = null;
+                if ($scheme->isTiered()) {
+                    $tier = $scheme->tierForQty($effectiveQty);
+                    if (!$tier) {
+                        continue;
+                    }
+                }
+                $rowDiscVal = $tier && $tier->discount_value !== null ? (float) $tier->discount_value : (float) ($sp->discount_value ?? 0);
+                $rowFreeQty = $tier && $tier->free_qty !== null ? (float) $tier->free_qty : (float) ($sp->free_qty ?? 1);
+
+                $minQty = $tier ? (float) $tier->min_qty : (float) ($sp->min_qty ?? 0);
                 if ($minQty > 0 && $effectiveQty < $minQty) {
                     continue;
                 }
 
-                $maxQty = $sp->max_qty !== null ? (float) $sp->max_qty : null;
+                $maxQty = $tier ? ($tier->max_qty !== null ? (float) $tier->max_qty : null) : ($sp->max_qty !== null ? (float) $sp->max_qty : null);
                 if ($maxQty !== null && $maxQty > 0 && $effectiveQty > $maxQty) {
                     $effectiveQty = $maxQty;
                 }
@@ -1001,7 +1027,7 @@ class SchemeEngine
 
                 if ($discType === 'percentage') {
                     $base = ($isPreTax ? $actualLine : $lineTotal) * $eligibleRatio;
-                    $pct = (float) ($sp->discount_value ?? 0);
+                    $pct = $rowDiscVal;
                     if ($pct > 0) {
                         $rowDisc = round($base * min($pct, 100) / 100, 2);
                         $piece = min($rowDisc, $lineTotal);
@@ -1009,7 +1035,7 @@ class SchemeEngine
                         $otherPart += $piece;
                     }
                 } elseif ($discType === 'flat') {
-                    $flat = (float) ($sp->discount_value ?? 0);
+                    $flat = $rowDiscVal;
                     if ($flat > 0) {
                         [$off, $pre] = self::flatDiscount($flat, $lineTotal, $actualLine, $isPreTax);
                         $schemeDiscount += $off;
@@ -1020,7 +1046,7 @@ class SchemeEngine
                         }
                     }
                 } elseif ($discType === 'free_product') {
-                    $rawFree = (float) ($sp->free_qty ?? 1);
+                    $rawFree = $rowFreeQty;
                     $freeUnits = ($sp->free_qty_basis === 'outer')
                         ? ($rawFree * $secVal)
                         : $rawFree;
@@ -1043,7 +1069,7 @@ class SchemeEngine
                         ? ($discUnits * $secVal)
                         : $discUnits;
 
-                    $pct = (float) ($sp->discount_value ?? 0);
+                    $pct = $rowDiscVal;
                     if ($pct > 0 && $freeUnitCount > 0) {
                         $discountedAmount = round($freeUnitCount * $unitPrice * min($pct, 100) / 100, 2);
                         $piece = min($discountedAmount, $lineTotal);

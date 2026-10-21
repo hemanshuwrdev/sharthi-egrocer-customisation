@@ -13,6 +13,9 @@ class Notification extends Model
     private $image;
     public $timestamps = false;
 
+    // The card facts for order / payment / OTP notifications (see CustomerNotificationService).
+    protected $casts = ['data' => 'array'];
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

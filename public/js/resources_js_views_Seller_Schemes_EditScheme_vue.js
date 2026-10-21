@@ -17,9 +17,127 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var vue_multiselect__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vue-multiselect */ "./node_modules/vue-multiselect/dist/vue-multiselect.min.js");
 /* harmony import */ var vue_multiselect__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(vue_multiselect__WEBPACK_IMPORTED_MODULE_2__);
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter); }
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -558,6 +676,10 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       global_discount_value: 10,
       global_free_qty: 1,
       global_free_qty_basis: 'inner',
+      // Quantity tiers AFTER the first. Tier 1 is the Min / Max / discount already on screen (the shared
+      // fields of a combined scheme, or the single product's row); each extra tier only changes the
+      // range and the amount — qty basis and discount type stay the scheme's own.
+      extraTiers: [],
       availableProducts: [],
       isLoading: false,
       showProductModal: false,
@@ -569,6 +691,31 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     // English text for the Discount Option explanation (used until the language JSON has the key).
     discountOptionHint: function discountOptionHint() {
       return 'Discount Option decides what amount the discount value is measured on. ' + 'Before tax: measured on the price before GST (Net Taxable Amount), and GST is then calculated on the reduced amount ' + "- e.g. a flat \u20B9100 discount at 5% GST saves the customer \u20B9105 in total. " + 'After tax: measured on the final Total that already includes GST, and GST is not changed ' + "- e.g. a flat \u20B9100 discount saves the customer \u20B9100.";
+    },
+    // What the extra tiers are measured in: the scheme's own discount type, qty basis and units.
+    tierDiscountType: function tierDiscountType() {
+      if (this.record.products.length > 1) return this.global_discount_type;
+      return this.record.products[0] ? this.record.products[0].discount_type : 'percentage';
+    },
+    tierTypeLabel: function tierTypeLabel() {
+      var labels = {
+        percentage: this.t('discount_percentage', 'Discount %'),
+        flat: this.t('flat_amount', 'Flat (₹)'),
+        free_product: this.t('free_product', 'Free Product'),
+        discounted_product: this.t('discounted_product', 'Discounted Product')
+      };
+      return labels[this.tierDiscountType] || '';
+    },
+    tierFreeBasisLabel: function tierFreeBasisLabel() {
+      var basis = this.record.products.length > 1 ? this.global_free_qty_basis : (this.record.products[0] || {}).free_qty_basis;
+      return basis === 'outer' ? this.t('outer', 'Outer') : this.t('inner', 'Inner');
+    },
+    tierUnitLabel: function tierUnitLabel() {
+      if (this.record.products.length > 1) {
+        return this.global_qty_basis === 'outer' ? this.t('outer', 'Outer') : this.t('inner', 'Inner');
+      }
+      var p = this.record.products[0] || {};
+      return p.qty_basis === 'outer' ? p.secondary_unit || 'Outer' : p.uom || 'Units';
     },
     // Products a retailer can actually buy. A "free item only" product can't be bought, so it can
     // never trigger a scheme — keep it out of the Buy picker and the group-discount modal. (The
@@ -666,6 +813,14 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
           _this2.record.free_product = _this2.availableProducts.find(function (p) {
             return p.id == r.free_seller_product_id;
           }) || null;
+          _this2.extraTiers = r.tiers && r.tiers.length > 1 ? r.tiers.slice(1).map(function (t) {
+            return {
+              min_qty: t.min_qty,
+              max_qty: t.max_qty,
+              discount_value: t.discount_value,
+              free_qty: t.free_qty
+            };
+          }) : [];
           if (r.products && r.products.length > 0) {
             if (r.products.length > 1) {
               var p0 = r.products[0];
@@ -809,7 +964,83 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         p.qty_basis = basis;
       });
     },
+    // The extra tiers hold an amount in the OLD discount type (₹ vs % vs free qty) — meaningless after a
+    // type change, so they go back to empty for the distributor to fill in.
+    resetTierAmounts: function resetTierAmounts() {
+      var _this4 = this;
+      this.extraTiers.forEach(function (t) {
+        t.discount_value = null;
+        t.free_qty = _this4.tierDiscountType === 'free_product' ? 1 : null;
+      });
+    },
+    // Tier 1 = what is already on screen (shared fields of a combined scheme, or the single product's row).
+    firstTier: function firstTier() {
+      if (this.record.products.length > 1) {
+        return {
+          min_qty: this.global_min_qty,
+          max_qty: this.global_max_qty,
+          discount_value: this.global_discount_value,
+          free_qty: this.global_free_qty
+        };
+      }
+      var p = this.record.products[0] || {};
+      return {
+        min_qty: p.min_qty,
+        max_qty: p.max_qty,
+        discount_value: p.discount_value,
+        free_qty: p.free_qty
+      };
+    },
+    addTier: function addTier() {
+      if (this.extraTiers.length >= 9) {
+        this.showError(this.t('tier_limit', 'A scheme can have at most 10 tiers.'));
+        return;
+      }
+      var last = this.extraTiers.length ? this.extraTiers[this.extraTiers.length - 1] : this.firstTier();
+      if (!last.max_qty || Number(last.max_qty) <= 0) {
+        this.showError(this.t('tier_set_max_first', 'Enter the Max Quantity of the last tier before adding another tier.'));
+        return;
+      }
+      this.extraTiers.push({
+        min_qty: Number(last.max_qty) + 1,
+        max_qty: null,
+        discount_value: null,
+        free_qty: this.tierDiscountType === 'free_product' ? 1 : null
+      });
+    },
+    removeTier: function removeTier(index) {
+      this.extraTiers.splice(index, 1);
+    },
+    // First problem in the tier list (tier 1 included) as a message, or '' when it is fine. Mirrors the
+    // server rules: every tier needs Min and an amount, only the last may have no Max, ranges never overlap.
+    validateTiers: function validateTiers() {
+      if (!this.extraTiers.length) return '';
+      var rows = [this.firstTier()].concat(_toConsumableArray(this.extraTiers));
+      var type = this.tierDiscountType;
+      var blank = function blank(v) {
+        return v === null || v === undefined || v === '';
+      };
+      for (var i = 0; i < rows.length; i++) {
+        var r = rows[i];
+        var n = i + 1;
+        var isLast = i === rows.length - 1;
+        if (blank(r.min_qty) || Number(r.min_qty) <= 0) return 'Tier ' + n + ': please enter a valid Min Quantity.';
+        if (!blank(r.max_qty) && Number(r.max_qty) < Number(r.min_qty)) return 'Tier ' + n + ': Max Quantity cannot be less than Min Quantity.';
+        if (!isLast && (blank(r.max_qty) || Number(r.max_qty) <= 0)) return 'Tier ' + n + ': Max Quantity is required - only the last tier can have no upper limit.';
+        if (i > 0) {
+          if (Number(r.min_qty) <= Number(rows[i - 1].max_qty)) return 'Tier ' + n + ": Min Quantity must be more than Tier " + (n - 1) + "'s Max Quantity.";
+          if (type === 'free_product') {
+            if (blank(r.free_qty) || Number(r.free_qty) < 1) return 'Tier ' + n + ': please enter the free quantity.';
+          } else {
+            if (blank(r.discount_value) || Number(r.discount_value) <= 0) return 'Tier ' + n + ': please enter the discount amount.';
+            if ((type === 'percentage' || type === 'discounted_product') && Number(r.discount_value) > 100) return 'Tier ' + n + ': discount percentage cannot exceed 100%.';
+          }
+        }
+      }
+      return '';
+    },
     onGlobalDiscountTypeChange: function onGlobalDiscountTypeChange() {
+      this.resetTierAmounts();
       if (this.global_discount_type === 'discounted_product') {
         if (!this.global_free_qty || this.global_free_qty < 1) this.global_free_qty = 1;
         if (!this.global_free_qty_basis) this.global_free_qty_basis = 'outer';
@@ -824,6 +1055,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       }
     },
     onDiscountTypeChange: function onDiscountTypeChange(item) {
+      this.resetTierAmounts();
       if (item.discount_type === 'discounted_product') {
         if (!item.free_qty || item.free_qty < 1) item.free_qty = 1;
         if (!item.free_qty_basis) item.free_qty_basis = 'outer';
@@ -851,7 +1083,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       }
     },
     saveRecord: function saveRecord() {
-      var _this4 = this;
+      var _this5 = this;
       if (this.record.type === 'buy_x_get_y') {
         if (!this.record.buy_product || !this.record.free_product) {
           this.showError("Please select buy and free products.");
@@ -882,13 +1114,13 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
           // Sync all products with global multi-product settings
           this.record.products.forEach(function (p) {
-            p.qty_basis = _this4.global_qty_basis;
-            p.min_qty = _this4.global_min_qty;
-            p.max_qty = _this4.global_max_qty;
-            p.discount_type = _this4.global_discount_type;
-            p.discount_value = _this4.global_discount_value;
-            p.free_qty = _this4.global_free_qty;
-            p.free_qty_basis = _this4.global_free_qty_basis;
+            p.qty_basis = _this5.global_qty_basis;
+            p.min_qty = _this5.global_min_qty;
+            p.max_qty = _this5.global_max_qty;
+            p.discount_type = _this5.global_discount_type;
+            p.discount_value = _this5.global_discount_value;
+            p.free_qty = _this5.global_free_qty;
+            p.free_qty_basis = _this5.global_free_qty_basis;
           });
         } else {
           var p = this.record.products[0];
@@ -908,6 +1140,13 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
             this.showError("Discount percentage cannot exceed 100% for " + p.name);
             return;
           }
+        }
+      }
+      if (this.record.type !== 'buy_x_get_y') {
+        var tierError = this.validateTiers();
+        if (tierError) {
+          this.showError(tierError);
+          return;
         }
       }
       this.isLoading = true;
@@ -944,28 +1183,37 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
             free_qty_basis: p.free_qty_basis
           };
         });
+        // Always sent (empty = a plain single-rule scheme) so the server knows this form handles tiers.
+        payload.tiers = this.extraTiers.length ? [this.firstTier()].concat(_toConsumableArray(this.extraTiers)).map(function (t) {
+          return {
+            min_qty: t.min_qty,
+            max_qty: t.max_qty === '' || t.max_qty === undefined ? null : t.max_qty,
+            discount_value: t.discount_value,
+            free_qty: t.free_qty
+          };
+        }) : [];
       }
       axios__WEBPACK_IMPORTED_MODULE_1___default().post(url, payload).then(function (response) {
         var data = response.data;
         if (data.status === 1) {
-          _this4.showMessage("success", data.message);
+          _this5.showMessage("success", data.message);
           setTimeout(function () {
-            _this4.$router.push({
+            _this5.$router.push({
               path: '/seller/schemes'
             });
           }, 1000);
         } else {
-          _this4.showError(data.message);
-          _this4.isLoading = false;
+          _this5.showError(data.message);
+          _this5.isLoading = false;
         }
       })["catch"](function (error) {
-        _this4.isLoading = false;
+        _this5.isLoading = false;
         if (error.response && error.response.data && error.response.data.message) {
-          _this4.showError(error.response.data.message);
+          _this5.showError(error.response.data.message);
         } else if (error.message) {
-          _this4.showError(error.message);
+          _this5.showError(error.message);
         } else {
-          _this4.showError("Something went wrong!");
+          _this5.showError("Something went wrong!");
         }
       });
     }
@@ -991,7 +1239,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.scheme-form-page[data-v-82b5b35e] {\n    padding-bottom: 30px;\n}\n.scheme-card[data-v-82b5b35e] {\n    border: 1px solid #e2e8f0;\n    border-radius: 12px;\n    background-color: #ffffff;\n}\n.step-num-badge[data-v-82b5b35e] {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    width: 28px;\n    height: 28px;\n    border-radius: 50%;\n    background-color: #2563eb;\n    color: #ffffff;\n    font-size: 14px;\n    font-weight: 700;\n}\n.product-thumb[data-v-82b5b35e] {\n    width: 42px;\n    height: 42px;\n    -o-object-fit: cover;\n       object-fit: cover;\n}\n.product-name-text[data-v-82b5b35e] {\n    font-size: 13.5px;\n    line-height: 1.25;\n}\n.scheme-products-table th[data-v-82b5b35e] {\n    font-size: 12px;\n    text-transform: uppercase;\n    letter-spacing: 0.5px;\n    padding: 12px 10px;\n}\n.scheme-products-table td[data-v-82b5b35e] {\n    padding: 10px 8px;\n    vertical-align: middle;\n}\n.cursor-pointer[data-v-82b5b35e] {\n    cursor: pointer;\n}\n.hover-bg[data-v-82b5b35e]:hover {\n    background-color: #f8fafc;\n}\n.action-trash-btn[data-v-82b5b35e] {\n    width: 32px;\n    height: 32px;\n    padding: 0;\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    border-radius: 6px;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.scheme-form-page[data-v-82b5b35e] {\n    padding-bottom: 30px;\n}\n.scheme-card[data-v-82b5b35e] {\n    border: 1px solid #e2e8f0;\n    border-radius: 12px;\n    background-color: #ffffff;\n}\n.step-num-badge[data-v-82b5b35e] {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    width: 28px;\n    height: 28px;\n    border-radius: 50%;\n    background-color: #2563eb;\n    color: #ffffff;\n    font-size: 14px;\n    font-weight: 700;\n}\n.product-thumb[data-v-82b5b35e] {\n    width: 42px;\n    height: 42px;\n    -o-object-fit: cover;\n       object-fit: cover;\n}\n.product-name-text[data-v-82b5b35e] {\n    font-size: 13.5px;\n    line-height: 1.25;\n}\n.scheme-products-table th[data-v-82b5b35e] {\n    font-size: 12px;\n    text-transform: uppercase;\n    letter-spacing: 0.5px;\n    padding: 12px 10px;\n}\n.scheme-products-table td[data-v-82b5b35e] {\n    padding: 10px 8px;\n    vertical-align: middle;\n}\n.cursor-pointer[data-v-82b5b35e] {\n    cursor: pointer;\n}\n.scheme-tier-row[data-v-82b5b35e] {\n    margin-top: 0;\n    padding-top: 10px;\n    border-top: 1px dashed #cbd5e1;\n}\n.tier-type-pill[data-v-82b5b35e] {\n    cursor: default;\n    -webkit-user-select: none;\n       -moz-user-select: none;\n            user-select: none;\n}\n.hover-bg[data-v-82b5b35e]:hover {\n    background-color: #f8fafc;\n}\n.action-trash-btn[data-v-82b5b35e] {\n    width: 32px;\n    height: 32px;\n    padding: 0;\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    border-radius: 6px;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -3115,13 +3363,551 @@ var render = function () {
                                           ),
                                         ]
                                       : _vm._e(),
+                                    _vm._v(" "),
+                                    !_vm.extraTiers.length
+                                      ? _c(
+                                          "button",
+                                          {
+                                            staticClass:
+                                              "btn btn-outline-primary btn-sm flex-shrink-0 tier-add-btn",
+                                            attrs: {
+                                              type: "button",
+                                              title: _vm.t(
+                                                "add_tier",
+                                                "Add tier"
+                                              ),
+                                            },
+                                            on: { click: _vm.addTier },
+                                          },
+                                          [
+                                            _c("i", {
+                                              staticClass: "fa fa-plus",
+                                            }),
+                                            _c(
+                                              "span",
+                                              {
+                                                staticClass:
+                                                  "d-none d-xl-inline ms-1",
+                                              },
+                                              [
+                                                _vm._v(
+                                                  _vm._s(
+                                                    _vm.t(
+                                                      "add_tier",
+                                                      "Add tier"
+                                                    )
+                                                  )
+                                                ),
+                                              ]
+                                            ),
+                                          ]
+                                        )
+                                      : _vm._e(),
                                   ],
                                   2
                                 ),
                               ]),
                             ]
                           ),
-                        ]
+                          _vm._v(" "),
+                          _vm._l(_vm.extraTiers, function (tier, ti) {
+                            return _c(
+                              "div",
+                              {
+                                key: "ct" + ti,
+                                staticClass:
+                                  "row g-3 align-items-center scheme-tier-row",
+                              },
+                              [
+                                _c(
+                                  "div",
+                                  { staticClass: "col-lg-3 col-md-4 col-sm-6" },
+                                  [
+                                    _c(
+                                      "span",
+                                      {
+                                        staticClass:
+                                          "badge bg-light text-dark border px-2 py-2",
+                                      },
+                                      [
+                                        _c("i", {
+                                          staticClass:
+                                            "fa fa-layer-group me-1 text-primary",
+                                        }),
+                                        _vm._v(
+                                          _vm._s(_vm.t("tier", "Tier")) +
+                                            " " +
+                                            _vm._s(ti + 2)
+                                        ),
+                                      ]
+                                    ),
+                                  ]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  { staticClass: "col-lg-2 col-md-4 col-sm-6" },
+                                  [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "input-group input-group-sm",
+                                      },
+                                      [
+                                        _c("input", {
+                                          directives: [
+                                            {
+                                              name: "model",
+                                              rawName: "v-model",
+                                              value: tier.min_qty,
+                                              expression: "tier.min_qty",
+                                            },
+                                          ],
+                                          staticClass:
+                                            "form-control text-center fw-bold",
+                                          attrs: {
+                                            type: "number",
+                                            min: "0.01",
+                                            step: "any",
+                                            placeholder: "Min",
+                                          },
+                                          domProps: { value: tier.min_qty },
+                                          on: {
+                                            input: function ($event) {
+                                              if ($event.target.composing) {
+                                                return
+                                              }
+                                              _vm.$set(
+                                                tier,
+                                                "min_qty",
+                                                $event.target.value
+                                              )
+                                            },
+                                          },
+                                        }),
+                                        _vm._v(" "),
+                                        _c(
+                                          "span",
+                                          {
+                                            staticClass:
+                                              "input-group-text bg-white text-muted px-2 small",
+                                          },
+                                          [_vm._v(_vm._s(_vm.tierUnitLabel))]
+                                        ),
+                                      ]
+                                    ),
+                                  ]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  { staticClass: "col-lg-2 col-md-4 col-sm-6" },
+                                  [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "input-group input-group-sm",
+                                      },
+                                      [
+                                        _c("input", {
+                                          directives: [
+                                            {
+                                              name: "model",
+                                              rawName: "v-model",
+                                              value: tier.max_qty,
+                                              expression: "tier.max_qty",
+                                            },
+                                          ],
+                                          staticClass:
+                                            "form-control text-center",
+                                          attrs: {
+                                            type: "number",
+                                            min: "0.01",
+                                            step: "any",
+                                            placeholder:
+                                              ti === _vm.extraTiers.length - 1
+                                                ? _vm.t("no_limit", "No limit")
+                                                : "Max",
+                                          },
+                                          domProps: { value: tier.max_qty },
+                                          on: {
+                                            input: function ($event) {
+                                              if ($event.target.composing) {
+                                                return
+                                              }
+                                              _vm.$set(
+                                                tier,
+                                                "max_qty",
+                                                $event.target.value
+                                              )
+                                            },
+                                          },
+                                        }),
+                                        _vm._v(" "),
+                                        _c(
+                                          "span",
+                                          {
+                                            staticClass:
+                                              "input-group-text bg-white text-muted px-2 small",
+                                          },
+                                          [_vm._v(_vm._s(_vm.tierUnitLabel))]
+                                        ),
+                                      ]
+                                    ),
+                                  ]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  { staticClass: "col-lg-5 col-md-12" },
+                                  [
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "d-flex align-items-center gap-2 flex-nowrap",
+                                      },
+                                      [
+                                        _c(
+                                          "div",
+                                          {
+                                            staticClass:
+                                              "form-control form-control-sm bg-light text-muted tier-type-pill",
+                                            staticStyle: {
+                                              width: "160px",
+                                              "flex-shrink": "0",
+                                            },
+                                          },
+                                          [_vm._v(_vm._s(_vm.tierTypeLabel))]
+                                        ),
+                                        _vm._v(" "),
+                                        _vm.tierDiscountType === "flat"
+                                          ? [
+                                              _c(
+                                                "div",
+                                                {
+                                                  staticClass:
+                                                    "input-group input-group-sm flex-nowrap",
+                                                  staticStyle: {
+                                                    width: "130px",
+                                                    "flex-shrink": "0",
+                                                  },
+                                                },
+                                                [
+                                                  _c("input", {
+                                                    directives: [
+                                                      {
+                                                        name: "model",
+                                                        rawName: "v-model",
+                                                        value:
+                                                          tier.discount_value,
+                                                        expression:
+                                                          "tier.discount_value",
+                                                      },
+                                                    ],
+                                                    staticClass:
+                                                      "form-control text-center fw-bold",
+                                                    attrs: {
+                                                      type: "number",
+                                                      step: "0.01",
+                                                      min: "0.01",
+                                                      placeholder: "Amount",
+                                                    },
+                                                    domProps: {
+                                                      value:
+                                                        tier.discount_value,
+                                                    },
+                                                    on: {
+                                                      input: function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          tier,
+                                                          "discount_value",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                    },
+                                                  }),
+                                                  _vm._v(" "),
+                                                  _c(
+                                                    "span",
+                                                    {
+                                                      staticClass:
+                                                        "input-group-text bg-white text-muted px-2",
+                                                    },
+                                                    [_vm._v("₹")]
+                                                  ),
+                                                ]
+                                              ),
+                                            ]
+                                          : _vm.tierDiscountType ===
+                                            "free_product"
+                                          ? [
+                                              _c(
+                                                "div",
+                                                {
+                                                  staticClass:
+                                                    "d-flex align-items-center gap-1 flex-nowrap flex-shrink-0",
+                                                },
+                                                [
+                                                  _c("input", {
+                                                    directives: [
+                                                      {
+                                                        name: "model",
+                                                        rawName: "v-model",
+                                                        value: tier.free_qty,
+                                                        expression:
+                                                          "tier.free_qty",
+                                                      },
+                                                    ],
+                                                    staticClass:
+                                                      "form-control form-control-sm text-center fw-bold",
+                                                    staticStyle: {
+                                                      width: "55px",
+                                                      "flex-shrink": "0",
+                                                    },
+                                                    attrs: {
+                                                      type: "number",
+                                                      step: "1",
+                                                      min: "1",
+                                                      placeholder: "1",
+                                                    },
+                                                    domProps: {
+                                                      value: tier.free_qty,
+                                                    },
+                                                    on: {
+                                                      input: function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          tier,
+                                                          "free_qty",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                    },
+                                                  }),
+                                                  _vm._v(" "),
+                                                  _c(
+                                                    "span",
+                                                    {
+                                                      staticClass:
+                                                        "text-muted small",
+                                                    },
+                                                    [
+                                                      _vm._v(
+                                                        _vm._s(
+                                                          _vm.tierFreeBasisLabel
+                                                        )
+                                                      ),
+                                                    ]
+                                                  ),
+                                                  _vm._v(" "),
+                                                  _c(
+                                                    "span",
+                                                    {
+                                                      staticClass:
+                                                        "badge bg-success text-white ms-1",
+                                                    },
+                                                    [
+                                                      _vm._v(
+                                                        _vm._s(
+                                                          _vm.t("free", "FREE")
+                                                        )
+                                                      ),
+                                                    ]
+                                                  ),
+                                                ]
+                                              ),
+                                            ]
+                                          : [
+                                              _c(
+                                                "div",
+                                                {
+                                                  staticClass:
+                                                    "input-group input-group-sm flex-nowrap",
+                                                  staticStyle: {
+                                                    width: "120px",
+                                                    "flex-shrink": "0",
+                                                  },
+                                                },
+                                                [
+                                                  _c("input", {
+                                                    directives: [
+                                                      {
+                                                        name: "model",
+                                                        rawName: "v-model",
+                                                        value:
+                                                          tier.discount_value,
+                                                        expression:
+                                                          "tier.discount_value",
+                                                      },
+                                                    ],
+                                                    staticClass:
+                                                      "form-control text-center fw-bold",
+                                                    attrs: {
+                                                      type: "number",
+                                                      step: "0.01",
+                                                      min: "0.01",
+                                                      max: "100",
+                                                      placeholder: "%",
+                                                    },
+                                                    domProps: {
+                                                      value:
+                                                        tier.discount_value,
+                                                    },
+                                                    on: {
+                                                      input: function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          tier,
+                                                          "discount_value",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                    },
+                                                  }),
+                                                  _vm._v(" "),
+                                                  _c(
+                                                    "span",
+                                                    {
+                                                      staticClass:
+                                                        "input-group-text bg-white text-muted px-2",
+                                                    },
+                                                    [_vm._v("%")]
+                                                  ),
+                                                ]
+                                              ),
+                                              _vm._v(" "),
+                                              _vm.tierDiscountType ===
+                                              "discounted_product"
+                                                ? _c(
+                                                    "span",
+                                                    {
+                                                      staticClass:
+                                                        "text-muted small fw-semibold flex-shrink-0",
+                                                    },
+                                                    [
+                                                      _vm._v(
+                                                        _vm._s(
+                                                          _vm.t("off", "off")
+                                                        )
+                                                      ),
+                                                    ]
+                                                  )
+                                                : _vm._e(),
+                                            ],
+                                        _vm._v(" "),
+                                        _c(
+                                          "button",
+                                          {
+                                            staticClass:
+                                              "btn btn-sm btn-outline-danger action-trash-btn flex-shrink-0",
+                                            attrs: {
+                                              type: "button",
+                                              title: _vm.t(
+                                                "remove_tier",
+                                                "Remove tier"
+                                              ),
+                                            },
+                                            on: {
+                                              click: function ($event) {
+                                                return _vm.removeTier(ti)
+                                              },
+                                            },
+                                          },
+                                          [
+                                            _c("i", {
+                                              staticClass: "fa fa-trash",
+                                            }),
+                                          ]
+                                        ),
+                                        _vm._v(" "),
+                                        ti === _vm.extraTiers.length - 1
+                                          ? _c(
+                                              "button",
+                                              {
+                                                staticClass:
+                                                  "btn btn-outline-primary btn-sm flex-shrink-0 tier-add-btn",
+                                                attrs: {
+                                                  type: "button",
+                                                  title: _vm.t(
+                                                    "add_tier",
+                                                    "Add tier"
+                                                  ),
+                                                },
+                                                on: { click: _vm.addTier },
+                                              },
+                                              [
+                                                _c("i", {
+                                                  staticClass: "fa fa-plus",
+                                                }),
+                                                _c(
+                                                  "span",
+                                                  {
+                                                    staticClass:
+                                                      "d-none d-xl-inline ms-1",
+                                                  },
+                                                  [
+                                                    _vm._v(
+                                                      _vm._s(
+                                                        _vm.t(
+                                                          "add_tier",
+                                                          "Add tier"
+                                                        )
+                                                      )
+                                                    ),
+                                                  ]
+                                                ),
+                                              ]
+                                            )
+                                          : _vm._e(),
+                                      ],
+                                      2
+                                    ),
+                                  ]
+                                ),
+                              ]
+                            )
+                          }),
+                          _vm._v(" "),
+                          _vm.extraTiers.length
+                            ? _c(
+                                "p",
+                                { staticClass: "text-muted small mb-0 mt-2" },
+                                [
+                                  _c("i", {
+                                    staticClass: "fa fa-info-circle me-1",
+                                  }),
+                                  _vm._v(
+                                    _vm._s(
+                                      _vm.t(
+                                        "tiers_hint",
+                                        "Only the tier the quantity falls in applies. The last tier can leave Max empty (no upper limit); quantities outside every tier get no discount."
+                                      )
+                                    )
+                                  ),
+                                ]
+                              )
+                            : _vm._e(),
+                        ],
+                        2
                       )
                     : _vm._e(),
                   _vm._v(" "),
@@ -4379,6 +5165,48 @@ var render = function () {
                                                       ),
                                                     ]
                                                   : _vm._e(),
+                                                _vm._v(" "),
+                                                !_vm.extraTiers.length
+                                                  ? _c(
+                                                      "button",
+                                                      {
+                                                        staticClass:
+                                                          "btn btn-outline-primary btn-sm flex-shrink-0 tier-add-btn",
+                                                        attrs: {
+                                                          type: "button",
+                                                          title: _vm.t(
+                                                            "add_tier",
+                                                            "Add tier"
+                                                          ),
+                                                        },
+                                                        on: {
+                                                          click: _vm.addTier,
+                                                        },
+                                                      },
+                                                      [
+                                                        _c("i", {
+                                                          staticClass:
+                                                            "fa fa-plus",
+                                                        }),
+                                                        _c(
+                                                          "span",
+                                                          {
+                                                            staticClass: "ms-1",
+                                                          },
+                                                          [
+                                                            _vm._v(
+                                                              _vm._s(
+                                                                _vm.t(
+                                                                  "add_tier",
+                                                                  "Add tier"
+                                                                )
+                                                              )
+                                                            ),
+                                                          ]
+                                                        ),
+                                                      ]
+                                                    )
+                                                  : _vm._e(),
                                               ],
                                               2
                                             ),
@@ -4403,6 +5231,556 @@ var render = function () {
                                                     return _vm.removeProductRow(
                                                       index
                                                     )
+                                                  },
+                                                },
+                                              },
+                                              [
+                                                _c("i", {
+                                                  staticClass: "fa fa-trash",
+                                                }),
+                                              ]
+                                            ),
+                                          ]
+                                        ),
+                                      ]
+                                    )
+                                  }
+                                ),
+                                _vm._v(" "),
+                                _vm._l(
+                                  _vm.record.products.length === 1
+                                    ? _vm.extraTiers
+                                    : [],
+                                  function (tier, ti) {
+                                    return _c(
+                                      "tr",
+                                      {
+                                        key: "st" + ti,
+                                        staticClass: "scheme-tier-row",
+                                      },
+                                      [
+                                        _c(
+                                          "td",
+                                          {
+                                            staticClass:
+                                              "text-center text-muted small",
+                                          },
+                                          [_vm._v(_vm._s(ti + 2))]
+                                        ),
+                                        _vm._v(" "),
+                                        _c("td", { attrs: { colspan: "3" } }, [
+                                          _c(
+                                            "span",
+                                            {
+                                              staticClass:
+                                                "badge bg-light text-dark border px-2 py-2",
+                                            },
+                                            [
+                                              _c("i", {
+                                                staticClass:
+                                                  "fa fa-layer-group me-1 text-primary",
+                                              }),
+                                              _vm._v(
+                                                _vm._s(_vm.t("tier", "Tier")) +
+                                                  " " +
+                                                  _vm._s(ti + 2)
+                                              ),
+                                            ]
+                                          ),
+                                          _vm._v(" "),
+                                          _c(
+                                            "span",
+                                            {
+                                              staticClass:
+                                                "text-muted small ms-2",
+                                            },
+                                            [
+                                              _vm._v(
+                                                _vm._s(
+                                                  _vm.t(
+                                                    "tier_same_settings",
+                                                    "Same product, qty basis and discount type"
+                                                  )
+                                                )
+                                              ),
+                                            ]
+                                          ),
+                                        ]),
+                                        _vm._v(" "),
+                                        _c("td", [
+                                          _c(
+                                            "div",
+                                            {
+                                              staticClass:
+                                                "input-group input-group-sm",
+                                            },
+                                            [
+                                              _c("input", {
+                                                directives: [
+                                                  {
+                                                    name: "model",
+                                                    rawName: "v-model",
+                                                    value: tier.min_qty,
+                                                    expression: "tier.min_qty",
+                                                  },
+                                                ],
+                                                staticClass:
+                                                  "form-control text-center",
+                                                attrs: {
+                                                  type: "number",
+                                                  min: "0.01",
+                                                  step: "any",
+                                                  placeholder: "Min",
+                                                },
+                                                domProps: {
+                                                  value: tier.min_qty,
+                                                },
+                                                on: {
+                                                  input: function ($event) {
+                                                    if (
+                                                      $event.target.composing
+                                                    ) {
+                                                      return
+                                                    }
+                                                    _vm.$set(
+                                                      tier,
+                                                      "min_qty",
+                                                      $event.target.value
+                                                    )
+                                                  },
+                                                },
+                                              }),
+                                              _vm._v(" "),
+                                              _c(
+                                                "span",
+                                                {
+                                                  staticClass:
+                                                    "input-group-text bg-light text-muted px-2 small",
+                                                },
+                                                [
+                                                  _vm._v(
+                                                    _vm._s(_vm.tierUnitLabel)
+                                                  ),
+                                                ]
+                                              ),
+                                            ]
+                                          ),
+                                        ]),
+                                        _vm._v(" "),
+                                        _c("td", [
+                                          _c(
+                                            "div",
+                                            {
+                                              staticClass:
+                                                "input-group input-group-sm",
+                                            },
+                                            [
+                                              _c("input", {
+                                                directives: [
+                                                  {
+                                                    name: "model",
+                                                    rawName: "v-model",
+                                                    value: tier.max_qty,
+                                                    expression: "tier.max_qty",
+                                                  },
+                                                ],
+                                                staticClass:
+                                                  "form-control text-center",
+                                                attrs: {
+                                                  type: "number",
+                                                  min: "0.01",
+                                                  step: "any",
+                                                  placeholder:
+                                                    ti ===
+                                                    _vm.extraTiers.length - 1
+                                                      ? _vm.t(
+                                                          "no_limit",
+                                                          "No limit"
+                                                        )
+                                                      : "Max",
+                                                },
+                                                domProps: {
+                                                  value: tier.max_qty,
+                                                },
+                                                on: {
+                                                  input: function ($event) {
+                                                    if (
+                                                      $event.target.composing
+                                                    ) {
+                                                      return
+                                                    }
+                                                    _vm.$set(
+                                                      tier,
+                                                      "max_qty",
+                                                      $event.target.value
+                                                    )
+                                                  },
+                                                },
+                                              }),
+                                              _vm._v(" "),
+                                              _c(
+                                                "span",
+                                                {
+                                                  staticClass:
+                                                    "input-group-text bg-light text-muted px-2 small",
+                                                },
+                                                [
+                                                  _vm._v(
+                                                    _vm._s(_vm.tierUnitLabel)
+                                                  ),
+                                                ]
+                                              ),
+                                            ]
+                                          ),
+                                        ]),
+                                        _vm._v(" "),
+                                        _c(
+                                          "td",
+                                          { staticStyle: { width: "440px" } },
+                                          [
+                                            _c(
+                                              "div",
+                                              {
+                                                staticClass:
+                                                  "d-flex align-items-center gap-2 flex-nowrap",
+                                              },
+                                              [
+                                                _c(
+                                                  "div",
+                                                  {
+                                                    staticClass:
+                                                      "form-control form-control-sm bg-light text-muted tier-type-pill",
+                                                    staticStyle: {
+                                                      width: "155px",
+                                                      "flex-shrink": "0",
+                                                    },
+                                                  },
+                                                  [
+                                                    _vm._v(
+                                                      _vm._s(_vm.tierTypeLabel)
+                                                    ),
+                                                  ]
+                                                ),
+                                                _vm._v(" "),
+                                                _vm.tierDiscountType === "flat"
+                                                  ? [
+                                                      _c(
+                                                        "div",
+                                                        {
+                                                          staticClass:
+                                                            "input-group input-group-sm flex-nowrap",
+                                                          staticStyle: {
+                                                            width: "120px",
+                                                            "flex-shrink": "0",
+                                                          },
+                                                        },
+                                                        [
+                                                          _c("input", {
+                                                            directives: [
+                                                              {
+                                                                name: "model",
+                                                                rawName:
+                                                                  "v-model",
+                                                                value:
+                                                                  tier.discount_value,
+                                                                expression:
+                                                                  "tier.discount_value",
+                                                              },
+                                                            ],
+                                                            staticClass:
+                                                              "form-control text-center",
+                                                            attrs: {
+                                                              type: "number",
+                                                              step: "0.01",
+                                                              min: "0.01",
+                                                              placeholder:
+                                                                "Amount",
+                                                            },
+                                                            domProps: {
+                                                              value:
+                                                                tier.discount_value,
+                                                            },
+                                                            on: {
+                                                              input: function (
+                                                                $event
+                                                              ) {
+                                                                if (
+                                                                  $event.target
+                                                                    .composing
+                                                                ) {
+                                                                  return
+                                                                }
+                                                                _vm.$set(
+                                                                  tier,
+                                                                  "discount_value",
+                                                                  $event.target
+                                                                    .value
+                                                                )
+                                                              },
+                                                            },
+                                                          }),
+                                                          _vm._v(" "),
+                                                          _c(
+                                                            "span",
+                                                            {
+                                                              staticClass:
+                                                                "input-group-text bg-light text-muted px-2",
+                                                            },
+                                                            [_vm._v("₹")]
+                                                          ),
+                                                        ]
+                                                      ),
+                                                    ]
+                                                  : _vm.tierDiscountType ===
+                                                    "free_product"
+                                                  ? [
+                                                      _c(
+                                                        "div",
+                                                        {
+                                                          staticClass:
+                                                            "d-flex align-items-center gap-1 flex-nowrap flex-shrink-0",
+                                                        },
+                                                        [
+                                                          _c("input", {
+                                                            directives: [
+                                                              {
+                                                                name: "model",
+                                                                rawName:
+                                                                  "v-model",
+                                                                value:
+                                                                  tier.free_qty,
+                                                                expression:
+                                                                  "tier.free_qty",
+                                                              },
+                                                            ],
+                                                            staticClass:
+                                                              "form-control form-control-sm text-center",
+                                                            staticStyle: {
+                                                              width: "55px",
+                                                              "flex-shrink":
+                                                                "0",
+                                                            },
+                                                            attrs: {
+                                                              type: "number",
+                                                              step: "1",
+                                                              min: "1",
+                                                              placeholder: "1",
+                                                            },
+                                                            domProps: {
+                                                              value:
+                                                                tier.free_qty,
+                                                            },
+                                                            on: {
+                                                              input: function (
+                                                                $event
+                                                              ) {
+                                                                if (
+                                                                  $event.target
+                                                                    .composing
+                                                                ) {
+                                                                  return
+                                                                }
+                                                                _vm.$set(
+                                                                  tier,
+                                                                  "free_qty",
+                                                                  $event.target
+                                                                    .value
+                                                                )
+                                                              },
+                                                            },
+                                                          }),
+                                                          _vm._v(" "),
+                                                          _c(
+                                                            "span",
+                                                            {
+                                                              staticClass:
+                                                                "text-muted small",
+                                                            },
+                                                            [
+                                                              _vm._v(
+                                                                _vm._s(
+                                                                  _vm.tierFreeBasisLabel
+                                                                )
+                                                              ),
+                                                            ]
+                                                          ),
+                                                          _vm._v(" "),
+                                                          _c(
+                                                            "span",
+                                                            {
+                                                              staticClass:
+                                                                "badge bg-success text-white ms-1",
+                                                            },
+                                                            [
+                                                              _vm._v(
+                                                                _vm._s(
+                                                                  _vm.t(
+                                                                    "free",
+                                                                    "FREE"
+                                                                  )
+                                                                )
+                                                              ),
+                                                            ]
+                                                          ),
+                                                        ]
+                                                      ),
+                                                    ]
+                                                  : [
+                                                      _c(
+                                                        "div",
+                                                        {
+                                                          staticClass:
+                                                            "input-group input-group-sm flex-nowrap",
+                                                          staticStyle: {
+                                                            width: "110px",
+                                                            "flex-shrink": "0",
+                                                          },
+                                                        },
+                                                        [
+                                                          _c("input", {
+                                                            directives: [
+                                                              {
+                                                                name: "model",
+                                                                rawName:
+                                                                  "v-model",
+                                                                value:
+                                                                  tier.discount_value,
+                                                                expression:
+                                                                  "tier.discount_value",
+                                                              },
+                                                            ],
+                                                            staticClass:
+                                                              "form-control text-center",
+                                                            attrs: {
+                                                              type: "number",
+                                                              step: "0.01",
+                                                              min: "0.01",
+                                                              max: "100",
+                                                              placeholder: "%",
+                                                            },
+                                                            domProps: {
+                                                              value:
+                                                                tier.discount_value,
+                                                            },
+                                                            on: {
+                                                              input: function (
+                                                                $event
+                                                              ) {
+                                                                if (
+                                                                  $event.target
+                                                                    .composing
+                                                                ) {
+                                                                  return
+                                                                }
+                                                                _vm.$set(
+                                                                  tier,
+                                                                  "discount_value",
+                                                                  $event.target
+                                                                    .value
+                                                                )
+                                                              },
+                                                            },
+                                                          }),
+                                                          _vm._v(" "),
+                                                          _c(
+                                                            "span",
+                                                            {
+                                                              staticClass:
+                                                                "input-group-text bg-light text-muted px-2",
+                                                            },
+                                                            [_vm._v("%")]
+                                                          ),
+                                                        ]
+                                                      ),
+                                                      _vm._v(" "),
+                                                      _vm.tierDiscountType ===
+                                                      "discounted_product"
+                                                        ? _c(
+                                                            "span",
+                                                            {
+                                                              staticClass:
+                                                                "text-muted small fw-semibold flex-shrink-0",
+                                                            },
+                                                            [
+                                                              _vm._v(
+                                                                _vm._s(
+                                                                  _vm.t(
+                                                                    "off",
+                                                                    "off"
+                                                                  )
+                                                                )
+                                                              ),
+                                                            ]
+                                                          )
+                                                        : _vm._e(),
+                                                    ],
+                                                _vm._v(" "),
+                                                ti === _vm.extraTiers.length - 1
+                                                  ? _c(
+                                                      "button",
+                                                      {
+                                                        staticClass:
+                                                          "btn btn-outline-primary btn-sm flex-shrink-0 tier-add-btn",
+                                                        attrs: {
+                                                          type: "button",
+                                                          title: _vm.t(
+                                                            "add_tier",
+                                                            "Add tier"
+                                                          ),
+                                                        },
+                                                        on: {
+                                                          click: _vm.addTier,
+                                                        },
+                                                      },
+                                                      [
+                                                        _c("i", {
+                                                          staticClass:
+                                                            "fa fa-plus",
+                                                        }),
+                                                        _c(
+                                                          "span",
+                                                          {
+                                                            staticClass: "ms-1",
+                                                          },
+                                                          [
+                                                            _vm._v(
+                                                              _vm._s(
+                                                                _vm.t(
+                                                                  "add_tier",
+                                                                  "Add tier"
+                                                                )
+                                                              )
+                                                            ),
+                                                          ]
+                                                        ),
+                                                      ]
+                                                    )
+                                                  : _vm._e(),
+                                              ],
+                                              2
+                                            ),
+                                          ]
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "td",
+                                          { staticClass: "text-center" },
+                                          [
+                                            _c(
+                                              "button",
+                                              {
+                                                staticClass:
+                                                  "btn btn-sm btn-outline-danger action-trash-btn",
+                                                attrs: {
+                                                  type: "button",
+                                                  title: _vm.t(
+                                                    "remove_tier",
+                                                    "Remove tier"
+                                                  ),
+                                                },
+                                                on: {
+                                                  click: function ($event) {
+                                                    return _vm.removeTier(ti)
                                                   },
                                                 },
                                               },

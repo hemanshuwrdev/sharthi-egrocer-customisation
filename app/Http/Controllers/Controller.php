@@ -339,8 +339,16 @@ class Controller extends BaseController
         return CommonHelper::responseWithData($slug);
     }
 
-    public function getTopNotifications()
+    public function getTopNotifications(Request $request)
     {
+        // The list structure shared with the retailer app (see NotificationFeed) is the default — the driver and
+        // distributor apps get it with no extra parameter. The one exception is the web panel's bell, which reads
+        // the response below: it is recognised by the X-Requested-With header that the panel's axios sends on every
+        // call (resources/js/bootstrap.js), and keeps getting exactly what it always did. Mobile apps don't send it.
+        if (!$request->ajax()) {
+            return \App\Services\NotificationFeed::panelList($request, auth()->user());
+        }
+
         $notifications = PanelNotification::where('notifiable_id', auth()->user()->id);
         $unReadCount = (clone $notifications)->where('read_at', NULL)->get()->count();
         $notifications = $notifications->orderBy('created_at', 'DESC')->get();
@@ -349,6 +357,26 @@ class Controller extends BaseController
         $data['unread'] = $unReadCount;
         $data['notifications'] = $notifications;
         return CommonHelper::responseWithData($data);
+    }
+
+    /**
+     * GET seller/notifications and delivery_boy/notifications — the list structure shared with the retailer and
+     * salesman apps (see NotificationFeed). Unlike get_top_notifications it has no web-panel exception: always
+     * the shared structure.
+     */
+    public function notificationsFeed(Request $request)
+    {
+        return \App\Services\NotificationFeed::panelList($request, auth()->user());
+    }
+
+    /**
+     * POST seller/notifications/mark_read and delivery_boy/notifications/mark_read (also POST notification_mark_read,
+     * the first URL this was given — kept so nothing built on it breaks). Body: ids[] | all=1 [, category].
+     * Same request/response as the retailer's mark_read.
+     */
+    public function markNotificationsRead(Request $request)
+    {
+        return \App\Services\NotificationFeed::panelMarkRead($request, auth()->user());
     }
 
     public function markAsReadNotifications(Request $request)

@@ -285,6 +285,8 @@ export default {
     data() {
         return {
             orders: [],
+            // every order loaded so far, by id — the ticked orders stay counted (weight, value) while a filter hides them
+            knownOrders: {},
             areas: [],
             vehicles: [],
             drivers: [],
@@ -424,8 +426,11 @@ export default {
             axios.get(this.apiBase + '/loading_slips/orders', { params }).then(res => {
                 if (res.data.status === 1) {
                     this.orders = res.data.data;
-                    this.selectedOrderIds = [];
-                    this.selectAll = false;
+                    const known = { ...this.knownOrders };
+                    this.orders.forEach(o => { known[o.id] = o; });
+                    this.knownOrders = known;
+                    // ticked orders are kept across filter changes (area, rescheduled, products) — only the
+                    // list on screen changes, so orders picked under another filter are not lost
                     this.calculateWeightSum();
                 }
             });
@@ -444,21 +449,20 @@ export default {
             this.calculateWeightSum();
         },
         toggleSelectAll() {
+            // acts on the orders listed now; ticks made under another filter stay as they are
+            const visibleIds = this.orders.map(o => o.id);
             if (this.selectAll) {
-                this.selectedOrderIds = this.orders.map(o => o.id);
+                this.selectedOrderIds = [...new Set([...this.selectedOrderIds, ...visibleIds])];
             } else {
-                this.selectedOrderIds = [];
+                this.selectedOrderIds = this.selectedOrderIds.filter(id => !visibleIds.includes(id));
             }
             this.calculateWeightSum();
         },
         calculateWeightSum() {
-            let sum = 0;
-            this.orders.forEach(order => {
-                if (this.selectedOrderIds.includes(order.id)) {
-                    sum += parseFloat(order.weight || 0);
-                }
-            });
+            const sum = this.selectedOrderIds.reduce((acc, id) => acc + parseFloat((this.knownOrders[id] || {}).weight || 0), 0);
             this.totalSelectedWeight = parseFloat(sum.toFixed(2));
+            // header checkbox = every listed order is ticked
+            this.selectAll = this.orders.length > 0 && this.orders.every(o => this.selectedOrderIds.includes(o.id));
             
             const capacity = parseFloat(this.selectedVehicle?.capacity || 0);
             if (this.selectedVehicle && capacity > 0) {

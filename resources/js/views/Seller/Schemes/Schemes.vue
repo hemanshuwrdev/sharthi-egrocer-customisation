@@ -72,15 +72,26 @@
                         <template v-else-if="row.item.is_multi_combo">
                             <div class="small mb-1 text-start">
                                 <span class="badge bg-primary text-white mb-1"><i class="fa fa-layer-group me-1"></i> {{ t('multi_product_combo', 'Multi-Product Combo') }}</span>
-                                <div><strong>{{ row.item.combo_condition }}</strong> <span class="badge bg-success ms-1">{{ row.item.combo_reward }}</span></div>
+                                <template v-if="row.item.tiers && row.item.tiers.length">
+                                    <div v-for="(tier, ti) in row.item.tiers" :key="'tier' + ti"><strong>{{ tier.conditions }}</strong> <span class="badge bg-success ms-1">{{ tier.reward }}</span></div>
+                                </template>
+                                <div v-else><strong>{{ row.item.combo_condition }}</strong> <span class="badge bg-success ms-1">{{ row.item.combo_reward }}</span></div>
                                 <div class="text-muted small mt-1">{{ t('any_mix_of', 'Any mix of') }}: {{ row.item.products.join(', ') }}</div>
                             </div>
                         </template>
                         <template v-else-if="row.item.products_detail && row.item.products_detail.length">
                             <div v-for="(p, i) in row.item.products_detail" :key="'pd' + i" class="small mb-1 text-start">
                                 <strong>{{ p.product }}</strong>
-                                <span class="text-muted" v-if="p.conditions"> ({{ p.conditions }})</span>
-                                <span class="badge bg-success ms-1" v-if="p.reward">{{ p.reward }}</span>
+                                <template v-if="row.item.tiers && row.item.tiers.length">
+                                    <div v-for="(tier, ti) in row.item.tiers" :key="'ptier' + ti" class="ms-2">
+                                        <span class="text-muted">{{ tier.conditions }}</span>
+                                        <span class="badge bg-success ms-1">{{ tier.reward }}</span>
+                                    </div>
+                                </template>
+                                <template v-else>
+                                    <span class="text-muted" v-if="p.conditions"> ({{ p.conditions }})</span>
+                                    <span class="badge bg-success ms-1" v-if="p.reward">{{ p.reward }}</span>
+                                </template>
                             </div>
                         </template>
                         <template v-else>

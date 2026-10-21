@@ -855,6 +855,9 @@ class DeliveryBoysApiController extends Controller
 
         OrderItem::where('order_id', $order->id)->update(['active_status' => OrderStatusList::$notDelivered]);
 
+        // In-app Notifications for the retailer (never throws).
+        \App\Services\CustomerNotificationService::orderStatusChanged($order, OrderStatusList::$notDelivered);
+
         return CommonHelper::responseSuccess('order_marked_as_not_delivered');
     }
 

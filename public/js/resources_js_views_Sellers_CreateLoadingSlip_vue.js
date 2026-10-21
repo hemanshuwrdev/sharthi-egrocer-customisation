@@ -14,9 +14,18 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var v_select2_component__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! v-select2-component */ "./node_modules/v-select2-component/dist/Select2.esm.js");
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter); }
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+//
+//
+//
 //
 //
 //
@@ -314,6 +323,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
   data: function data() {
     return {
       orders: [],
+      // every order loaded so far, by id — the ticked orders stay counted (weight, value) while a filter hides them
+      knownOrders: {},
       areas: [],
       vehicles: [],
       drivers: [],
@@ -395,6 +406,15 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         maximumFractionDigits: 2
       });
     },
+    // ticked orders the current filters are not listing — still part of the slip
+    hiddenSelectedCount: function hiddenSelectedCount() {
+      var listed = new Set(this.orders.map(function (o) {
+        return o.id;
+      }));
+      return this.selectedOrderIds.filter(function (id) {
+        return !listed.has(id);
+      }).length;
+    },
     barClass: function barClass() {
       if (this.loadPercent > 100) return 'bg-danger';
       if (this.loadPercent > 85) return 'bg-warning';
@@ -417,10 +437,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     },
     selectedValue: function selectedValue() {
       var _this = this;
-      var sum = this.orders.filter(function (order) {
-        return _this.selectedOrderIds.includes(order.id);
-      }).reduce(function (acc, order) {
-        return acc + parseFloat(order.final_total || 0);
+      var sum = this.selectedOrderIds.reduce(function (acc, id) {
+        return acc + parseFloat((_this.knownOrders[id] || {}).final_total || 0);
       }, 0);
       return sum.toLocaleString('en-IN', {
         minimumFractionDigits: 2,
@@ -453,7 +471,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
   },
   watch: {
     selectedProductIds: function selectedProductIds() {
-      this.getOrders();
+      this.refreshAreasAndOrders();
     }
   },
   methods: {
@@ -465,30 +483,49 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         }
       });
     },
+    // Only areas that have orders left to load under the Rescheduled / Product filters. Returns the
+    // request so callers can reload the orders once the options (and a possibly dropped area) are settled.
     getAreas: function getAreas() {
       var _this3 = this;
-      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.apiBase + '/loading_slips/areas').then(function (res) {
+      var params = {};
+      if (this.selectedRescheduled !== '') params.is_rescheduled = this.selectedRescheduled;
+      if (this.selectedProductIds.length) params.product_ids = this.selectedProductIds;
+      return axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.apiBase + '/loading_slips/areas', {
+        params: params
+      }).then(function (res) {
         if (res.data.status === 1) {
           _this3.areas = res.data.data || [];
+          // the chosen area may have no orders under the new filters — fall back to all areas
+          if (_this3.selectedArea && !_this3.areas.some(function (a) {
+            return a.id == _this3.selectedArea;
+          })) {
+            _this3.selectedArea = '';
+          }
         }
+      })["catch"](function () {});
+    },
+    refreshAreasAndOrders: function refreshAreasAndOrders() {
+      var _this4 = this;
+      this.getAreas().then(function () {
+        return _this4.getOrders();
       });
     },
     getVehicles: function getVehicles() {
-      var _this4 = this;
+      var _this5 = this;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.apiBase + '/vehicles/active').then(function (res) {
         if (res.data.status === 1) {
-          _this4.vehicles = res.data.data;
+          _this5.vehicles = res.data.data;
           // a single vehicle leaves nothing to choose, so it is picked for you
           // (never overrides something already selected)
-          if (_this4.vehicles.length === 1 && !_this4.selectedVehicleId) {
-            _this4.selectedVehicleId = _this4.vehicles[0].id;
-            _this4.updateVehicleCapacity();
+          if (_this5.vehicles.length === 1 && !_this5.selectedVehicleId) {
+            _this5.selectedVehicleId = _this5.vehicles[0].id;
+            _this5.updateVehicleCapacity();
           }
         }
       });
     },
     getDrivers: function getDrivers() {
-      var _this5 = this;
+      var _this6 = this;
       // Eager load delivery boys that are active
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.apiBase + '/delivery_boys', {
         params: {
@@ -496,16 +533,16 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         }
       }).then(function (res) {
         if (res.data.status === 1) {
-          _this5.drivers = res.data.data.data || res.data.data;
+          _this6.drivers = res.data.data.data || res.data.data;
           // same for a single driver
-          if (_this5.drivers.length === 1 && !_this5.selectedDriverId) {
-            _this5.selectedDriverId = _this5.drivers[0].id;
+          if (_this6.drivers.length === 1 && !_this6.selectedDriverId) {
+            _this6.selectedDriverId = _this6.drivers[0].id;
           }
         }
       });
     },
     getOrders: function getOrders() {
-      var _this6 = this;
+      var _this7 = this;
       var params = {};
       if (this.selectedArea) params.area_id = this.selectedArea;
       if (this.selectedRescheduled !== '') params.is_rescheduled = this.selectedRescheduled;
@@ -514,17 +551,22 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         params: params
       }).then(function (res) {
         if (res.data.status === 1) {
-          _this6.orders = res.data.data;
-          _this6.selectedOrderIds = [];
-          _this6.selectAll = false;
-          _this6.calculateWeightSum();
+          _this7.orders = res.data.data;
+          var known = _objectSpread({}, _this7.knownOrders);
+          _this7.orders.forEach(function (o) {
+            known[o.id] = o;
+          });
+          _this7.knownOrders = known;
+          // ticked orders are kept across filter changes (area, rescheduled, products) — only the
+          // list on screen changes, so orders picked under another filter are not lost
+          _this7.calculateWeightSum();
         }
       });
     },
     updateVehicleCapacity: function updateVehicleCapacity() {
-      var _this7 = this;
+      var _this8 = this;
       this.selectedVehicle = this.vehicles.find(function (v) {
-        return v.id == _this7.selectedVehicleId;
+        return v.id == _this8.selectedVehicleId;
       }) || null;
       this.calculateWeightSum();
     },
@@ -538,25 +580,30 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.calculateWeightSum();
     },
     toggleSelectAll: function toggleSelectAll() {
+      // acts on the orders listed now; ticks made under another filter stay as they are
+      var visibleIds = this.orders.map(function (o) {
+        return o.id;
+      });
       if (this.selectAll) {
-        this.selectedOrderIds = this.orders.map(function (o) {
-          return o.id;
-        });
+        this.selectedOrderIds = _toConsumableArray(new Set([].concat(_toConsumableArray(this.selectedOrderIds), _toConsumableArray(visibleIds))));
       } else {
-        this.selectedOrderIds = [];
+        this.selectedOrderIds = this.selectedOrderIds.filter(function (id) {
+          return !visibleIds.includes(id);
+        });
       }
       this.calculateWeightSum();
     },
     calculateWeightSum: function calculateWeightSum() {
-      var _this8 = this,
+      var _this9 = this,
         _this$selectedVehicle;
-      var sum = 0;
-      this.orders.forEach(function (order) {
-        if (_this8.selectedOrderIds.includes(order.id)) {
-          sum += parseFloat(order.weight || 0);
-        }
-      });
+      var sum = this.selectedOrderIds.reduce(function (acc, id) {
+        return acc + parseFloat((_this9.knownOrders[id] || {}).weight || 0);
+      }, 0);
       this.totalSelectedWeight = parseFloat(sum.toFixed(2));
+      // header checkbox = every listed order is ticked
+      this.selectAll = this.orders.length > 0 && this.orders.every(function (o) {
+        return _this9.selectedOrderIds.includes(o.id);
+      });
       var capacity = parseFloat(((_this$selectedVehicle = this.selectedVehicle) === null || _this$selectedVehicle === void 0 ? void 0 : _this$selectedVehicle.capacity) || 0);
       if (this.selectedVehicle && capacity > 0) {
         this.loadPercent = Math.min(this.totalSelectedWeight / capacity * 100, 120);
@@ -567,7 +614,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     // Rescheduled filter as buttons: sets the same selectedRescheduled value ('' | '1' | '0') the old select did
     setRescheduled: function setRescheduled(value) {
       this.selectedRescheduled = value;
-      this.getOrders();
+      this.refreshAreasAndOrders();
     },
     // whole amounts stay compact (4,000); fractional ones always show paise (8,336.30)
     formatMoney: function formatMoney(value) {
@@ -597,22 +644,22 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       return zone.charAt(0).toUpperCase() + zone.slice(1);
     },
     openReviewModal: function openReviewModal() {
-      var _this9 = this;
+      var _this10 = this;
       this.reviewLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.apiBase + '/loading_slips/order_items_summary', {
         order_ids: this.selectedOrderIds
       }).then(function (res) {
-        _this9.reviewLoading = false;
+        _this10.reviewLoading = false;
         if (res.data.status === 1) {
-          _this9.reviewSummary = res.data.data || [];
-          _this9.expandedProducts = {};
-          _this9.showReviewModal = true;
+          _this10.reviewSummary = res.data.data || [];
+          _this10.expandedProducts = {};
+          _this10.showReviewModal = true;
         } else {
-          _this9.showError(res.data.message);
+          _this10.showError(res.data.message);
         }
       })["catch"](function () {
-        _this9.reviewLoading = false;
-        _this9.showError(__('an_error_occurred_during_slip_creation'));
+        _this10.reviewLoading = false;
+        _this10.showError(__('an_error_occurred_during_slip_creation'));
       });
     },
     confirmGenerate: function confirmGenerate() {
@@ -636,7 +683,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.$set(this.expandedProducts, key, !this.expandedProducts[key]);
     },
     createLoadingSlip: function createLoadingSlip() {
-      var _this10 = this;
+      var _this11 = this;
       var confirmStock = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
       this.loading = true;
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.apiBase + '/loading_slips/save', {
@@ -645,17 +692,17 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         order_ids: this.selectedOrderIds,
         confirm_stock_shortage: confirmStock === true
       }).then(function (res) {
-        _this10.loading = false;
+        _this11.loading = false;
         if (res.data.status === 1) {
-          _this10.showSuccess(__('loading_slip_generated_and_route_optimized_successfully'));
-          _this10.$router.push(_this10.urlPrefix + '/loading_slips');
+          _this11.showSuccess(__('loading_slip_generated_and_route_optimized_successfully'));
+          _this11.$router.push(_this11.urlPrefix + '/loading_slips');
         } else if (res.data.status === 2) {
           var shortageListHtml = '<div class="text-left mt-2" style="max-height: 200px; overflow-y: auto; font-size: 14px;"><ul class="list-group list-group-flush">';
           res.data.shortages.forEach(function (item) {
             shortageListHtml += "<li class=\"list-group-item px-0 py-1 text-danger\">\n                            <strong>".concat(item.name, "</strong><br>\n                            <span class=\"text-muted small\">Required: <b>").concat(item.required, "</b> | Available: <b>").concat(item.available, "</b></span>\n                        </li>");
           });
           shortageListHtml += '</ul></div>';
-          _this10.$swal.fire({
+          _this11.$swal.fire({
             title: 'Stock Shortage Warning!',
             html: "<p class=\"mb-2\">The following items have insufficient database stock:</p>".concat(shortageListHtml, "<p class=\"mt-3\">Are you sure you want to proceed and generate the loading slip?</p>"),
             icon: 'warning',
@@ -666,15 +713,15 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
             cancelButtonColor: '#d33'
           }).then(function (result) {
             if (result.value) {
-              _this10.createLoadingSlip(true);
+              _this11.createLoadingSlip(true);
             }
           });
         } else {
-          _this10.showError(res.data.message);
+          _this11.showError(res.data.message);
         }
       })["catch"](function (err) {
-        _this10.loading = false;
-        _this10.showError(__('an_error_occurred_during_slip_creation'));
+        _this11.loading = false;
+        _this11.showError(__('an_error_occurred_during_slip_creation'));
       });
     }
   }
@@ -698,7 +745,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n/* All colours come from the --ui-* tokens that modern.css defines on .ui-modern (the seller layout),\n   so this page follows light/dark mode and the app palette automatically. */\n.clp[data-v-0f2eeed6] { padding: 24px; color: var(--ui-text); font-variant-numeric: tabular-nums;\n}\n.clp-muted[data-v-0f2eeed6] { color: var(--ui-muted);\n}\n.clp-num[data-v-0f2eeed6] { text-align: right; white-space: nowrap;\n}\n\n/* ---------- header ---------- */\n.clp-head[data-v-0f2eeed6] { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px; margin-bottom: 18px;\n}\n.clp-head__title[data-v-0f2eeed6] { display: flex; align-items: baseline; gap: 14px;\n}\n.clp-eyebrow[data-v-0f2eeed6] { padding-right: 14px; border-right: 1px solid var(--ui-border); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ui-muted);\n}\n.clp .clp-head h1[data-v-0f2eeed6] { margin: 0; font-size: 28px; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em; color: var(--ui-text);\n}\n.clp-back[data-v-0f2eeed6] {\n    display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 18px; border-radius: 12px;\n    border: 1px solid var(--ui-border); background: var(--ui-card); color: var(--ui-text); font-size: 14px; font-weight: 600; text-decoration: none !important;\n    box-shadow: var(--ui-shadow); transition: background-color 0.15s ease;\n}\n.clp-back[data-v-0f2eeed6]:hover { background: var(--ui-soft); color: var(--ui-text);\n}\n\n/* ---------- layout ---------- */\n.clp-grid[data-v-0f2eeed6] { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 20px; align-items: start;\n}\n.clp-card[data-v-0f2eeed6] { background: var(--ui-card); border: 1px solid var(--ui-border); border-radius: 18px; box-shadow: var(--ui-shadow);\n}\n.clp-orders[data-v-0f2eeed6] { overflow: hidden; container-type: inline-size; container-name: clporders;\n}\n.clp-planner[data-v-0f2eeed6] { position: sticky; top: 24px;\n}\n.clp-card__head[data-v-0f2eeed6] { padding: 18px 20px; border-bottom: 1px solid var(--ui-border);\n}\n.clp-card__head--plain[data-v-0f2eeed6] { border-bottom: 0; padding-bottom: 4px;\n}\n.clp-card__title[data-v-0f2eeed6] { display: flex; align-items: center; gap: 12px;\n}\n.clp .clp-card__title h2[data-v-0f2eeed6] { margin: 0; font-size: 17px; font-weight: 700; color: var(--ui-text);\n}\n.clp-tile[data-v-0f2eeed6] { width: 40px; height: 40px; border-radius: 12px; font-size: 17px;\n}\n\n/* ---------- filters ---------- */\n.clp-filters[data-v-0f2eeed6] { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; margin-top: 14px;\n}\n.clp-field[data-v-0f2eeed6] { display: flex; flex-direction: column; gap: 5px; min-width: 0;\n}\n.clp-field--grow[data-v-0f2eeed6] { flex: 1 1 260px;\n}\n.clp-field--stack[data-v-0f2eeed6] { margin-bottom: 16px;\n}\n.clp-field__label[data-v-0f2eeed6] { margin: 0; font-size: 11.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ui-muted);\n}\n.clp-field__label em[data-v-0f2eeed6] { font-style: normal; color: var(--ui-red);\n}\n.clp-filters .clp-select[data-v-0f2eeed6] { width: 200px;\n}\n.clp-select[data-v-0f2eeed6] {\n    height: 42px; min-width: 160px; padding: 0 34px 0 14px; border-radius: 12px; border: 1px solid var(--ui-border);\n    background-color: var(--ui-soft); color: var(--ui-text); font-size: 14px; outline: none; cursor: pointer; max-width: 100%;\n}\n.clp-select--lg[data-v-0f2eeed6] { width: 100%; height: 46px;\n}\n.clp-select[data-v-0f2eeed6]:focus { border-color: var(--ui-primary); box-shadow: 0 0 0 3px var(--ui-primary-soft);\n}\n.clp-seg[data-v-0f2eeed6] { display: inline-flex; gap: 4px; padding: 4px; height: 42px; border-radius: 12px; background: var(--ui-slate-bg);\n}\n.clp .clp-seg__btn[data-v-0f2eeed6] { padding: 0 12px; border: 0; border-radius: 9px; background: transparent; color: var(--ui-muted); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s ease; white-space: nowrap;\n}\n.clp-seg__btn[data-v-0f2eeed6]:hover { color: var(--ui-text);\n}\n.clp-seg__btn--on[data-v-0f2eeed6] { background: var(--ui-card); color: var(--ui-text); box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);\n}\n\n/* ---------- order table ---------- */\n.clp-scroll[data-v-0f2eeed6] { max-height: 540px; overflow: auto;\n}\n.clp-table td.clp-col-zone[data-v-0f2eeed6] { max-width: 220px;\n}\n.clp-table[data-v-0f2eeed6] { width: 100%; border-collapse: separate; border-spacing: 0;\n}\n.clp-table thead th[data-v-0f2eeed6] {\n    position: sticky; top: 0; z-index: 1; padding: 12px 16px; background: var(--ui-soft); color: var(--ui-muted); white-space: nowrap;\n    font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid var(--ui-border);\n}\n.clp-table tbody td[data-v-0f2eeed6] { padding: 12px 16px; vertical-align: middle; border-top: 1px solid var(--ui-border); font-size: 14px;\n}\n.clp-table tbody tr:first-child td[data-v-0f2eeed6] { border-top: 0;\n}\n.clp-th-check[data-v-0f2eeed6] { width: 48px; padding-right: 0 !important;\n}\n.clp-check[data-v-0f2eeed6] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--ui-primary);\n}\n.clp-row[data-v-0f2eeed6] { cursor: pointer; transition: background-color 0.12s ease;\n}\n.clp-row:hover td[data-v-0f2eeed6] { background: var(--ui-soft);\n}\n.clp-row--on td[data-v-0f2eeed6] { background: var(--ui-primary-soft) !important;\n}\n.clp-id[data-v-0f2eeed6] { font-weight: 700; white-space: nowrap;\n}\n.clp-shop[data-v-0f2eeed6] { display: flex; align-items: center; gap: 12px; min-width: 220px;\n}\n.clp-shop__text[data-v-0f2eeed6] { display: flex; flex-direction: column; gap: 2px; min-width: 0;\n}\n.clp-shop__name[data-v-0f2eeed6] { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px;\n}\n.clp-shop__name strong[data-v-0f2eeed6] { font-size: 14px; font-weight: 700;\n}\n.clp-shop__addr[data-v-0f2eeed6] { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--ui-muted);\n}\n.clp-pills[data-v-0f2eeed6] { display: flex; flex-wrap: wrap; gap: 6px; max-width: 180px;\n}\n/* long names (an area can list a dozen places) are cut to one line; the full text shows on hover */\n.clp-clip[data-v-0f2eeed6] { display: block; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;\n}\n.clp-shop__zone[data-v-0f2eeed6] { display: none; flex-wrap: wrap; gap: 6px; margin-top: 4px;\n}\n.clp-shop__id[data-v-0f2eeed6] { display: none; font-size: 12px; font-weight: 700; color: var(--ui-muted);\n}\n.clp-list-foot[data-v-0f2eeed6] { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; padding: 14px 20px; border-top: 1px solid var(--ui-border); font-size: 13px; color: var(--ui-muted);\n}\n.clp-list-foot strong[data-v-0f2eeed6] { margin-left: 6px; color: var(--ui-text); font-size: 14px;\n}\n\n/* ---------- planner ---------- */\n.clp-form[data-v-0f2eeed6] { padding: 8px 20px 20px;\n}\n.clp-chips[data-v-0f2eeed6] { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;\n}\n.clp-plate[data-v-0f2eeed6] { font-family: SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0.04em;\n}\n.clp-gauge[data-v-0f2eeed6] { --g: var(--ui-slate); --g-bg: var(--ui-slate-bg); --g-fg: var(--ui-slate-fg); margin-bottom: 16px; padding: 14px 16px; border-radius: 14px; background: var(--ui-soft); border: 1px solid var(--ui-border);\n}\n.clp-gauge--green[data-v-0f2eeed6] { --g: var(--ui-green); --g-fg: var(--ui-green-fg);\n}\n.clp-gauge--amber[data-v-0f2eeed6] { --g: var(--ui-amber); --g-fg: var(--ui-amber-fg);\n}\n.clp-gauge--red[data-v-0f2eeed6]   { --g: var(--ui-red);   --g-fg: var(--ui-red-fg);\n}\n.clp-gauge__title[data-v-0f2eeed6] { margin-bottom: 8px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ui-muted);\n}\n.clp-gauge__idle[data-v-0f2eeed6] { padding: 6px 0; text-align: center; font-size: 13px; color: var(--ui-muted);\n}\n.clp-gauge__idle .fa[data-v-0f2eeed6] { margin-right: 6px;\n}\n.clp-gauge__nums[data-v-0f2eeed6] { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13px; color: var(--ui-muted);\n}\n.clp-gauge__nums strong[data-v-0f2eeed6] { font-size: 15px; color: var(--ui-text);\n}\n.clp-gauge__track[data-v-0f2eeed6] { height: 10px; margin: 10px 0 8px; border-radius: 999px; background: var(--g-bg); overflow: hidden;\n}\n.clp-gauge__fill[data-v-0f2eeed6] { height: 100%; border-radius: 999px; background: var(--g); transition: width 0.35s ease, background-color 0.2s ease;\n}\n.clp-gauge__meta[data-v-0f2eeed6] { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; font-weight: 600;\n}\n.clp-gauge__pct[data-v-0f2eeed6] { color: var(--g-fg);\n}\n.clp-gauge__left[data-v-0f2eeed6] { color: var(--ui-muted);\n}\n.clp-sel[data-v-0f2eeed6] { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.35fr); margin-bottom: 16px; border: 1px solid var(--ui-border); border-radius: 14px; overflow: hidden;\n}\n.clp-sel > div[data-v-0f2eeed6] { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px;\n}\n.clp-sel > div + div[data-v-0f2eeed6] { border-left: 1px solid var(--ui-border);\n}\n.clp-sel span[data-v-0f2eeed6] { font-size: 11.5px; color: var(--ui-muted);\n}\n.clp-sel strong[data-v-0f2eeed6] { font-size: 16px; font-weight: 800; color: var(--ui-text);\n}\n.clp-alert[data-v-0f2eeed6] { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 16px; padding: 12px 14px; border-radius: 12px; background: var(--ui-red-bg); color: var(--ui-red-fg); font-size: 13px; line-height: 1.4;\n}\n.clp-alert .fa[data-v-0f2eeed6] { margin-top: 2px;\n}\n.clp .clp-cta[data-v-0f2eeed6] {\n    display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 48px; border: 0; border-radius: 12px;\n    background: var(--ui-primary); color: #fff; font-size: 14.5px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(var(--brand-rgb, 4, 42, 95), 0.3);\n    transition: filter 0.15s ease, transform 0.1s ease;\n}\n.clp-cta[data-v-0f2eeed6]:hover:not(:disabled) { filter: brightness(0.95);\n}\n.clp-cta[data-v-0f2eeed6]:active:not(:disabled) { transform: translateY(1px);\n}\n.clp-cta[data-v-0f2eeed6]:disabled { opacity: 0.65; cursor: wait;\n}\n.clp-hint[data-v-0f2eeed6] { margin: 10px 0 0; text-align: center; font-size: 12.5px; color: var(--ui-muted);\n}\n\n/* ---------- review modal ---------- */\n.clp-review[data-v-0f2eeed6] { background: transparent; color: var(--ui-text);\n}\n.clp-review__lead[data-v-0f2eeed6] { margin: 0 0 12px; font-size: 13px; color: var(--ui-muted);\n}\n.clp-review__strip[data-v-0f2eeed6] { display: flex; gap: 10px; margin-bottom: 14px;\n}\n.clp-review__strip span[data-v-0f2eeed6] { padding: 6px 12px; border-radius: 10px; background: var(--ui-soft); border: 1px solid var(--ui-border); font-size: 13px; color: var(--ui-muted);\n}\n.clp-review__strip strong[data-v-0f2eeed6] { margin-right: 4px; color: var(--ui-text);\n}\n.review-orders-scroll[data-v-0f2eeed6] { max-height: 56vh; overflow-y: auto; padding-right: 4px; margin-bottom: 16px;\n}\n.clp-review__empty[data-v-0f2eeed6] { padding: 20px 0; text-align: center; color: var(--ui-muted);\n}\n.clp-pcard[data-v-0f2eeed6] { margin-bottom: 12px; border: 1px solid var(--ui-border); border-radius: 14px; overflow: hidden; background: var(--ui-card);\n}\n.clp-pcard[data-v-0f2eeed6]:last-child { margin-bottom: 0;\n}\n.clp-pcard__head[data-v-0f2eeed6] { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: var(--ui-soft); cursor: pointer; -webkit-user-select: none; -moz-user-select: none; user-select: none;\n}\n.clp-pcard__head[data-v-0f2eeed6]:hover { filter: brightness(0.98);\n}\n.clp-pcard__name[data-v-0f2eeed6] { display: flex; align-items: center; gap: 10px; min-width: 0;\n}\n.clp-pcard__name .fa[data-v-0f2eeed6] { font-size: 11px; color: var(--ui-muted);\n}\n.clp-pcard__name strong[data-v-0f2eeed6] { font-size: 14px;\n}\n.clp-pcard__meta[data-v-0f2eeed6] { display: flex; align-items: center; gap: 12px; flex-shrink: 0;\n}\n.clp-pcard__count[data-v-0f2eeed6] { font-size: 12.5px; color: var(--ui-muted);\n}\n.clp-rtable[data-v-0f2eeed6] { width: 100%; border-collapse: collapse;\n}\n.clp-rtable th[data-v-0f2eeed6] { padding: 10px 16px; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ui-muted); border-top: 1px solid var(--ui-border); border-bottom: 1px solid var(--ui-border); background: var(--ui-card);\n}\n.clp-rtable td[data-v-0f2eeed6] { padding: 10px 16px; font-size: 13.5px; border-top: 1px dashed var(--ui-border);\n}\n.clp-rtable tbody tr:first-child td[data-v-0f2eeed6] { border-top: 0;\n}\n.review-order-remove-btn[data-v-0f2eeed6] { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--ui-muted); font-size: 12px; transition: background-color 0.15s ease, color 0.15s ease;\n}\n.review-order-remove-btn[data-v-0f2eeed6]:hover { background: var(--ui-red-bg); color: var(--ui-red-fg);\n}\n.clp-review__foot[data-v-0f2eeed6] { display: flex; justify-content: flex-end; gap: 10px;\n}\n.clp-btn[data-v-0f2eeed6] { height: 42px; padding: 0 18px; border-radius: 12px; font-weight: 600;\n}\n.clp-btn--primary[data-v-0f2eeed6] { background: var(--ui-primary); border-color: var(--ui-primary);\n}\n\n/* ---------- responsive ---------- */\n/* when the orders card is narrow, the zone/area pills tuck under the address instead of taking a column */\n@container clporders (max-width: 880px) {\n.clp-col-zone { display: none;\n}\n.clp-shop__zone { display: flex;\n}\n}\n@media (max-width: 1199px) {\n.clp-grid[data-v-0f2eeed6] { grid-template-columns: 1fr;\n}\n.clp-planner[data-v-0f2eeed6] { position: static;\n}\n}\n@media (max-width: 767px) {\n.clp[data-v-0f2eeed6] { padding: 16px;\n}\n.clp .clp-head h1[data-v-0f2eeed6] { font-size: 24px;\n}\n.clp-col-zone[data-v-0f2eeed6] { display: none;\n}\n.clp-table[data-v-0f2eeed6] { table-layout: fixed;\n}\n.clp-table thead th[data-v-0f2eeed6], .clp-table tbody td[data-v-0f2eeed6] { padding: 10px 8px;\n}\n.clp-th-check[data-v-0f2eeed6] { width: 34px;\n}\n.clp-col-id[data-v-0f2eeed6] { display: none;\n}\n.clp-col-value[data-v-0f2eeed6] { width: 92px;\n}\n.clp-col-weight[data-v-0f2eeed6] { width: 66px;\n}\n.clp-shop[data-v-0f2eeed6] { min-width: 0;\n}\n.clp-shop .ui-avatar[data-v-0f2eeed6] { display: none;\n}\n.clp-shop__id[data-v-0f2eeed6] { display: inline;\n}\n.clp-shop__addr[data-v-0f2eeed6] { max-width: 100%;\n}\n.clp-sel strong[data-v-0f2eeed6] { font-size: 14px;\n}\n.clp-field[data-v-0f2eeed6], .clp-select[data-v-0f2eeed6], .clp-filters .clp-select[data-v-0f2eeed6] { width: 100%;\n}\n.clp-seg[data-v-0f2eeed6] { width: 100%;\n}\n.clp-seg__btn[data-v-0f2eeed6] { flex: 1; padding: 0 6px;\n}\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n/* All colours come from the --ui-* tokens that modern.css defines on .ui-modern (the seller layout),\n   so this page follows light/dark mode and the app palette automatically. */\n.clp[data-v-0f2eeed6] { padding: 24px; color: var(--ui-text); font-variant-numeric: tabular-nums;\n}\n.clp-muted[data-v-0f2eeed6] { color: var(--ui-muted);\n}\n.clp-num[data-v-0f2eeed6] { text-align: right; white-space: nowrap;\n}\n\n/* ---------- header ---------- */\n.clp-head[data-v-0f2eeed6] { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px; margin-bottom: 18px;\n}\n.clp-head__title[data-v-0f2eeed6] { display: flex; align-items: baseline; gap: 14px;\n}\n.clp-eyebrow[data-v-0f2eeed6] { padding-right: 14px; border-right: 1px solid var(--ui-border); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ui-muted);\n}\n.clp .clp-head h1[data-v-0f2eeed6] { margin: 0; font-size: 28px; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em; color: var(--ui-text);\n}\n.clp-back[data-v-0f2eeed6] {\n    display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 18px; border-radius: 12px;\n    border: 1px solid var(--ui-border); background: var(--ui-card); color: var(--ui-text); font-size: 14px; font-weight: 600; text-decoration: none !important;\n    box-shadow: var(--ui-shadow); transition: background-color 0.15s ease;\n}\n.clp-back[data-v-0f2eeed6]:hover { background: var(--ui-soft); color: var(--ui-text);\n}\n\n/* ---------- layout ---------- */\n.clp-grid[data-v-0f2eeed6] { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 20px; align-items: start;\n}\n.clp-card[data-v-0f2eeed6] { background: var(--ui-card); border: 1px solid var(--ui-border); border-radius: 18px; box-shadow: var(--ui-shadow);\n}\n.clp-orders[data-v-0f2eeed6] { overflow: hidden; container-type: inline-size; container-name: clporders;\n}\n.clp-planner[data-v-0f2eeed6] { position: sticky; top: 24px;\n}\n.clp-card__head[data-v-0f2eeed6] { padding: 18px 20px; border-bottom: 1px solid var(--ui-border);\n}\n.clp-card__head--plain[data-v-0f2eeed6] { border-bottom: 0; padding-bottom: 4px;\n}\n.clp-card__title[data-v-0f2eeed6] { display: flex; align-items: center; gap: 12px;\n}\n.clp .clp-card__title h2[data-v-0f2eeed6] { margin: 0; font-size: 17px; font-weight: 700; color: var(--ui-text);\n}\n.clp-tile[data-v-0f2eeed6] { width: 40px; height: 40px; border-radius: 12px; font-size: 17px;\n}\n\n/* ---------- filters ---------- */\n.clp-filters[data-v-0f2eeed6] { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; margin-top: 14px;\n}\n.clp-field[data-v-0f2eeed6] { display: flex; flex-direction: column; gap: 5px; min-width: 0;\n}\n.clp-field--grow[data-v-0f2eeed6] { flex: 1 1 260px;\n}\n.clp-field--stack[data-v-0f2eeed6] { margin-bottom: 16px;\n}\n.clp-field__label[data-v-0f2eeed6] { margin: 0; font-size: 11.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ui-muted);\n}\n.clp-field__label em[data-v-0f2eeed6] { font-style: normal; color: var(--ui-red);\n}\n.clp-filters .clp-select[data-v-0f2eeed6] { width: 200px;\n}\n.clp-select[data-v-0f2eeed6] {\n    height: 42px; min-width: 160px; padding: 0 34px 0 14px; border-radius: 12px; border: 1px solid var(--ui-border);\n    background-color: var(--ui-soft); color: var(--ui-text); font-size: 14px; outline: none; cursor: pointer; max-width: 100%;\n}\n.clp-select--lg[data-v-0f2eeed6] { width: 100%; height: 46px;\n}\n.clp-select[data-v-0f2eeed6]:focus { border-color: var(--ui-primary); box-shadow: 0 0 0 3px var(--ui-primary-soft);\n}\n.clp-seg[data-v-0f2eeed6] { display: inline-flex; gap: 4px; padding: 4px; height: 42px; border-radius: 12px; background: var(--ui-slate-bg);\n}\n.clp .clp-seg__btn[data-v-0f2eeed6] { padding: 0 12px; border: 0; border-radius: 9px; background: transparent; color: var(--ui-muted); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s ease; white-space: nowrap;\n}\n.clp-seg__btn[data-v-0f2eeed6]:hover { color: var(--ui-text);\n}\n.clp-seg__btn--on[data-v-0f2eeed6] { background: var(--ui-card); color: var(--ui-text); box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);\n}\n\n/* ---------- order table ---------- */\n.clp-scroll[data-v-0f2eeed6] { max-height: 540px; overflow: auto;\n}\n.clp-table td.clp-col-zone[data-v-0f2eeed6] { max-width: 220px;\n}\n.clp-table[data-v-0f2eeed6] { width: 100%; border-collapse: separate; border-spacing: 0;\n}\n.clp-table thead th[data-v-0f2eeed6] {\n    position: sticky; top: 0; z-index: 1; padding: 12px 16px; background: var(--ui-soft); color: var(--ui-muted); white-space: nowrap;\n    font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid var(--ui-border);\n}\n.clp-table tbody td[data-v-0f2eeed6] { padding: 12px 16px; vertical-align: middle; border-top: 1px solid var(--ui-border); font-size: 14px;\n}\n.clp-table tbody tr:first-child td[data-v-0f2eeed6] { border-top: 0;\n}\n.clp-th-check[data-v-0f2eeed6] { width: 48px; padding-right: 0 !important;\n}\n.clp-check[data-v-0f2eeed6] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--ui-primary);\n}\n.clp-row[data-v-0f2eeed6] { cursor: pointer; transition: background-color 0.12s ease;\n}\n.clp-row:hover td[data-v-0f2eeed6] { background: var(--ui-soft);\n}\n.clp-row--on td[data-v-0f2eeed6] { background: var(--ui-primary-soft) !important;\n}\n.clp-id[data-v-0f2eeed6] { font-weight: 700; white-space: nowrap;\n}\n.clp-shop[data-v-0f2eeed6] { display: flex; align-items: center; gap: 12px; min-width: 220px;\n}\n.clp-shop__text[data-v-0f2eeed6] { display: flex; flex-direction: column; gap: 2px; min-width: 0;\n}\n.clp-shop__name[data-v-0f2eeed6] { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px;\n}\n.clp-shop__name strong[data-v-0f2eeed6] { font-size: 14px; font-weight: 700;\n}\n.clp-shop__addr[data-v-0f2eeed6] { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--ui-muted);\n}\n.clp-pills[data-v-0f2eeed6] { display: flex; flex-wrap: wrap; gap: 6px; max-width: 180px;\n}\n/* long names (an area can list a dozen places) are cut to one line; the full text shows on hover */\n.clp-clip[data-v-0f2eeed6] { display: block; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;\n}\n.clp-shop__zone[data-v-0f2eeed6] { display: none; flex-wrap: wrap; gap: 6px; margin-top: 4px;\n}\n.clp-shop__id[data-v-0f2eeed6] { display: none; font-size: 12px; font-weight: 700; color: var(--ui-muted);\n}\n.clp-list-foot[data-v-0f2eeed6] { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; padding: 14px 20px; border-top: 1px solid var(--ui-border); font-size: 13px; color: var(--ui-muted);\n}\n.clp-list-foot strong[data-v-0f2eeed6] { margin-left: 6px; color: var(--ui-text); font-size: 14px;\n}\n/* ticked orders a filter is hiding: its own full-width line under the totals */\n.clp-list-foot__hidden[data-v-0f2eeed6] { flex-basis: 100%;\n}\n.clp-list-foot__hidden strong[data-v-0f2eeed6] { margin: 0 4px 0 0;\n}\n\n/* ---------- planner ---------- */\n.clp-form[data-v-0f2eeed6] { padding: 8px 20px 20px;\n}\n.clp-chips[data-v-0f2eeed6] { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;\n}\n.clp-plate[data-v-0f2eeed6] { font-family: SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0.04em;\n}\n.clp-gauge[data-v-0f2eeed6] { --g: var(--ui-slate); --g-bg: var(--ui-slate-bg); --g-fg: var(--ui-slate-fg); margin-bottom: 16px; padding: 14px 16px; border-radius: 14px; background: var(--ui-soft); border: 1px solid var(--ui-border);\n}\n.clp-gauge--green[data-v-0f2eeed6] { --g: var(--ui-green); --g-fg: var(--ui-green-fg);\n}\n.clp-gauge--amber[data-v-0f2eeed6] { --g: var(--ui-amber); --g-fg: var(--ui-amber-fg);\n}\n.clp-gauge--red[data-v-0f2eeed6]   { --g: var(--ui-red);   --g-fg: var(--ui-red-fg);\n}\n.clp-gauge__title[data-v-0f2eeed6] { margin-bottom: 8px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ui-muted);\n}\n.clp-gauge__idle[data-v-0f2eeed6] { padding: 6px 0; text-align: center; font-size: 13px; color: var(--ui-muted);\n}\n.clp-gauge__idle .fa[data-v-0f2eeed6] { margin-right: 6px;\n}\n.clp-gauge__nums[data-v-0f2eeed6] { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13px; color: var(--ui-muted);\n}\n.clp-gauge__nums strong[data-v-0f2eeed6] { font-size: 15px; color: var(--ui-text);\n}\n.clp-gauge__track[data-v-0f2eeed6] { height: 10px; margin: 10px 0 8px; border-radius: 999px; background: var(--g-bg); overflow: hidden;\n}\n.clp-gauge__fill[data-v-0f2eeed6] { height: 100%; border-radius: 999px; background: var(--g); transition: width 0.35s ease, background-color 0.2s ease;\n}\n.clp-gauge__meta[data-v-0f2eeed6] { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; font-weight: 600;\n}\n.clp-gauge__pct[data-v-0f2eeed6] { color: var(--g-fg);\n}\n.clp-gauge__left[data-v-0f2eeed6] { color: var(--ui-muted);\n}\n.clp-sel[data-v-0f2eeed6] { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.35fr); margin-bottom: 16px; border: 1px solid var(--ui-border); border-radius: 14px; overflow: hidden;\n}\n.clp-sel > div[data-v-0f2eeed6] { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px;\n}\n.clp-sel > div + div[data-v-0f2eeed6] { border-left: 1px solid var(--ui-border);\n}\n.clp-sel span[data-v-0f2eeed6] { font-size: 11.5px; color: var(--ui-muted);\n}\n.clp-sel strong[data-v-0f2eeed6] { font-size: 16px; font-weight: 800; color: var(--ui-text);\n}\n.clp-alert[data-v-0f2eeed6] { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 16px; padding: 12px 14px; border-radius: 12px; background: var(--ui-red-bg); color: var(--ui-red-fg); font-size: 13px; line-height: 1.4;\n}\n.clp-alert .fa[data-v-0f2eeed6] { margin-top: 2px;\n}\n.clp .clp-cta[data-v-0f2eeed6] {\n    display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 48px; border: 0; border-radius: 12px;\n    background: var(--ui-primary); color: #fff; font-size: 14.5px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(var(--brand-rgb, 4, 42, 95), 0.3);\n    transition: filter 0.15s ease, transform 0.1s ease;\n}\n.clp-cta[data-v-0f2eeed6]:hover:not(:disabled) { filter: brightness(0.95);\n}\n.clp-cta[data-v-0f2eeed6]:active:not(:disabled) { transform: translateY(1px);\n}\n.clp-cta[data-v-0f2eeed6]:disabled { opacity: 0.65; cursor: wait;\n}\n.clp-hint[data-v-0f2eeed6] { margin: 10px 0 0; text-align: center; font-size: 12.5px; color: var(--ui-muted);\n}\n\n/* ---------- review modal ---------- */\n.clp-review[data-v-0f2eeed6] { background: transparent; color: var(--ui-text);\n}\n.clp-review__lead[data-v-0f2eeed6] { margin: 0 0 12px; font-size: 13px; color: var(--ui-muted);\n}\n.clp-review__strip[data-v-0f2eeed6] { display: flex; gap: 10px; margin-bottom: 14px;\n}\n.clp-review__strip span[data-v-0f2eeed6] { padding: 6px 12px; border-radius: 10px; background: var(--ui-soft); border: 1px solid var(--ui-border); font-size: 13px; color: var(--ui-muted);\n}\n.clp-review__strip strong[data-v-0f2eeed6] { margin-right: 4px; color: var(--ui-text);\n}\n.review-orders-scroll[data-v-0f2eeed6] { max-height: 56vh; overflow-y: auto; padding-right: 4px; margin-bottom: 16px;\n}\n.clp-review__empty[data-v-0f2eeed6] { padding: 20px 0; text-align: center; color: var(--ui-muted);\n}\n.clp-pcard[data-v-0f2eeed6] { margin-bottom: 12px; border: 1px solid var(--ui-border); border-radius: 14px; overflow: hidden; background: var(--ui-card);\n}\n.clp-pcard[data-v-0f2eeed6]:last-child { margin-bottom: 0;\n}\n.clp-pcard__head[data-v-0f2eeed6] { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: var(--ui-soft); cursor: pointer; -webkit-user-select: none; -moz-user-select: none; user-select: none;\n}\n.clp-pcard__head[data-v-0f2eeed6]:hover { filter: brightness(0.98);\n}\n.clp-pcard__name[data-v-0f2eeed6] { display: flex; align-items: center; gap: 10px; min-width: 0;\n}\n.clp-pcard__name .fa[data-v-0f2eeed6] { font-size: 11px; color: var(--ui-muted);\n}\n.clp-pcard__name strong[data-v-0f2eeed6] { font-size: 14px;\n}\n.clp-pcard__meta[data-v-0f2eeed6] { display: flex; align-items: center; gap: 12px; flex-shrink: 0;\n}\n.clp-pcard__count[data-v-0f2eeed6] { font-size: 12.5px; color: var(--ui-muted);\n}\n.clp-rtable[data-v-0f2eeed6] { width: 100%; border-collapse: collapse;\n}\n.clp-rtable th[data-v-0f2eeed6] { padding: 10px 16px; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ui-muted); border-top: 1px solid var(--ui-border); border-bottom: 1px solid var(--ui-border); background: var(--ui-card);\n}\n.clp-rtable td[data-v-0f2eeed6] { padding: 10px 16px; font-size: 13.5px; border-top: 1px dashed var(--ui-border);\n}\n.clp-rtable tbody tr:first-child td[data-v-0f2eeed6] { border-top: 0;\n}\n.review-order-remove-btn[data-v-0f2eeed6] { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--ui-muted); font-size: 12px; transition: background-color 0.15s ease, color 0.15s ease;\n}\n.review-order-remove-btn[data-v-0f2eeed6]:hover { background: var(--ui-red-bg); color: var(--ui-red-fg);\n}\n.clp-review__foot[data-v-0f2eeed6] { display: flex; justify-content: flex-end; gap: 10px;\n}\n.clp-btn[data-v-0f2eeed6] { height: 42px; padding: 0 18px; border-radius: 12px; font-weight: 600;\n}\n.clp-btn--primary[data-v-0f2eeed6] { background: var(--ui-primary); border-color: var(--ui-primary);\n}\n\n/* ---------- responsive ---------- */\n/* when the orders card is narrow, the zone/area pills tuck under the address instead of taking a column */\n@container clporders (max-width: 880px) {\n.clp-col-zone { display: none;\n}\n.clp-shop__zone { display: flex;\n}\n}\n@media (max-width: 1199px) {\n.clp-grid[data-v-0f2eeed6] { grid-template-columns: 1fr;\n}\n.clp-planner[data-v-0f2eeed6] { position: static;\n}\n}\n@media (max-width: 767px) {\n.clp[data-v-0f2eeed6] { padding: 16px;\n}\n.clp .clp-head h1[data-v-0f2eeed6] { font-size: 24px;\n}\n.clp-col-zone[data-v-0f2eeed6] { display: none;\n}\n.clp-table[data-v-0f2eeed6] { table-layout: fixed;\n}\n.clp-table thead th[data-v-0f2eeed6], .clp-table tbody td[data-v-0f2eeed6] { padding: 10px 8px;\n}\n.clp-th-check[data-v-0f2eeed6] { width: 34px;\n}\n.clp-col-id[data-v-0f2eeed6] { display: none;\n}\n.clp-col-value[data-v-0f2eeed6] { width: 92px;\n}\n.clp-col-weight[data-v-0f2eeed6] { width: 66px;\n}\n.clp-shop[data-v-0f2eeed6] { min-width: 0;\n}\n.clp-shop .ui-avatar[data-v-0f2eeed6] { display: none;\n}\n.clp-shop__id[data-v-0f2eeed6] { display: inline;\n}\n.clp-shop__addr[data-v-0f2eeed6] { max-width: 100%;\n}\n.clp-sel strong[data-v-0f2eeed6] { font-size: 14px;\n}\n.clp-field[data-v-0f2eeed6], .clp-select[data-v-0f2eeed6], .clp-filters .clp-select[data-v-0f2eeed6] { width: 100%;\n}\n.clp-seg[data-v-0f2eeed6] { width: 100%;\n}\n.clp-seg__btn[data-v-0f2eeed6] { flex: 1; padding: 0 6px;\n}\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -1464,6 +1511,21 @@ var render = function () {
               _vm._v(_vm._s(_vm.__("total_value")) + " "),
               _c("strong", [_vm._v("₹" + _vm._s(_vm.totalFilteredValue))]),
             ]),
+            _vm._v(" "),
+            _vm.hiddenSelectedCount
+              ? _c("span", { staticClass: "clp-list-foot__hidden" }, [
+                  _c("strong", [_vm._v(_vm._s(_vm.hiddenSelectedCount))]),
+                  _vm._v(
+                    " " +
+                      _vm._s(
+                        _vm.__(
+                          "selected orders are hidden by the filters but stay in the slip"
+                        )
+                      ) +
+                      "\n                "
+                  ),
+                ])
+              : _vm._e(),
           ]),
         ]),
         _vm._v(" "),

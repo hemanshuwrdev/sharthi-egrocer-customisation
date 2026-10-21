@@ -79,6 +79,9 @@ Route::group(['middleware' => ['auth.customer']], function () {
 
     Route::group(['middleware' => ['auth:api-customers']], function () {
 
+        // Notifications screen: mark one / several / all as read (the list itself is the public GET above).
+        Route::post('notifications/mark_read', [\App\Http\Controllers\API\Customer\BasicApiController::class, 'markNotificationsRead']);
+
         // User
         Route::post('logout', [\App\Http\Controllers\API\Customer\CustomerAuthController::class, 'logout']);
         Route::post('delete_account', [\App\Http\Controllers\API\Customer\CustomerAuthController::class, 'deleteAccount']);
