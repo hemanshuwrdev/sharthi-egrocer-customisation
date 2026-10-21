@@ -249,7 +249,11 @@ class RetailerCartOrderApiController extends Controller
             // Inclusive pricing: sub_total already contains tax, so it is NOT added
             // again here — tax_amount/actual_price are only the billing-summary breakdown.
             $group['final_total']     = ($group['sub_total'] ?? 0) - $group['scheme_discount'];
-            $group['nearest_scheme']  = SchemeEngine::nearestUnapplied((int) $sellerId, $schemeLines, $appliedIds);
+            // nearest_schemes = for each product in the cart, the scheme closest to unlocking (closest first);
+            // nearest_scheme = just the overall closest one, exactly as before.
+            $nearestList = SchemeEngine::nearestUnappliedList((int) $sellerId, $schemeLines, $appliedIds);
+            $group['nearest_scheme']  = $nearestList[0] ?? null;
+            $group['nearest_schemes'] = $nearestList;
 
             $seller = $sellers[$sellerId] ?? null;
             $group['seller_name']           = $seller->name ?? null;

@@ -481,11 +481,14 @@
             border: none;
         }
 
+        /* Black on white with a rule above and below — not white text on a dark band: browsers drop background
+           colours when printing / saving as PDF, which left the white text barely readable. */
         .udaan-totals-table tr.grand-total td {
-            background-color: #343a40;
-            color: #fff;
+            color: #000;
             font-weight: bold;
             font-size: 14px;
+            border-top: 2px solid #000;
+            border-bottom: 2px solid #000;
         }
 
         .udaan-ad-banner {
@@ -638,16 +641,15 @@
                     <td class="center" style="font-size: 14px; font-weight: bold; color: #df2029;">{{ $index + 1 }}
                     </td>
                     <td>
-                        <strong>{{ $order->shop_name ?: ($order->party_name ?: $order->user_name) }}</strong>
+                        @php
+                            // "Shop name - Area", no address (the same area the bill's Bill to/Ship to uses: the retailer's own,
+                            // else the order address's). No dangling dash when there is no area.
+                            $rowArea = !empty($order->retailer_area) ? $order->retailer_area : ($order->area_name ?? '');
+                        @endphp
+                        <strong>{{ $order->shop_name ?: ($order->party_name ?: $order->user_name) }}{{ $rowArea !== '' ? ' - ' . $rowArea : '' }}</strong>
                         @if ($shopBills->count() > 1)
                             <span style="color: #555; font-size: 10px; font-weight: bold; margin-left: 6px;">({{ $shopBills->count() }} bills)</span>
                         @endif
-                        @if ($order->area_name)
-                            <span style="color: #666; font-size: 10px; font-weight: bold; margin-left: 10px;">(Area:
-                                {{ $order->area_name }})</span>
-                        @endif
-                        <br><span
-                            style="font-size: 10.5px; color: #555; font-weight: normal;">{{ $order->customer_address }}</span>
                         {{-- The order was on this slip but has since been rescheduled off it: keep it listed, with when it
                              happened and where it went, so the slip still matches what was loaded and dispatched. --}}
                         @if ($order->rescheduled_off_slip)

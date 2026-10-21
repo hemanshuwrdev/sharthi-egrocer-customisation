@@ -102,6 +102,48 @@ class SalesmanAppApiController extends Controller
     }
 
     /**
+     * Narrow a query on retailer_profiles by the distributor's assigned areas ($areaIds, empty = not area-scoped).
+     *
+     * Areas split a zone between distributors, so a retailer in an area the distributor has was always
+     * visible, and one in an area ANOTHER active distributor of its zone has claimed never is. But an area
+     * nobody serving the retailer's zone has claimed yet — one just added by the admin, or none picked at
+     * all — falls back to zone-only visibility. Without that, such a retailer (even a verified, active one)
+     * is invisible to every salesman, and a pending one can never be verified, until an admin happens to
+     * assign its area to a distributor.
+     */
+    private function inAssignedAreas($query, array $areaIds)
+    {
+        if (empty($areaIds)) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($areaIds) {
+            $q->whereIn('retailer_profiles.area_id', $areaIds)
+              // A NULL area matches no distributor_areas row, so it lands here as unclaimed too.
+              ->orWhereNotExists(function ($claimed) {
+                  $claimed->select(DB::raw(1))
+                      ->from('distributor_areas as da')
+                      ->join('sellers as claimer', 'claimer.id', '=', 'da.seller_id')
+                      ->where('claimer.status', Seller::$statusActive)
+                      ->whereColumn('da.area_id', 'retailer_profiles.area_id')
+                      ->whereExists(function ($serves) {
+                          $serves->select(DB::raw(1))
+                              ->from('brand_distributor_mappings as bdm')
+                              ->whereColumn('bdm.seller_id', 'da.seller_id')
+                              ->where(function ($zone) {
+                                  $zone->whereColumn('bdm.city_id', 'retailer_profiles.city_id')
+                                       ->orWhereIn('bdm.city_id', function ($rpc) {
+                                           $rpc->select('rpc.city_id')
+                                               ->from('retailer_profile_cities as rpc')
+                                               ->whereColumn('rpc.user_id', 'retailer_profiles.user_id');
+                                       });
+                              });
+                      });
+              });
+        });
+    }
+
+    /**
      * Retailers a salesman can see and work with (My Retailers, detail, QR scan, assisted orders).
      *
      * Verification only confirms the shop is legitimate. Once a retailer is verified (by any salesman
@@ -131,7 +173,7 @@ class SalesmanAppApiController extends Controller
                             ->where(function ($zone) use ($cityIds) {
                                 $this->inTerritoryZones($zone, $cityIds);
                             })
-                            ->when($areaIds, fn ($s) => $s->whereIn('retailer_profiles.area_id', $areaIds));
+                            ->when($areaIds, fn ($s) => $this->inAssignedAreas($s, $areaIds));
                     });
                 }
             });
@@ -256,7 +298,7 @@ class SalesmanAppApiController extends Controller
             ->where(function ($zone) use ($cityIds) {
                 $this->inTerritoryZones($zone, $cityIds);
             })
-            ->when($areaIds =$this->territoryAreaIds((int) $salesman->seller_id), fn ($q) => $q->whereIn('retailer_profiles.area_id', $areaIds))
+            ->when($areaIds = $this->territoryAreaIds((int) $salesman->seller_id), fn ($q) => $this->inAssignedAreas($q, $areaIds))
             ->orderByDesc('users.created_at')
             ->get();
 
@@ -678,8 +720,9 @@ class SalesmanAppApiController extends Controller
             return false;
         }
 
+        // Same area rule as the list queries (incl. the unclaimed-area fallback), asked of this one profile.
         $areaIds = array_map('intval', $this->territoryAreaIds((int) $salesman->seller_id) ?: []);
-        return empty($areaIds) || in_array((int) $profile->area_id, $areaIds, true);
+        return $this->inAssignedAreas(RetailerProfile::query()->where('retailer_profiles.user_id', $profile->user_id), $areaIds)->exists();
     }
 
     /**
@@ -744,7 +787,7 @@ class SalesmanAppApiController extends Controller
         $areaIds = $this->territoryAreaIds((int) $salesman->seller_id);
         if (!empty($areaIds)) {
             $query->where(function ($q) use ($areaIds, $salesman) {
-                $q->whereIn('retailer_profiles.area_id', $areaIds)
+                $q->where(fn ($inArea) => $this->inAssignedAreas($inArea, $areaIds))
                   ->orWhere('users.salesman_id', $salesman->id);
             });
         }
@@ -1204,7 +1247,9 @@ class SalesmanAppApiController extends Controller
         foreach ($groups as $sellerId => &$group) {
             $schemeLines = $group['scheme_lines'] ?? [];
             $scheme  = SchemeEngine::evaluate((int) $sellerId, $schemeLines);
-            $nearest = SchemeEngine::nearestUnapplied((int) $sellerId, $schemeLines, array_column($scheme['schemes'] ?? [], 'scheme_id'));
+            // nearest_schemes = for each product in the cart, the scheme closest to unlocking (closest first);
+            // nearest_scheme = just the overall closest one, exactly as before.
+            $nearestList = SchemeEngine::nearestUnappliedList((int) $sellerId, $schemeLines, array_column($scheme['schemes'] ?? [], 'scheme_id'));
             unset($group['scheme_lines']);
             // applied_scheme = the biggest single scheme, exactly as before; applied_schemes = every
             // scheme applied; scheme_discount = their total.
@@ -1212,7 +1257,8 @@ class SalesmanAppApiController extends Controller
             $group['applied_schemes'] = $scheme['schemes'] ?? [];
             $group['scheme_discount'] = $scheme['scheme_discount'] ?? 0;
             $group['final_total']     = ($group['sub_total'] ?? 0) - $group['scheme_discount'];
-            $group['nearest_scheme']  = $nearest;
+            $group['nearest_scheme']  = $nearestList[0] ?? null;
+            $group['nearest_schemes'] = $nearestList;
 
             $seller = $sellers[$sellerId] ?? null;
             $group['seller_name']           = $seller->name ?? null;

@@ -765,6 +765,10 @@ class BasicApiController extends Controller
 
         $sellers = Seller::select(
                 'sellers.id', 'sellers.name', 'sellers.store_name', 'sellers.logo', 'sellers.min_order_amount',
+                // Distributor contact + location. country_code is only used to build the "+<code><number>"
+                // mobile below and is hidden from the response; address is Address Line 1 + 2 (else the Google address).
+                'sellers.mobile', 'sellers.country_code', 'sellers.latitude', 'sellers.longitude',
+                DB::raw(Seller::displayAddressSql('sellers') . ' AS address'),
                 DB::raw("ROUND(6371 * acos(cos(radians(" . $request->latitude . "))
                                 * cos(radians(sellers.latitude)) * cos(radians(sellers.longitude) - radians(" . $request->longitude . "))
                                 + sin(radians(" . $request->latitude . ")) * sin(radians(sellers.latitude))), 2) AS distance"),
@@ -779,7 +783,12 @@ class BasicApiController extends Controller
             ->orderBy('distance', 'asc')
             ->get();
 
-        $sellers = $sellers->makeHidden(['national_identity_card_url', 'address_proof_url', 'logo']);
+        // Stored numbers are bare; return them with their country code ("+916359021290").
+        $sellers->each(function ($seller) {
+            $seller->mobile = CommonHelper::mobileWithCountryCode($seller->mobile, $seller->country_code);
+        });
+
+        $sellers = $sellers->makeHidden(['national_identity_card_url', 'address_proof_url', 'logo', 'country_code']);
         $total = $sellers->count();
         if (count($sellers) > 0) {
             return CommonHelper::responseWithData($sellers, $total);

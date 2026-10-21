@@ -11,13 +11,10 @@ use App\Models\Favorite;
 use App\Models\MasterProduct;
 use App\Models\MasterProductVariant;
 use App\Models\ProductRating;
-use App\Models\Scheme;
-use App\Models\SchemeProduct;
 use App\Models\SellerProduct;
 use App\Models\SellerProductSlabPrice;
 use App\Services\SchemeListing;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 
 /**
@@ -221,7 +218,7 @@ class RetailerCatalogApiController extends Controller
             ->get()
             ->groupBy('seller_product_id');
 
-        $nearestSchemesBySp = self::nearestSchemesForSellerProducts($rows->pluck('sp_id'));
+        $nearestSchemesBySp = SchemeListing::nearestForSellerProducts($rows->pluck('sp_id'));
 
         // Preload ratings grouped by (product_id, seller_id) for seller-wise avg/count
         $masterProductIds = $rows->pluck('master_product_id')->unique();
@@ -416,7 +413,7 @@ class RetailerCatalogApiController extends Controller
         $brand = $variant->masterProduct->brand;
         $overlapAllowed = $brand && (int) $brand->is_overlap_allowed === 1;
 
-        $nearestSchemesBySp = self::nearestSchemesForSellerProducts($sellerProducts->pluck('id'));
+        $nearestSchemesBySp = SchemeListing::nearestForSellerProducts($sellerProducts->pluck('id'));
         $appliedSchemesBySeller = self::appliedSchemesForVariant($request->user('api-customers'), $variant->id);
 
         $offers = $sellerProducts->map(function ($sp) use ($nearestSchemesBySp, $appliedSchemesBySeller, $variant) {
@@ -527,60 +524,6 @@ class RetailerCatalogApiController extends Controller
     }
 
     /**
-     * For each seller_product, resolve the single "nearest" currently-active scheme it
-     * participates in — either a buy_x_get_y where it's the buy product, or a
-     * group_discount_price/qty scheme it's listed under. "Nearest" = soonest end_date,
-     * i.e. the offer that's most urgent for the retailer to act on. Returns a map of
-     * seller_product_id => formatted scheme array (or null when no active scheme applies).
-     */
-    private static function nearestSchemesForSellerProducts(Collection $sellerProductIds): Collection
-    {
-        $sellerProductIds = $sellerProductIds->unique()->values();
-        if ($sellerProductIds->isEmpty()) {
-            return collect();
-        }
-
-        $bxgySchemes = Scheme::with(['freeProduct.masterProductVariant.masterProduct'])
-            ->where('type', Scheme::TYPE_BUY_X_GET_Y)
-            ->whereIn('buy_seller_product_id', $sellerProductIds)
-            ->active()
-            ->get()
-            ->keyBy('buy_seller_product_id');
-
-        $spToSchemeIds = SchemeProduct::whereIn('seller_product_id', $sellerProductIds)
-            ->get(['seller_product_id', 'scheme_id'])
-            ->groupBy('seller_product_id');
-
-        $groupSchemes = Scheme::with('schemeSlabs')
-            ->whereIn('id', $spToSchemeIds->flatten(1)->pluck('scheme_id')->unique())
-            ->whereIn('type', [Scheme::TYPE_GROUP_DISCOUNT_PRICE, Scheme::TYPE_GROUP_DISCOUNT_QTY])
-            ->active()
-            ->get()
-            ->keyBy('id');
-
-        return $sellerProductIds->mapWithKeys(function ($spId) use ($bxgySchemes, $spToSchemeIds, $groupSchemes) {
-            $candidates = collect();
-
-            if ($bxgySchemes->has($spId)) {
-                $candidates->push($bxgySchemes[$spId]);
-            }
-
-            foreach ($spToSchemeIds[$spId] ?? [] as $link) {
-                if ($groupSchemes->has($link->scheme_id)) {
-                    $candidates->push($groupSchemes[$link->scheme_id]);
-                }
-            }
-
-            if ($candidates->isEmpty()) {
-                return [$spId => null];
-            }
-
-            $nearest = $candidates->sortBy('end_date')->first();
-            return [$spId => self::formatNearestScheme($nearest)];
-        });
-    }
-
-    /**
      * [seller_id => list of applied schemes] for the distributors the retailer already holds this
      * variant with in the cart — the cart's own evaluation (see RetailerCartOrderApiController::appliedSchemesBySeller).
      * Empty for guests and when the variant is not in the cart, so the cart is only priced when it matters.
@@ -605,27 +548,5 @@ class RetailerCatalogApiController extends Controller
         $applied = app(RetailerCartOrderApiController::class)->appliedSchemesBySeller($user);
 
         return array_intersect_key(array_filter($applied), array_flip($sellerIdsInCart));
-    }
-
-    private static function formatNearestScheme(Scheme $s): array
-    {
-        $isBxgy = $s->type === Scheme::TYPE_BUY_X_GET_Y;
-
-        return [
-            'id'           => $s->id,
-            'name'         => $s->name,
-            'type'         => $s->type,
-            'end_date'     => $s->end_date,
-            'buy_qty'      => $isBxgy ? $s->buy_qty : null,
-            'free_product' => $isBxgy && $s->freeProduct
-                ? trim(($s->freeProduct->masterProductVariant->masterProduct->name ?? '') . ' — ' . ($s->freeProduct->masterProductVariant->sku ?? ''))
-                : null,
-            'free_qty'     => $isBxgy ? $s->free_qty : null,
-            'slabs'        => !$isBxgy ? $s->schemeSlabs->sortBy('min_value')->map(fn ($sl) => [
-                'min_value'      => (float) $sl->min_value,
-                'discount_type'  => $sl->discount_type,
-                'discount_value' => (float) $sl->discount_value,
-            ])->values() : [],
-        ];
     }
 }

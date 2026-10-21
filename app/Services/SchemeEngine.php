@@ -174,13 +174,55 @@ class SchemeEngine
     }
 
     /**
-     * Find the single nearest scheme that is NOT yet triggered — the one requiring
-     * the smallest additional spend / qty to unlock.
+     * The single nearest scheme that is NOT yet triggered — the one requiring the smallest additional
+     * spend / qty to unlock. Same as nearestUnappliedList()[0]; kept for apps that read one nearest_scheme.
      */
     public static function nearestUnapplied(int $sellerId, array $lines, $appliedSchemeIds = null): ?array
     {
+        return self::nearestUnappliedList($sellerId, $lines, $appliedSchemeIds)[0] ?? null;
+    }
+
+    /**
+     * Not-yet-triggered schemes worth showing for this cart: for EACH product in the cart, the scheme
+     * closest to unlocking among the ones it takes part in (a scheme shared by two cart products is
+     * listed once), closest first. So a cart with two products that each have a scheme shows both —
+     * not just whichever is closest overall. [0] is always that overall closest scheme.
+     */
+    public static function nearestUnappliedList(int $sellerId, array $lines, $appliedSchemeIds = null): array
+    {
+        [$candidates, $qtyByProduct] = self::nearestCandidates($sellerId, $lines, $appliedSchemeIds);
+
+        $closest = [];   // seller_product_id => index of its closest candidate
+        foreach ($candidates as $i => $c) {
+            $s = $c['scheme'];
+            $involved = $s->type === Scheme::TYPE_BUY_X_GET_Y
+                ? [(int) $s->buy_seller_product_id]
+                : array_map('intval', $s->schemeProducts->pluck('seller_product_id')->all());
+            foreach ($involved as $spId) {
+                if (($qtyByProduct[$spId] ?? 0) <= 0) {
+                    continue;   // only products actually in the cart
+                }
+                if (!isset($closest[$spId]) || $c['amountNeeded'] < $candidates[$closest[$spId]]['amountNeeded']) {
+                    $closest[$spId] = $i;
+                }
+            }
+        }
+
+        $picked = array_values(array_unique($closest));
+        usort($picked, fn ($a, $b) => [$candidates[$a]['amountNeeded'], $a] <=> [$candidates[$b]['amountNeeded'], $b]);
+
+        return array_map(fn ($i) => self::formatNearest($candidates[$i]), $picked);
+    }
+
+    /**
+     * One entry per not-yet-triggered scheme that has a product in the cart.
+     *
+     * @return array{0: array, 1: array} [candidates, qty in cart by seller_product_id]
+     */
+    private static function nearestCandidates(int $sellerId, array $lines, $appliedSchemeIds): array
+    {
         if (empty($lines)) {
-            return null;
+            return [[], []];
         }
 
         // Schemes stack, so several can already be applied — one id, a list of ids, or null all work.
@@ -205,7 +247,7 @@ class SchemeEngine
             ->get();
 
 
-        $nearest = null;
+        $candidates = [];
 
         foreach ($schemes as $scheme) {
             if ($scheme->type === Scheme::TYPE_BUY_X_GET_Y) {
@@ -249,21 +291,19 @@ class SchemeEngine
                 $amountNeeded = round($unitsNeeded * $unitPrice, 2);
                 $minimumAmount = round(($buyBasis === 'outer' ? (float) $scheme->buy_qty * $buySecVal : (float) $scheme->buy_qty) * $unitPrice, 2);
 
-                if ($nearest === null || $amountNeeded < $nearest['amountNeeded']) {
-                    $nearest = [
-                        'type'               => Scheme::TYPE_BUY_X_GET_Y,
-                        'amountNeeded'       => $amountNeeded,
-                        'minimumAmount'      => $minimumAmount,
-                        'qtyNeeded'          => $qtyNeededInBasis,
-                        'scheme'             => $scheme,
-                        'nextSlab'           => null,
-                        'currentBuyQty'      => $effectiveCartQty,
-                        'currentGroupTotal'  => null,
-                        'currentGroupQty'    => null,
-                        'groupQtyNeeded'     => null,
-                        'minimumGroupQty'    => null,
-                    ];
-                }
+                $candidates[] = [
+                    'type'               => Scheme::TYPE_BUY_X_GET_Y,
+                    'amountNeeded'       => $amountNeeded,
+                    'minimumAmount'      => $minimumAmount,
+                    'qtyNeeded'          => $qtyNeededInBasis,
+                    'scheme'             => $scheme,
+                    'nextSlab'           => null,
+                    'currentBuyQty'      => $effectiveCartQty,
+                    'currentGroupTotal'  => null,
+                    'currentGroupQty'    => null,
+                    'groupQtyNeeded'     => null,
+                    'minimumGroupQty'    => null,
+                ];
 
             } elseif ($scheme->type === Scheme::TYPE_GROUP_DISCOUNT_PRICE) {
                 $groupIds = $scheme->schemeProducts->pluck('seller_product_id')->all();
@@ -293,21 +333,19 @@ class SchemeEngine
                 $amountNeeded  = round((float) $nextSlab->min_value - $groupTotal, 2);
                 $minimumAmount = (float) $nextSlab->min_value;
 
-                if ($nearest === null || $amountNeeded < $nearest['amountNeeded']) {
-                    $nearest = [
-                        'type'               => Scheme::TYPE_GROUP_DISCOUNT_PRICE,
-                        'amountNeeded'       => $amountNeeded,
-                        'minimumAmount'      => $minimumAmount,
-                        'qtyNeeded'          => null,
-                        'scheme'             => $scheme,
-                        'nextSlab'           => $nextSlab,
-                        'currentBuyQty'      => null,
-                        'currentGroupTotal'  => round($groupTotal, 2),
-                        'currentGroupQty'    => null,
-                        'groupQtyNeeded'     => null,
-                        'minimumGroupQty'    => null,
-                    ];
-                }
+                $candidates[] = [
+                    'type'               => Scheme::TYPE_GROUP_DISCOUNT_PRICE,
+                    'amountNeeded'       => $amountNeeded,
+                    'minimumAmount'      => $minimumAmount,
+                    'qtyNeeded'          => null,
+                    'scheme'             => $scheme,
+                    'nextSlab'           => $nextSlab,
+                    'currentBuyQty'      => null,
+                    'currentGroupTotal'  => round($groupTotal, 2),
+                    'currentGroupQty'    => null,
+                    'groupQtyNeeded'     => null,
+                    'minimumGroupQty'    => null,
+                ];
 
             } elseif ($scheme->type === Scheme::TYPE_GROUP_DISCOUNT_QTY) {
                 $groupIds = $scheme->schemeProducts->pluck('seller_product_id')->all();
@@ -340,21 +378,19 @@ class SchemeEngine
                 $minimumGroupQty = (int) $nextSlab->min_value;
 
                 // Use qty gap as the comparison metric (treat as "amount needed" for ranking)
-                if ($nearest === null || $groupQtyNeeded < $nearest['amountNeeded']) {
-                    $nearest = [
-                        'type'               => Scheme::TYPE_GROUP_DISCOUNT_QTY,
-                        'amountNeeded'       => $groupQtyNeeded,
-                        'minimumAmount'      => null,
-                        'qtyNeeded'          => null,
-                        'scheme'             => $scheme,
-                        'nextSlab'           => $nextSlab,
-                        'currentBuyQty'      => null,
-                        'currentGroupTotal'  => round($groupTotal, 2),
-                        'currentGroupQty'    => round($groupQty, 2),
-                        'groupQtyNeeded'     => $groupQtyNeeded,
-                        'minimumGroupQty'    => $minimumGroupQty,
-                    ];
-                }
+                $candidates[] = [
+                    'type'               => Scheme::TYPE_GROUP_DISCOUNT_QTY,
+                    'amountNeeded'       => $groupQtyNeeded,
+                    'minimumAmount'      => null,
+                    'qtyNeeded'          => null,
+                    'scheme'             => $scheme,
+                    'nextSlab'           => $nextSlab,
+                    'currentBuyQty'      => null,
+                    'currentGroupTotal'  => round($groupTotal, 2),
+                    'currentGroupQty'    => round($groupQty, 2),
+                    'groupQtyNeeded'     => $groupQtyNeeded,
+                    'minimumGroupQty'    => $minimumGroupQty,
+                ];
             } elseif (!in_array((int) $scheme->id, $appliedSchemeIds, true) && ($scheme->type === Scheme::TYPE_PRODUCT_CONDITIONS || $scheme->schemeProducts->contains(fn ($sp) => $sp->min_qty !== null))) {
                 if ($scheme->schemeProducts->count() > 1) {
                     $firstSp = $scheme->schemeProducts->first();
@@ -388,21 +424,19 @@ class SchemeEngine
                             $unitsNeeded = ($firstSp->qty_basis === 'outer') ? ($qtyNeededInBasis * $sampleSecVal) : $qtyNeededInBasis;
                             $amountNeeded = round($unitsNeeded * $sampleUnitPrice, 2);
 
-                            if ($nearest === null || $amountNeeded < $nearest['amountNeeded']) {
-                                $nearest = [
-                                    'type'               => 'group_discount',
-                                    'amountNeeded'       => $amountNeeded,
-                                    'minimumAmount'      => round($minQty * ($firstSp->qty_basis === 'outer' ? $sampleSecVal * $sampleUnitPrice : $sampleUnitPrice), 2),
-                                    'qtyNeeded'          => (int) ceil($qtyNeededInBasis),
-                                    'scheme'             => $scheme,
-                                    'nextSlab'           => null,
-                                    'currentBuyQty'      => $combinedEffective,
-                                    'currentGroupTotal'  => null,
-                                    'currentGroupQty'    => null,
-                                    'groupQtyNeeded'     => null,
-                                    'minimumGroupQty'    => null,
-                                ];
-                            }
+                            $candidates[] = [
+                                'type'               => 'group_discount',
+                                'amountNeeded'       => $amountNeeded,
+                                'minimumAmount'      => round($minQty * ($firstSp->qty_basis === 'outer' ? $sampleSecVal * $sampleUnitPrice : $sampleUnitPrice), 2),
+                                'qtyNeeded'          => (int) ceil($qtyNeededInBasis),
+                                'scheme'             => $scheme,
+                                'nextSlab'           => null,
+                                'currentBuyQty'      => $combinedEffective,
+                                'currentGroupTotal'  => null,
+                                'currentGroupQty'    => null,
+                                'groupQtyNeeded'     => null,
+                                'minimumGroupQty'    => null,
+                            ];
                         }
                     }
                 } else {
@@ -436,30 +470,30 @@ class SchemeEngine
                             : $sellerProduct->selling_price);
                         $amountNeeded = round($unitsNeeded * $unitPrice, 2);
 
-                        if ($nearest === null || $amountNeeded < $nearest['amountNeeded']) {
-                            $nearest = [
-                                'type'               => 'group_discount',
-                                'amountNeeded'       => $amountNeeded,
-                                'minimumAmount'      => round($minQty * ($sp->qty_basis === 'outer' ? $secVal * $unitPrice : $unitPrice), 2),
-                                'qtyNeeded'          => (int) ceil($qtyNeededInBasis),
-                                'scheme'             => $scheme,
-                                'nextSlab'           => null,
-                                'currentBuyQty'      => $effectiveQty,
-                                'currentGroupTotal'  => null,
-                                'currentGroupQty'    => null,
-                                'groupQtyNeeded'     => null,
-                                'minimumGroupQty'    => null,
-                            ];
-                        }
+                        $candidates[] = [
+                            'type'               => 'group_discount',
+                            'amountNeeded'       => $amountNeeded,
+                            'minimumAmount'      => round($minQty * ($sp->qty_basis === 'outer' ? $secVal * $unitPrice : $unitPrice), 2),
+                            'qtyNeeded'          => (int) ceil($qtyNeededInBasis),
+                            'scheme'             => $scheme,
+                            'nextSlab'           => null,
+                            'currentBuyQty'      => $effectiveQty,
+                            'currentGroupTotal'  => null,
+                            'currentGroupQty'    => null,
+                            'groupQtyNeeded'     => null,
+                            'minimumGroupQty'    => null,
+                        ];
                     }
                 }
             }
         }
 
-        if (!$nearest) {
-            return null;
-        }
+        return [$candidates, $qtyByProduct];
+    }
 
+    /** One candidate -> the app-facing nearest_scheme shape. */
+    private static function formatNearest(array $nearest): array
+    {
         $s      = $nearest['scheme'];
         $type   = $s->type;
         $isBxgy = $type === Scheme::TYPE_BUY_X_GET_Y;
