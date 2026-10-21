@@ -110,6 +110,9 @@ class SalesmanAppApiController extends Controller
      *   - one this salesman verified (kept visible even if the territory config changes later), or
      *   - already verified (not pending) and located in the distributor's cities / assigned areas.
      *
+     * A retailer the super admin has made inactive (or deleted) — users.status != 1 — is never visible,
+     * however it was verified.
+     *
      * Returns a query on `users` left-joined to `retailer_profiles`; callers add selects/filters.
      */
     private function visibleRetailersQuery(Salesman $salesman)
@@ -119,6 +122,7 @@ class SalesmanAppApiController extends Controller
 
         return User::query()
             ->leftJoin('retailer_profiles', 'retailer_profiles.user_id', '=', 'users.id')
+            ->where('users.status', 1)
             ->where(function ($q) use ($salesman, $cityIds, $areaIds) {
                 $q->where('users.salesman_id', $salesman->id);
                 if (!empty($cityIds)) {
@@ -247,11 +251,12 @@ class SalesmanAppApiController extends Controller
             ->leftJoin('cities', 'cities.id', '=', 'retailer_profiles.city_id')
             ->leftJoin('areas as rp_area', 'rp_area.id', '=', 'retailer_profiles.area_id')
             ->where('users.verification_status', 'pending')
+            ->where('users.status', 1)
             ->whereNull('users.salesman_id')
             ->where(function ($zone) use ($cityIds) {
                 $this->inTerritoryZones($zone, $cityIds);
             })
-            ->when($areaIds = $this->territoryAreaIds((int) $salesman->seller_id), fn ($q) => $q->whereIn('retailer_profiles.area_id', $areaIds))
+            ->when($areaIds =$this->territoryAreaIds((int) $salesman->seller_id), fn ($q) => $q->whereIn('retailer_profiles.area_id', $areaIds))
             ->orderByDesc('users.created_at')
             ->get();
 
@@ -660,7 +665,7 @@ class SalesmanAppApiController extends Controller
      */
     private function canScanPendingRetailer(Salesman $salesman, User $retailer): bool
     {
-        if ($retailer->verification_status !== 'pending') {
+        if ($retailer->verification_status !== 'pending' || (int) $retailer->status !== 1) {
             return false;
         }
         if ($retailer->salesman_id && (int) $retailer->salesman_id !== (int) $salesman->id) {
@@ -730,6 +735,7 @@ class SalesmanAppApiController extends Controller
             ->join('retailer_profiles', 'retailer_profiles.user_id', '=', 'users.id')
             ->leftJoin('cities', 'cities.id', '=', 'retailer_profiles.city_id')
             ->leftJoin('areas as rp_area', 'rp_area.id', '=', 'retailer_profiles.area_id')
+            ->where('users.status', 1)
             ->where(function ($zone) use ($cityIds) {
                 $this->inTerritoryZones($zone, $cityIds);
             });
@@ -803,6 +809,7 @@ class SalesmanAppApiController extends Controller
     {
         $retailer = User::find($retailerId);
         if (!$retailer) return null;
+        if ((int) $retailer->status !== 1) return null;
         if ($retailer->verification_status !== 'active') return null;
         if (!$this->canAccessRetailer($salesman, (int) $retailer->id)) return null;
         return $retailer;
@@ -1884,6 +1891,7 @@ class SalesmanAppApiController extends Controller
                     $this->inTerritoryZones($zone, $cityIds);
                 })
                 ->where('users.verification_status', 'pending')
+                ->where('users.status', 1)
                 ->whereNull('users.salesman_id')
                 ->count();
         }

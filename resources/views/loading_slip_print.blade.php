@@ -231,6 +231,10 @@
                 background: none;
             }
 
+            .udaan-invoice {
+                max-width: none;
+            }
+
             .party-bill-page {
                 page-break-before: always;
                 border-top: none !important;
@@ -256,15 +260,39 @@
             margin-top: 20px;
             box-sizing: border-box;
             position: relative;
+            /* On screen the invoice used to stretch to the full window width, leaving the number
+               columns mostly blank. Print uses the page width (see @media print). */
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
+        /* Logo left, "Tax Invoice" centred in the space between, invoice details right. The side columns
+           size to their content so the details block never wraps because of the title. */
         .udaan-header {
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            column-gap: 16px;
             align-items: flex-start;
             border-bottom: 2px solid #000;
             padding-bottom: 8px;
             margin-bottom: 10px;
+        }
+
+        .udaan-header .udaan-meta-grid {
+            justify-self: end;
+        }
+
+        .udaan-title {
+            align-self: flex-start;
+            justify-self: center;
+            /* same height as the logo so the title sits level with it */
+            line-height: 38px;
+            font-size: 22px;
+            font-weight: 900;
+            color: #000;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
         }
 
         .udaan-logo-container {
@@ -358,8 +386,8 @@
         .udaan-table td {
             box-sizing: border-box;
             border: 1px solid #777;
-            padding: 6px 6px;
-            font-size: 11px;
+            padding: 8px 6px;
+            font-size: 12.5px;
             vertical-align: top;
             text-align: left;
         }
@@ -368,8 +396,70 @@
             background-color: #e2e3e5;
             color: #000;
             font-weight: bold;
+            font-size: 12px;
             text-transform: none;
             border-bottom: 2px solid #555;
+        }
+
+        /* Numbers line up with the middle of a tall row instead of hugging the top with blank space below. */
+        .udaan-table td.num {
+            vertical-align: middle;
+        }
+
+        .udaan-table .item-name {
+            font-size: 13px;
+        }
+
+        .udaan-table .free-tag {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 1px 7px;
+            border: 1px solid #1a7f37;
+            border-radius: 3px;
+            color: #1a7f37;
+            font-size: 10.5px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            vertical-align: middle;
+        }
+
+        .udaan-table .free-qty-line {
+            margin-top: 2px;
+            font-size: 10.5px;
+            font-weight: bold;
+            color: #1a7f37;
+            white-space: nowrap;
+        }
+
+        .udaan-table .item-sub {
+            font-size: 11px;
+            color: #444;
+        }
+
+        .udaan-table .item-format {
+            font-size: 11.5px;
+            font-weight: bold;
+            color: #111;
+        }
+
+        .udaan-table .item-boxqty {
+            font-size: 11.5px;
+            font-weight: bold;
+            color: #df2029;
+            margin-left: 10px;
+        }
+
+        .udaan-table .tax-lines {
+            font-size: 10.5px;
+            line-height: 1.35;
+            white-space: nowrap;
+        }
+
+        .udaan-table .tax-lines > div {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
         }
 
         .udaan-totals-area {
@@ -387,7 +477,7 @@
 
         .udaan-totals-table td {
             padding: 5px 10px;
-            font-size: 11px;
+            font-size: 12.5px;
             border: none;
         }
 
@@ -395,7 +485,7 @@
             background-color: #343a40;
             color: #fff;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 14px;
         }
 
         .udaan-ad-banner {
@@ -524,12 +614,34 @@
             </tr>
         </thead>
         <tbody>
-            @foreach ($orders as $index => $order)
+            @php
+                // One row per shop: a shop with several bills on this slip is listed once, with all of its
+                // bill numbers and the combined amount (each bill still has its own invoice page below).
+                // An order rescheduled off the slip keeps its own row, since it carries its own reschedule note.
+                $billRows = collect();
+                $billRowByShop = [];
+                foreach ($orders as $o) {
+                    if ($o->rescheduled_off_slip) {
+                        $billRows->push(collect([$o]));
+                        continue;
+                    }
+                    if (!isset($billRowByShop[$o->user_id])) {
+                        $billRowByShop[$o->user_id] = collect();
+                        $billRows->push($billRowByShop[$o->user_id]);
+                    }
+                    $billRowByShop[$o->user_id]->push($o);
+                }
+            @endphp
+            @foreach ($billRows as $index => $shopBills)
+                @php $order = $shopBills->first(); @endphp
                 <tr>
                     <td class="center" style="font-size: 14px; font-weight: bold; color: #df2029;">{{ $index + 1 }}
                     </td>
                     <td>
                         <strong>{{ $order->shop_name ?: ($order->party_name ?: $order->user_name) }}</strong>
+                        @if ($shopBills->count() > 1)
+                            <span style="color: #555; font-size: 10px; font-weight: bold; margin-left: 6px;">({{ $shopBills->count() }} bills)</span>
+                        @endif
                         @if ($order->area_name)
                             <span style="color: #666; font-size: 10px; font-weight: bold; margin-left: 10px;">(Area:
                                 {{ $order->area_name }})</span>
@@ -552,9 +664,18 @@
                             </span>
                         @endif
                     </td>
-                    <td class="center">{{ $order->invoice_number ?: '-' }}</td>
+                    <td class="center">
+                        {{-- Bill numbers exist only once the slip is dispatched; until then a single dash, not one per bill. --}}
+                        @if ($shopBills->contains(fn ($b) => !empty($b->invoice_number)))
+                            @foreach ($shopBills as $shopBill)
+                                {{ $shopBill->invoice_number ?: '-' }}@if (!$loop->last)<br>@endif
+                            @endforeach
+                        @else
+                            -
+                        @endif
+                    </td>
                     <td class="right" style="font-weight: bold; font-size: 13px;">
-                        ₹{{ number_format($order->final_total, 2) }}</td>
+                        ₹{{ number_format($shopBills->sum('final_total'), 2) }}</td>
                 </tr>
             @endforeach
             <tr>
@@ -614,6 +735,8 @@
                         </div>
                     </div>
 
+                    <div class="udaan-title">Tax Invoice</div>
+
                     <div class="udaan-meta-grid">
                         <span class="udaan-meta-label">Invoice ID:</span>
                         {{-- The real distributor invoice number (same one the "Bill No." column on the first page shows),
@@ -649,9 +772,9 @@
 
                 <!-- Address Grid -->
                 <div class="udaan-address-columns">
-                    <!-- Ship From -->
+                    <!-- Bill From / Ship From -->
                     <div class="udaan-address-col">
-                        <h4>Ship From:</h4>
+                        <h4>Bill from/Ship from:</h4>
                         <p><strong>{{ $seller->store_name }}</strong></p>
                         <p>{{ $sellerTypedAddress ?: $seller->street }}</p>
                         <p>{{ $seller->city_name }}, {{ $seller->state }}</p>
@@ -716,6 +839,32 @@
                     $totalTaxAmount = 0;
                     $totalBillAmt = 0;
                     $srNo = 0;
+
+                    // A free (scheme) line is merged into the paid line of the same product: one row, the
+                    // free qty shown beside the paid qty and tagged "Free Qty". With several paid lines of
+                    // that product it joins the last one. A free line with no paid line of that product
+                    // (e.g. buy X get a different Y) keeps its own row after the paid lines, still tagged.
+                    $isFreeLine = fn ($i) => (int) ($i->is_free_item ?? 0) === 1;
+                    $sameProduct = function ($a, $b) {
+                        if (!empty($a->master_product_variant_id)) {
+                            return $a->master_product_variant_id == $b->master_product_variant_id;
+                        }
+                        return !empty($a->product_variant_id) && $a->product_variant_id == $b->product_variant_id;
+                    };
+                    $paidLines = $order->items->reject($isFreeLine)->values();
+                    foreach ($paidLines as $paidLine) {
+                        $paidLine->merged_free_qty = 0;
+                    }
+                    $freeUnmatched = [];
+                    foreach ($order->items->filter($isFreeLine) as $freeLine) {
+                        $owner = $paidLines->keys()->filter(fn ($k) => $sameProduct($paidLines[$k], $freeLine))->last();
+                        if ($owner === null) {
+                            $freeUnmatched[] = $freeLine;
+                        } else {
+                            $paidLines[$owner]->merged_free_qty += $freeLine->quantity;
+                        }
+                    }
+                    $orderedItems = $paidLines->concat($freeUnmatched)->values();
                 @endphp
               
                 <table class="udaan-table">
@@ -723,15 +872,15 @@
                         <tr>
                             <th style="width: 5%; text-align: center;">Sr No.</th>
                             <th>Description</th>
-                            <th style="width: 7%; text-align: center;">Qty</th>
+                            <th style="width: 10%; text-align: center;">Qty</th>
                             <th style="width: 12%; text-align: right;">Rate</th>
                             <th style="width: 14%; text-align: right;">Net Taxable Amt.</th>
-                            <th style="width: 15%; text-align: right;">Tax (GST)</th>
+                            <th style="width: 17%; text-align: right;">Tax (GST)</th>
                             <th style="width: 14%; text-align: right;">Total Amt.</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($order->items as $itemIndex => $item)
+                        @foreach ($orderedItems as $itemIndex => $item)
                             @php
                                 $pkgFormat = '';
                                 $boxQty = '';
@@ -772,36 +921,42 @@
 
                                 $rate = $item->discounted_price ?: $item->price;
 
-                                $totalBillQty += $item->quantity;
+                                $mergedFreeQty = (float) ($item->merged_free_qty ?? 0);
+                                $totalBillQty += $item->quantity + $mergedFreeQty;
                                 $totalNetTaxable += $netTaxable;
                                 $totalTaxAmount += $itemTax;
                                 $totalBillAmt += $itemTotal;
                                 $srNo++;
                             @endphp
                             <tr>
-                                <td style="text-align: center;">{{ $srNo }}</td>
+                                <td class="num" style="text-align: center;">{{ $srNo }}</td>
                                 <td>
-                                    <strong>{{ $item->product_name }}</strong>
-                                    <br><span style="color: #555; font-size: 9px;">HSN: {{ $hsn }}</span>
+                                    <strong class="item-name">{{ $item->product_name }}</strong>
+                                    @if ($isFreeLine($item) || $mergedFreeQty > 0)
+                                        <span class="free-tag">Free Qty</span>
+                                    @endif
+                                    <br><span class="item-sub">HSN: {{ $hsn }}</span>
                                     @if ($pkgFormat)
-                                        <br><span style="color: #111; font-weight: bold; font-size: 10px;">Format:
-                                            {{ $pkgFormat }}</span>
+                                        <br><span class="item-format">Format: {{ $pkgFormat }}</span>
                                     @endif
                                     @if ($boxQty)
-                                        <span
-                                            style="color: #df2029; font-weight: bold; margin-left: 10px; font-size: 10px;">({{ $boxQty }})</span>
+                                        <span class="item-boxqty">({{ $boxQty }})</span>
                                     @endif
                                 </td>
-                                <td style="text-align: center; font-weight: bold;">
-                                    {{ number_format($item->quantity, 1) }}</td>
-                                <td style="text-align: right; white-space: nowrap;">₹{{ number_format($rate, 2) }}</td>
-                                <td style="text-align: right; white-space: nowrap;">₹{{ number_format($netTaxable, 2) }}</td>
-                                <td style="font-size: 8.5px; line-height: 1.25; white-space: nowrap;">
-                                    <div style="display: flex; justify-content: space-between;"><span>CGST {{ number_format($cgstPct, 1) }}%</span><span>{{ number_format($cgstAmt, 2) }}</span></div>
-                                    <div style="display: flex; justify-content: space-between;"><span>SGST {{ number_format($sgstPct, 1) }}%</span><span>{{ number_format($sgstAmt, 2) }}</span></div>
-                                    <div style="display: flex; justify-content: space-between; font-weight: bold;"><span>Tax</span><span>{{ number_format($itemTax, 2) }}</span></div>
+                                <td class="num" style="text-align: center; font-weight: bold;">
+                                    {{ number_format($item->quantity, 1) }}
+                                    @if ($mergedFreeQty > 0)
+                                        <div class="free-qty-line">+{{ number_format($mergedFreeQty, 1) }} free</div>
+                                    @endif
                                 </td>
-                                <td style="text-align: right; font-weight: bold; white-space: nowrap;">₹{{ number_format($itemTotal, 2) }}
+                                <td class="num" style="text-align: right; white-space: nowrap;">₹{{ number_format($rate, 2) }}</td>
+                                <td class="num" style="text-align: right; white-space: nowrap;">₹{{ number_format($netTaxable, 2) }}</td>
+                                <td class="num tax-lines">
+                                    <div><span>CGST {{ number_format($cgstPct, 1) }}%</span><span>{{ number_format($cgstAmt, 2) }}</span></div>
+                                    <div><span>SGST {{ number_format($sgstPct, 1) }}%</span><span>{{ number_format($sgstAmt, 2) }}</span></div>
+                                    <div style="font-weight: bold;"><span>Tax</span><span>{{ number_format($itemTax, 2) }}</span></div>
+                                </td>
+                                <td class="num" style="text-align: right; font-weight: bold; white-space: nowrap;">₹{{ number_format($itemTotal, 2) }}
                                 </td>
                             </tr>
                         @endforeach
