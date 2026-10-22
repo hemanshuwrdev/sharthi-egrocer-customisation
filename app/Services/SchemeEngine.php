@@ -224,6 +224,13 @@ class SchemeEngine
             if (isset($seen[$s->id])) {
                 continue;
             }
+            // A Cart Value Discount that counts the whole cart has no products of its own; a candidate only
+            // exists when the cart has some value, so it always belongs in the list.
+            if ($s->applies_to_all) {
+                $picked[] = $i;
+                $seen[$s->id] = true;
+                continue;
+            }
             $involved = $s->type === Scheme::TYPE_BUY_X_GET_Y
                 ? [(int) $s->buy_seller_product_id]
                 : array_map('intval', $s->schemeProducts->pluck('seller_product_id')->all());
@@ -328,15 +335,8 @@ class SchemeEngine
                 ];
 
             } elseif ($scheme->type === Scheme::TYPE_GROUP_DISCOUNT_PRICE) {
-                $groupIds = $scheme->schemeProducts->pluck('seller_product_id')->all();
-                if (empty($groupIds)) {
-                    continue;
-                }
-
-                $groupTotal = 0.0;
-                foreach ($groupIds as $spId) {
-                    $groupTotal += $totalByProduct[(int) $spId] ?? 0;
-                }
+                // Its selected products' value, or the whole cart for a Cart Value Discount that applies to all.
+                [$groupTotal] = self::groupValue($scheme, $totalByProduct, $totalByProduct);
 
                 // Only surface if at least one group product is in cart
                 if ($groupTotal <= 0) {
@@ -562,6 +562,7 @@ class SchemeEngine
 
         $nextSlabData = $nearest['nextSlab'] ? [
             'min_value'      => (float) $nearest['nextSlab']->min_value,
+            'max_value'      => $nearest['nextSlab']->max_value !== null ? (float) $nearest['nextSlab']->max_value : null,
             'discount_type'  => $nearest['nextSlab']->discount_type,
             'discount_value' => (float) $nearest['nextSlab']->discount_value,
             'tax_option'     => $nearest['nextSlab']->tax_option ?? 'inclusive',
@@ -580,7 +581,9 @@ class SchemeEngine
             'qty_needed'          => $nearest['qtyNeeded'] ?? null,
             'buy_product'         => $buyProductData,
             'free_product'        => $freeProductData,
-            // group_discount_price fields
+            // group_discount_price fields. applies_to_all = a Cart Value Discount counting the whole cart
+            // (its `products` is then empty and current_group_total is the cart value).
+            'applies_to_all'      => (bool) $s->applies_to_all,
             'current_group_total' => !$isBxgy ? $nearest['currentGroupTotal'] : null,
             // group_discount_qty fields
             'current_group_qty'   => $type === Scheme::TYPE_GROUP_DISCOUNT_QTY ? $nearest['currentGroupQty'] : null,
@@ -595,6 +598,7 @@ class SchemeEngine
             'products'            => $productsData,
             'slabs'               => !$isBxgy ? $s->schemeSlabs->sortBy('min_value')->map(fn ($sl) => [
                 'min_value'      => (float) $sl->min_value,
+                'max_value'      => $sl->max_value !== null ? (float) $sl->max_value : null,
                 'discount_type'  => $sl->discount_type,
                 'discount_value' => (float) $sl->discount_value,
                 'tax_option'     => $sl->tax_option ?? 'inclusive',
@@ -665,25 +669,21 @@ class SchemeEngine
         ];
     }
 
+    /**
+     * Cart Value Discount: the value of the scheme's products — or of the WHOLE cart when it applies to all —
+     * (tax-inclusive, as the retailer sees it) picks the slab it falls in. Slabs run from min_value to
+     * max_value, both inclusive; a blank max_value is "no upper limit" (how slabs always worked), and a value
+     * in a gap between two slabs, or above the last slab's max, gets no discount.
+     */
     private static function evaluateGroupDiscountPrice(Scheme $scheme, array $totalByProduct, array $actualTotalByProduct = []): ?array
     {
-        $groupIds = $scheme->schemeProducts->pluck('seller_product_id')->all();
-        if (empty($groupIds)) {
-            return null;
-        }
-
-        $groupTotal = 0.0;
-        $groupActualTotal = 0.0;
-        foreach ($groupIds as $spId) {
-            $groupTotal += $totalByProduct[(int) $spId] ?? 0;
-            $groupActualTotal += $actualTotalByProduct[(int) $spId] ?? ($totalByProduct[(int) $spId] ?? 0);
-        }
+        [$groupTotal, $groupActualTotal] = self::groupValue($scheme, $totalByProduct, $actualTotalByProduct);
         if ($groupTotal <= 0) {
             return null;
         }
 
         $matched = $scheme->schemeSlabs
-            ->where('min_value', '<=', $groupTotal)
+            ->filter(fn ($slab) => $slab->containsValue($groupTotal))
             ->sortByDesc('min_value')
             ->first();
         if (!$matched) {
@@ -706,6 +706,26 @@ class SchemeEngine
             'scheme_discount_pretax' => self::slabPretaxPortion($matched, $discount, $groupTotal, $groupActualTotal),
             'free_items'      => [],
         ];
+    }
+
+    /**
+     * [tax-inclusive value, pre-tax value] a basket-value scheme is measured on: its selected products, or
+     * the whole cart when it applies to all. [0, 0] for a scheme with neither (it can never apply).
+     */
+    private static function groupValue(Scheme $scheme, array $totalByProduct, array $actualTotalByProduct): array
+    {
+        $spIds = $scheme->applies_to_all
+            ? array_keys($totalByProduct)
+            : array_map('intval', $scheme->schemeProducts->pluck('seller_product_id')->all());
+
+        $total = 0.0;
+        $actual = 0.0;
+        foreach ($spIds as $spId) {
+            $total  += $totalByProduct[(int) $spId] ?? 0;
+            $actual += $actualTotalByProduct[(int) $spId] ?? ($totalByProduct[(int) $spId] ?? 0);
+        }
+
+        return [$total, $actual];
     }
 
     private static function evaluateGroupDiscountQty(Scheme $scheme, array $qtyByProduct, array $totalByProduct, array $actualTotalByProduct = []): ?array

@@ -32,7 +32,24 @@ class Scheme extends Model
         'status',
         'description',
         'tax_option',
+        'applies_to_all',
     ];
+
+    protected $casts = [
+        'applies_to_all' => 'boolean',
+    ];
+
+    /**
+     * False before `php artisan migrate` has added schemes.applies_to_all and scheme_slabs.max_value, so
+     * code deployed ahead of the migration keeps working — Cart Value Discount just can't be saved yet.
+     */
+    public static function cartValueColumnsExist(): bool
+    {
+        static $exists = null;
+
+        return $exists ??= \Illuminate\Support\Facades\Schema::hasColumn('schemes', 'applies_to_all')
+            && \Illuminate\Support\Facades\Schema::hasColumn('scheme_slabs', 'max_value');
+    }
 
     public function seller()
     {

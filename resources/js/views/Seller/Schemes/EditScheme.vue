@@ -35,6 +35,7 @@
                             <label class="form-label font-weight-bold">{{ __('scheme_type') }} <span class="text-danger">*</span></label>
                             <select class="form-control form-select" v-model="record.type" required>
                                 <option value="group_discount">{{ __('group_discount', 'Group Discount') }}</option>
+                                <option value="cart_value">{{ t('cart_value_discount', 'Cart Value Discount') }}</option>
                                 <option value="buy_x_get_y">{{ __('buy_x_get_y', 'Buy X Get Y (Direct)') }}</option>
                             </select>
                         </div>
@@ -113,8 +114,103 @@
                 </div>
             </div>
 
+            <!-- 2. Cart Value Discount: a discount that depends on how much the retailer orders -->
+            <div v-else-if="record.type === 'cart_value'" class="card scheme-card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="step-num-badge me-2">2</span>
+                        <div>
+                            <h5 class="mb-0 font-weight-bold">{{ t('cart_value_tiers', 'Cart Value Tiers') }}</h5>
+                            <p class="text-muted small mb-0">{{ t('cart_value_subtitle', 'Give a discount that depends on how much the retailer orders. The cart value is the total including GST, before any scheme discount.') }}</p>
+                        </div>
+                    </div>
+
+                    <!-- What the value is counted on -->
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold d-block">{{ t('cart_value_applies_to', 'Cart value counted on') }}</label>
+                        <div class="d-flex flex-wrap align-items-center gap-4">
+                            <div class="form-check form-check-inline m-0">
+                                <input class="form-check-input cursor-pointer" type="radio" name="cv_scope" id="cv_scope_all" :value="true" v-model="record.applies_to_all">
+                                <label class="form-check-label ms-1 cursor-pointer fw-semibold" for="cv_scope_all">{{ t('entire_cart', 'Entire cart (any product)') }}</label>
+                            </div>
+                            <div class="form-check form-check-inline m-0">
+                                <input class="form-check-input cursor-pointer" type="radio" name="cv_scope" id="cv_scope_products" :value="false" v-model="record.applies_to_all">
+                                <label class="form-check-label ms-1 cursor-pointer fw-semibold" for="cv_scope_products">{{ t('selected_products_only', 'Selected products only') }}</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Selected products: only their value counts towards the tiers -->
+                    <div v-if="!record.applies_to_all" class="mb-4 p-3 rounded-3 border bg-light">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                            <span class="fw-semibold small">{{ t('cart_value_products_hint', 'Only the value of these products counts towards the tiers.') }}</span>
+                            <button type="button" class="btn btn-outline-primary btn-sm px-3 d-inline-flex align-items-center gap-2" @click="openProductModal">
+                                <i class="fa fa-plus"></i><span>{{ t('add_products', 'Add Products') }}</span>
+                            </button>
+                        </div>
+                        <div v-if="record.products.length" class="d-flex flex-wrap gap-2">
+                            <span v-for="(item, index) in record.products" :key="'cvp' + (item.id || item.seller_product_id || index)" class="badge bg-white text-dark border px-2 py-2 d-inline-flex align-items-center gap-2">
+                                <span>{{ item.name }}<span class="text-muted"> · {{ item.sku || 'N/A' }}</span></span>
+                                <a href="javascript:void(0)" class="text-danger text-decoration-none" :title="t('remove', 'Remove')" @click="removeProductRow(index)"><i class="fa fa-times"></i></a>
+                            </span>
+                        </div>
+                        <p v-else class="text-muted small mb-0">{{ __('no_products_added_yet', 'No products added yet.') }}</p>
+                    </div>
+
+                    <!-- The tiers -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle scheme-products-table mb-2" style="min-width: 640px;">
+                            <thead class="bg-light text-muted">
+                                <tr>
+                                    <th style="width: 90px;" class="text-center">{{ t('tier', 'Tier') }}</th>
+                                    <th>{{ t('cart_value_from', 'From (₹)') }} <span class="text-danger">*</span></th>
+                                    <th>{{ t('cart_value_to', 'To (₹)') }}</th>
+                                    <th>{{ t('cart_value_discount_amount', 'Discount') }} <span class="text-danger">*</span></th>
+                                    <th style="width: 70px;" class="text-center">{{ t('actions', 'Actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(tier, ti) in valueTiers" :key="'vt' + ti">
+                                    <td class="text-center font-weight-bold text-muted">{{ ti + 1 }}</td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text bg-light text-muted px-2">₹</span>
+                                            <input type="number" min="1" step="0.01" v-model="tier.min_value" class="form-control text-center fw-bold" placeholder="5000" required>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text bg-light text-muted px-2">₹</span>
+                                            <input type="number" min="1" step="0.01" v-model="tier.max_value" class="form-control text-center" :placeholder="ti === valueTiers.length - 1 ? t('no_limit', 'No limit') : t('cart_value_to', 'To (₹)')">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" min="0.01" :max="tier.discount_type === 'percentage' ? 100 : null" step="0.01" v-model="tier.discount_value" class="form-control text-center fw-bold" :placeholder="tier.discount_type === 'percentage' ? '5' : '150'" required>
+                                            <span class="input-group-text bg-light text-muted px-2">{{ tier.discount_type === 'percentage' ? '%' : '₹ ' + t('flat_off', 'flat off') }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <button v-if="valueTiers.length > 1" type="button" class="btn btn-sm btn-outline-danger action-trash-btn" :title="t('remove_tier', 'Remove tier')" @click="removeValueTier(ti)">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm px-3 d-inline-flex align-items-center gap-2 mb-2" @click="addValueTier">
+                        <i class="fa fa-plus"></i><span>{{ t('add_tier', 'Add tier') }}</span>
+                    </button>
+                    <p class="text-muted small mb-1"><i class="fa fa-info-circle me-1"></i>{{ t('cart_value_tiers_hint', 'Only the tier the cart value falls in applies. Leave the last To empty for no upper limit. Amounts include GST. A cart value outside every tier gets no discount.') }}</p>
+                    <div v-for="(w, wi) in valueTierWarnings" :key="'cvw' + wi" class="alert alert-warning small py-2 px-3 mb-1 d-flex align-items-center gap-2">
+                        <i class="fa fa-exclamation-triangle"></i><span>{{ w }}</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- 2. Select Products & Qty Conditions -->
-            <div v-else class="card scheme-card shadow-sm mb-4">
+            <div v-else-if="record.type === 'group_discount'" class="card scheme-card shadow-sm mb-4">
                 <div class="card-body p-4">
                     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                         <div class="d-flex align-items-center">
@@ -629,6 +725,8 @@ export default {
                 type: 'group_discount',
                 description: '',
                 tax_option: 'inclusive',
+                // Cart Value Discount: true = the value counted is the whole cart, false = only the selected products.
+                applies_to_all: true,
                 buy_product: null,
                 buy_qty: null,
                 buy_qty_basis: 'outer',
@@ -651,6 +749,9 @@ export default {
             // fields of a combined scheme, or the single product's row); each extra tier only changes the
             // range and the amount — qty basis and discount type stay the scheme's own.
             extraTiers: [],
+            // Cart Value Discount tiers: From / To (cart value in ₹ incl. GST) and the discount. Flat ₹ for now;
+            // a scheme saved earlier with percentage tiers keeps its type here and is shown with a % box.
+            valueTiers: [{ min_value: null, max_value: null, discount_value: null, discount_type: 'flat' }],
             availableProducts: [],
             isLoading: false,
             showProductModal: false,
@@ -666,6 +767,24 @@ export default {
                 + '- e.g. a flat \u20b9100 discount at 5% GST saves the customer \u20b9105 in total. '
                 + 'After tax: measured on the final Total that already includes GST, and GST is not changed '
                 + '- e.g. a flat \u20b9100 discount saves the customer \u20b9100.';
+        },
+        // Heads-up (not an error) about cart values that fall in no tier: a gap bigger than ₹1 between two tiers,
+        // and everything above the last tier when it has a To.
+        valueTierWarnings() {
+            const num = v => (v === null || v === undefined || v === '') ? null : Number(v);
+            const rows = this.sortedValueTiers();
+            const msgs = [];
+            rows.forEach((r, i) => {
+                const max = num(r.max_value);
+                const next = rows[i + 1] ? num(rows[i + 1].min_value) : null;
+                if (max !== null && next !== null && next - max > 1) {
+                    msgs.push(this.t('cart_value_gap', 'A cart worth between') + ' ₹' + max + ' ' + this.t('and', 'and') + ' ₹' + next + ' ' + this.t('cart_value_gets_nothing', 'gets no discount') + ' (' + this.t('tier', 'Tier') + ' ' + (i + 1) + ' / ' + (i + 2) + ').');
+                }
+                if (i === rows.length - 1 && max !== null) {
+                    msgs.push(this.t('cart_value_above', 'A cart worth more than') + ' ₹' + max + ' ' + this.t('cart_value_gets_nothing', 'gets no discount') + '. ' + this.t('cart_value_leave_to_empty', 'Leave the last To empty to keep the discount going.'));
+                }
+            });
+            return msgs;
         },
         // What the extra tiers are measured in: the scheme's own discount type, qty basis and units.
         tierDiscountType() {
@@ -754,7 +873,7 @@ export default {
                         let r = data.data;
                         this.record.name = r.name;
                         this.record.description = r.description || '';
-                        this.record.type = (r.type === 'buy_x_get_y') ? 'buy_x_get_y' : 'group_discount';
+                        this.record.type = (r.type === 'buy_x_get_y') ? 'buy_x_get_y' : (r.type === 'group_discount_price' ? 'cart_value' : 'group_discount');
                         this.record.tax_option = r.tax_option || 'inclusive';
                         this.record.buy_qty = r.buy_qty;
                         this.record.buy_qty_basis = r.buy_qty_basis || 'outer';
@@ -765,6 +884,18 @@ export default {
                         this.record.status = r.status;
                         this.record.buy_product = this.availableProducts.find(p => p.id == r.buy_seller_product_id) || null;
                         this.record.free_product = this.availableProducts.find(p => p.id == r.free_seller_product_id) || null;
+
+                        if (r.type === 'group_discount_price') {
+                            this.record.applies_to_all = !!r.applies_to_all;
+                            if (r.slabs && r.slabs.length) {
+                                this.valueTiers = r.slabs.map(s => ({
+                                    min_value: s.min_value,
+                                    max_value: s.max_value,
+                                    discount_value: s.discount_value,
+                                    discount_type: s.discount_type || 'flat'
+                                }));
+                            }
+                        }
 
                         this.extraTiers = (r.tiers && r.tiers.length > 1)
                             ? r.tiers.slice(1).map(t => ({ min_qty: t.min_qty, max_qty: t.max_qty, discount_value: t.discount_value, free_qty: t.free_qty }))
@@ -905,6 +1036,46 @@ export default {
                 p.qty_basis = basis;
             });
         },
+        // Cart Value tiers in ascending order of From (blank From last), so checks and the saved order never depend
+        // on the order they were typed in.
+        sortedValueTiers() {
+            const key = v => (v === null || v === undefined || v === '') ? Infinity : Number(v);
+            return this.valueTiers.slice().sort((a, b) => key(a.min_value) - key(b.min_value));
+        },
+        addValueTier() {
+            if (this.valueTiers.length >= 10) {
+                this.showError(this.t('tier_limit', 'A scheme can have at most 10 tiers.'));
+                return;
+            }
+            const rows = this.sortedValueTiers();
+            const last = rows[rows.length - 1];
+            if (last.max_value === null || last.max_value === undefined || last.max_value === '' || Number(last.max_value) <= 0) {
+                this.showError(this.t('cart_value_set_to_first', 'Enter the To amount of the last tier before adding another tier.'));
+                return;
+            }
+            this.valueTiers.push({ min_value: Number(last.max_value) + 1, max_value: null, discount_value: null, discount_type: 'flat' });
+        },
+        removeValueTier(index) {
+            this.valueTiers.splice(index, 1);
+        },
+        // First problem in the Cart Value tiers as a message, or '' when fine. Mirrors the server rules: every tier
+        // needs From and a discount, only the last may have no To, tiers never overlap.
+        validateValueTiers() {
+            const rows = this.sortedValueTiers();
+            const blank = v => v === null || v === undefined || v === '';
+            for (let i = 0; i < rows.length; i++) {
+                const r = rows[i];
+                const n = i + 1;
+                const isLast = i === rows.length - 1;
+                if (blank(r.min_value) || Number(r.min_value) <= 0) return 'Tier ' + n + ': please enter a valid From amount.';
+                if (!blank(r.max_value) && Number(r.max_value) < Number(r.min_value)) return 'Tier ' + n + ': To amount cannot be less than From amount.';
+                if (!isLast && blank(r.max_value)) return 'Tier ' + n + ': To amount is required - only the last tier can have no upper limit.';
+                if (i > 0 && Number(r.min_value) <= Number(rows[i - 1].max_value)) return 'Tier ' + n + ": From amount must be more than Tier " + i + "'s To amount.";
+                if (blank(r.discount_value) || Number(r.discount_value) <= 0) return 'Tier ' + n + ': please enter the discount amount.';
+                if (r.discount_type === 'percentage' && Number(r.discount_value) > 100) return 'Tier ' + n + ': discount percentage cannot exceed 100%.';
+            }
+            return '';
+        },
         // The extra tiers hold an amount in the OLD discount type (₹ vs % vs free qty) — meaningless after a
         // type change, so they go back to empty for the distributor to fill in.
         resetTierAmounts() {
@@ -1016,6 +1187,16 @@ export default {
                     this.showError("Please select buy and free products.");
                     return;
                 }
+            } else if (this.record.type === 'cart_value') {
+                if (!this.record.applies_to_all && this.record.products.length === 0) {
+                    this.showError(this.t('cart_value_need_products', 'Please add at least one product, or choose Entire cart.'));
+                    return;
+                }
+                const valueTierError = this.validateValueTiers();
+                if (valueTierError) {
+                    this.showError(valueTierError);
+                    return;
+                }
             } else {
                 if (this.record.products.length === 0) {
                     this.showError("Please add at least one product with quantity conditions.");
@@ -1071,7 +1252,7 @@ export default {
                 }
             }
 
-            if (this.record.type !== 'buy_x_get_y') {
+            if (this.record.type === 'group_discount') {
                 const tierError = this.validateTiers();
                 if (tierError) {
                     this.showError(tierError);
@@ -1083,7 +1264,8 @@ export default {
             let url = this.$sellerApiUrl + '/schemes/' + (this.id ? 'update' : 'save');
             let payload = {
                 name: this.record.name,
-                type: this.record.type,
+                // The form's Cart Value Discount is the engine's basket-value scheme (group_discount_price).
+                type: this.record.type === 'cart_value' ? 'group_discount_price' : this.record.type,
                 description: this.record.description,
                 tax_option: this.record.tax_option,
                 start_date: this.record.start_date,
@@ -1102,6 +1284,20 @@ export default {
                 payload.free_seller_product_id = this.record.free_product.id;
                 payload.free_qty = this.record.free_qty;
                 payload.free_qty_basis = this.record.free_qty_basis || 'outer';
+            } else if (this.record.type === 'cart_value') {
+                payload.applies_to_all = !!this.record.applies_to_all;
+                // Plain product ids (no per-product quantity rules) when only some products count.
+                if (!this.record.applies_to_all) {
+                    payload.product_ids = this.record.products.map(p => p.seller_product_id || p.id);
+                }
+                payload.slabs = this.sortedValueTiers().map(tr => ({
+                    min_value: tr.min_value,
+                    max_value: (tr.max_value === '' || tr.max_value === undefined) ? null : tr.max_value,
+                    discount_type: tr.discount_type || 'flat',
+                    discount_value: tr.discount_value,
+                    // Every tier follows the scheme's Discount Option (before / after tax).
+                    tax_option: this.record.tax_option
+                }));
             } else {
                 payload.products = this.record.products.map(p => ({
                     seller_product_id: p.seller_product_id || p.id,

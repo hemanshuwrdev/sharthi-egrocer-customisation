@@ -62,6 +62,8 @@ class SchemesApiController extends Controller
             'description'            => $scheme->description,
             'type'                   => $scheme->type,
             'tax_option'             => $scheme->tax_option ?? 'inclusive',
+            // Cart Value Discount counting the whole cart (no products selected).
+            'applies_to_all'         => (bool) $scheme->applies_to_all,
             'buy_seller_product_id'  => $scheme->buy_seller_product_id,
             'buy_qty'                => $scheme->buy_qty,
             'buy_qty_basis'          => $scheme->buy_qty_basis ?: 'outer',
@@ -108,8 +110,9 @@ class SchemesApiController extends Controller
                 'discount_value' => $t->discount_value !== null ? (float) $t->discount_value : null,
                 'free_qty'       => $t->free_qty !== null ? (float) $t->free_qty : null,
             ])->values() : [],
-            'slabs'                  => $scheme->schemeSlabs->map(fn ($sl) => [
+            'slabs'                  => $scheme->schemeSlabs->sortBy('min_value')->map(fn ($sl) => [
                 'min_value'      => $sl->min_value,
+                'max_value'      => $sl->max_value,
                 'discount_type'  => $sl->discount_type,
                 'discount_value' => $sl->discount_value,
                 'tax_option'     => $sl->tax_option ?? 'inclusive',
@@ -206,6 +209,8 @@ class SchemesApiController extends Controller
             'type'        => 'required|in:buy_x_get_y,group_discount,group_discount_price,group_discount_qty,product_conditions',
             'description' => 'nullable|string',
             'tax_option'  => 'nullable|in:inclusive,exclusive',
+            // Cart Value Discount only (type group_discount_price): count the whole cart, not selected products.
+            'applies_to_all' => 'nullable|boolean',
             'start_date'  => 'required|date',
             'end_date'    => 'required|date|after_or_equal:start_date',
             'status'      => 'required|integer|in:0,1',
@@ -219,6 +224,7 @@ class SchemesApiController extends Controller
             $rules += [
                 'slabs'                  => 'required|array|min:1',
                 'slabs.*.min_value'      => 'required|numeric|min:1',
+                'slabs.*.max_value'      => 'nullable|numeric|min:0.01',
                 'slabs.*.discount_type'  => 'required|in:percentage,flat',
                 'slabs.*.discount_value' => 'required|numeric|min:0.01',
                 'slabs.*.tax_option'     => 'nullable|in:inclusive,exclusive',
@@ -241,12 +247,32 @@ class SchemesApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
+        // Cart Value Discount: the value counted is the whole cart (no products), and each tier may carry an
+        // upper end. Older clients send neither, so their slabs stay open-ended exactly as before.
+        $isPriceSlabs = $request->type === Scheme::TYPE_GROUP_DISCOUNT_PRICE;
+        $appliesToAll = $isPriceSlabs && $request->boolean('applies_to_all');
+        $slabRows     = $request->filled('slabs') && is_array($request->slabs) ? array_values($request->slabs) : [];
+        $hasTierEnds  = collect($slabRows)->contains(fn ($s) => isset($s['max_value']) && $s['max_value'] !== '' && $s['max_value'] !== null);
+        if ($isPriceSlabs && ($appliesToAll || $hasTierEnds)) {
+            if (!Scheme::cartValueColumnsExist()) {
+                return CommonHelper::responseError('Cart Value Discount is not available yet — the database update (php artisan migrate) has not been run.');
+            }
+            [$slabRows, $slabError] = self::normaliseValueSlabs($slabRows, $request->tax_option ?? 'inclusive');
+            if ($slabError) {
+                return CommonHelper::responseError($slabError);
+            }
+        }
+        if ($appliesToAll) {
+            // No products of its own: ignore any that were sent.
+            $request->merge(['products' => [], 'product_ids' => []]);
+        }
+
         $productsInput = $request->input('products');
         if (is_string($productsInput)) {
             $productsInput = json_decode($productsInput, true);
         }
 
-        if (!$isBxgy) {
+        if (!$isBxgy && !$appliesToAll) {
             if ((!is_array($productsInput) || count($productsInput) === 0) && !$request->filled('product_ids')) {
                 return CommonHelper::responseError('Please select at least one product.');
             }
@@ -333,7 +359,7 @@ class SchemesApiController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($request, $sellerId, $isBxgy, $productsInput, $tiers, &$scheme) {
+            DB::transaction(function () use ($request, $sellerId, $isBxgy, $productsInput, $tiers, $appliesToAll, $slabRows, &$scheme) {
                 $data = [
                     'seller_id'              => $sellerId,
                     'name'                   => $request->name,
@@ -353,6 +379,9 @@ class SchemesApiController extends Controller
                     'end_date'               => $request->end_date,
                     'status'                 => $request->status,
                 ];
+                if (Scheme::cartValueColumnsExist()) {
+                    $data['applies_to_all'] = $appliesToAll;
+                }
 
                 if ($scheme) {
                     $scheme->update($data);
@@ -400,16 +429,16 @@ class SchemesApiController extends Controller
                         SchemeTier::create(['scheme_id' => $scheme->id] + $tier);
                     }
 
-                    if ($request->filled('slabs') && is_array($request->slabs)) {
-                        foreach ($request->slabs as $slab) {
-                            SchemeSlab::create([
-                                'scheme_id'      => $scheme->id,
-                                'min_value'      => $slab['min_value'],
-                                'discount_type'  => $slab['discount_type'],
-                                'discount_value' => $slab['discount_value'],
-                                'tax_option'     => $slab['tax_option'] ?? 'inclusive',
-                            ]);
-                        }
+                    foreach ($slabRows as $slab) {
+                        SchemeSlab::create([
+                            'scheme_id'      => $scheme->id,
+                            'min_value'      => $slab['min_value'],
+                            'discount_type'  => $slab['discount_type'],
+                            'discount_value' => $slab['discount_value'],
+                            'tax_option'     => $slab['tax_option'] ?? 'inclusive',
+                        ] + (Scheme::cartValueColumnsExist()
+                            ? ['max_value' => isset($slab['max_value']) && $slab['max_value'] !== '' ? $slab['max_value'] : null]
+                            : []));
                     }
                 }
             });
@@ -421,6 +450,51 @@ class SchemesApiController extends Controller
             'id'      => $scheme->id,
             'message' => __('scheme_saved_successfully'),
         ]);
+    }
+
+    /**
+     * Clean, sorted tiers of a Cart Value Discount, or [[], error]. A tier runs From..To (both inclusive, in ₹
+     * including GST); only the last may leave To blank (no upper limit), and tiers must not overlap. A cart
+     * value between two tiers — or above the last To — simply gets no discount.
+     *
+     * @return array{0: array, 1: ?string}
+     */
+    private static function normaliseValueSlabs(array $input, string $defaultTaxOption): array
+    {
+        $slabs = [];
+        foreach (array_values($input) as $i => $s) {
+            $n   = $i + 1;
+            $min = isset($s['min_value']) && $s['min_value'] !== '' ? (float) $s['min_value'] : 0.0;
+            $max = isset($s['max_value']) && $s['max_value'] !== '' ? (float) $s['max_value'] : null;
+            if ($min <= 0) {
+                return [[], "Tier {$n}: please enter a valid From amount."];
+            }
+            if ($max !== null && $max < $min) {
+                return [[], "Tier {$n}: To amount cannot be less than From amount."];
+            }
+            $slabs[] = [
+                'min_value'      => $min,
+                'max_value'      => $max,
+                'discount_type'  => $s['discount_type'],
+                'discount_value' => (float) $s['discount_value'],
+                'tax_option'     => $s['tax_option'] ?? $defaultTaxOption,
+            ];
+        }
+
+        usort($slabs, fn ($a, $b) => $a['min_value'] <=> $b['min_value']);
+
+        $last = count($slabs) - 1;
+        foreach ($slabs as $i => $s) {
+            $n = $i + 1;
+            if ($i < $last && $s['max_value'] === null) {
+                return [[], "Tier {$n}: To amount is required - only the last tier can have no upper limit."];
+            }
+            if ($i > 0 && $s['min_value'] <= $slabs[$i - 1]['max_value']) {
+                return [[], "Tier {$n}: From amount must be more than Tier " . $i . "'s To amount."];
+            }
+        }
+
+        return [$slabs, null];
     }
 
     /**
@@ -619,8 +693,10 @@ class SchemesApiController extends Controller
             // Group fields (null for BXGY)
             'products'        => !$isBxgy ? $s->schemeProducts->map(fn ($p) => $productName($p->sellerProduct))->filter()->values() : [],
             'products_detail' => $productsDetail,
-            'slabs'           => !$isBxgy ? $s->schemeSlabs->map(fn ($sl) => [
+            'applies_to_all'  => (bool) $s->applies_to_all,
+            'slabs'           => !$isBxgy ? $s->schemeSlabs->sortBy('min_value')->map(fn ($sl) => [
                 'min_value'      => (float) $sl->min_value,
+                'max_value'      => $sl->max_value !== null ? (float) $sl->max_value : null,
                 'discount_type'  => $sl->discount_type,
                 'discount_value' => (float) $sl->discount_value,
                 'tax_option'     => $sl->tax_option ?? 'inclusive',

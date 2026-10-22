@@ -643,6 +643,102 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -658,6 +754,8 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         type: 'group_discount',
         description: '',
         tax_option: 'inclusive',
+        // Cart Value Discount: true = the value counted is the whole cart, false = only the selected products.
+        applies_to_all: true,
         buy_product: null,
         buy_qty: null,
         buy_qty_basis: 'outer',
@@ -680,6 +778,14 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       // fields of a combined scheme, or the single product's row); each extra tier only changes the
       // range and the amount — qty basis and discount type stay the scheme's own.
       extraTiers: [],
+      // Cart Value Discount tiers: From / To (cart value in ₹ incl. GST) and the discount. Flat ₹ for now;
+      // a scheme saved earlier with percentage tiers keeps its type here and is shown with a % box.
+      valueTiers: [{
+        min_value: null,
+        max_value: null,
+        discount_value: null,
+        discount_type: 'flat'
+      }],
       availableProducts: [],
       isLoading: false,
       showProductModal: false,
@@ -691,6 +797,27 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     // English text for the Discount Option explanation (used until the language JSON has the key).
     discountOptionHint: function discountOptionHint() {
       return 'Discount Option decides what amount the discount value is measured on. ' + 'Before tax: measured on the price before GST (Net Taxable Amount), and GST is then calculated on the reduced amount ' + "- e.g. a flat \u20B9100 discount at 5% GST saves the customer \u20B9105 in total. " + 'After tax: measured on the final Total that already includes GST, and GST is not changed ' + "- e.g. a flat \u20B9100 discount saves the customer \u20B9100.";
+    },
+    // Heads-up (not an error) about cart values that fall in no tier: a gap bigger than ₹1 between two tiers,
+    // and everything above the last tier when it has a To.
+    valueTierWarnings: function valueTierWarnings() {
+      var _this = this;
+      var num = function num(v) {
+        return v === null || v === undefined || v === '' ? null : Number(v);
+      };
+      var rows = this.sortedValueTiers();
+      var msgs = [];
+      rows.forEach(function (r, i) {
+        var max = num(r.max_value);
+        var next = rows[i + 1] ? num(rows[i + 1].min_value) : null;
+        if (max !== null && next !== null && next - max > 1) {
+          msgs.push(_this.t('cart_value_gap', 'A cart worth between') + ' ₹' + max + ' ' + _this.t('and', 'and') + ' ₹' + next + ' ' + _this.t('cart_value_gets_nothing', 'gets no discount') + ' (' + _this.t('tier', 'Tier') + ' ' + (i + 1) + ' / ' + (i + 2) + ').');
+        }
+        if (i === rows.length - 1 && max !== null) {
+          msgs.push(_this.t('cart_value_above', 'A cart worth more than') + ' ₹' + max + ' ' + _this.t('cart_value_gets_nothing', 'gets no discount') + '. ' + _this.t('cart_value_leave_to_empty', 'Leave the last To empty to keep the discount going.'));
+        }
+      });
+      return msgs;
     },
     // What the extra tiers are measured in: the scheme's own discount type, qty basis and units.
     tierDiscountType: function tierDiscountType() {
@@ -779,41 +906,54 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       e.target.src = '/images/default_product.png';
     },
     getProducts: function getProducts() {
-      var _this = this;
+      var _this2 = this;
       return axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$sellerApiUrl + '/schemes/products').then(function (response) {
         if (response.data.status === 1) {
-          _this.availableProducts = response.data.data;
+          _this2.availableProducts = response.data.data;
         }
       })["catch"](function () {
         console.error("Error fetching products");
       });
     },
     getRecord: function getRecord() {
-      var _this2 = this;
+      var _this3 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$sellerApiUrl + '/schemes/edit/' + this.id).then(function (response) {
-        _this2.isLoading = false;
+        _this3.isLoading = false;
         var data = response.data;
         if (data.status === 1) {
           var r = data.data;
-          _this2.record.name = r.name;
-          _this2.record.description = r.description || '';
-          _this2.record.type = r.type === 'buy_x_get_y' ? 'buy_x_get_y' : 'group_discount';
-          _this2.record.tax_option = r.tax_option || 'inclusive';
-          _this2.record.buy_qty = r.buy_qty;
-          _this2.record.buy_qty_basis = r.buy_qty_basis || 'outer';
-          _this2.record.free_qty = r.free_qty;
-          _this2.record.free_qty_basis = r.free_qty_basis || 'outer';
-          _this2.record.start_date = r.start_date ? r.start_date.substring(0, 10) : '';
-          _this2.record.end_date = r.end_date ? r.end_date.substring(0, 10) : '';
-          _this2.record.status = r.status;
-          _this2.record.buy_product = _this2.availableProducts.find(function (p) {
+          _this3.record.name = r.name;
+          _this3.record.description = r.description || '';
+          _this3.record.type = r.type === 'buy_x_get_y' ? 'buy_x_get_y' : r.type === 'group_discount_price' ? 'cart_value' : 'group_discount';
+          _this3.record.tax_option = r.tax_option || 'inclusive';
+          _this3.record.buy_qty = r.buy_qty;
+          _this3.record.buy_qty_basis = r.buy_qty_basis || 'outer';
+          _this3.record.free_qty = r.free_qty;
+          _this3.record.free_qty_basis = r.free_qty_basis || 'outer';
+          _this3.record.start_date = r.start_date ? r.start_date.substring(0, 10) : '';
+          _this3.record.end_date = r.end_date ? r.end_date.substring(0, 10) : '';
+          _this3.record.status = r.status;
+          _this3.record.buy_product = _this3.availableProducts.find(function (p) {
             return p.id == r.buy_seller_product_id;
           }) || null;
-          _this2.record.free_product = _this2.availableProducts.find(function (p) {
+          _this3.record.free_product = _this3.availableProducts.find(function (p) {
             return p.id == r.free_seller_product_id;
           }) || null;
-          _this2.extraTiers = r.tiers && r.tiers.length > 1 ? r.tiers.slice(1).map(function (t) {
+          if (r.type === 'group_discount_price') {
+            _this3.record.applies_to_all = !!r.applies_to_all;
+            if (r.slabs && r.slabs.length) {
+              _this3.valueTiers = r.slabs.map(function (s) {
+                return {
+                  min_value: s.min_value,
+                  max_value: s.max_value,
+                  discount_value: s.discount_value,
+                  discount_type: s.discount_type || 'flat'
+                };
+              });
+            }
+          }
+          _this3.extraTiers = r.tiers && r.tiers.length > 1 ? r.tiers.slice(1).map(function (t) {
             return {
               min_qty: t.min_qty,
               max_qty: t.max_qty,
@@ -824,16 +964,16 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
           if (r.products && r.products.length > 0) {
             if (r.products.length > 1) {
               var p0 = r.products[0];
-              _this2.global_qty_basis = p0.qty_basis || 'outer';
-              _this2.global_min_qty = p0.min_qty !== null ? p0.min_qty : 1;
-              _this2.global_max_qty = p0.max_qty !== null ? p0.max_qty : null;
-              _this2.global_discount_type = p0.discount_type || 'percentage';
-              _this2.global_discount_value = p0.discount_value !== null ? p0.discount_value : 10;
-              _this2.global_free_qty = p0.free_qty !== null ? p0.free_qty : 1;
-              _this2.global_free_qty_basis = p0.free_qty_basis || 'inner';
+              _this3.global_qty_basis = p0.qty_basis || 'outer';
+              _this3.global_min_qty = p0.min_qty !== null ? p0.min_qty : 1;
+              _this3.global_max_qty = p0.max_qty !== null ? p0.max_qty : null;
+              _this3.global_discount_type = p0.discount_type || 'percentage';
+              _this3.global_discount_value = p0.discount_value !== null ? p0.discount_value : 10;
+              _this3.global_free_qty = p0.free_qty !== null ? p0.free_qty : 1;
+              _this3.global_free_qty_basis = p0.free_qty_basis || 'inner';
             }
-            _this2.record.products = r.products.map(function (p) {
-              var match = _this2.availableProducts.find(function (ap) {
+            _this3.record.products = r.products.map(function (p) {
+              var match = _this3.availableProducts.find(function (ap) {
                 return ap.id == (p.seller_product_id || p.id);
               });
               return {
@@ -847,7 +987,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
                 secondary_unit_value: p.secondary_unit_value || (match ? match.secondary_unit_value : null),
                 price: p.price || (match ? match.price : 0),
                 outer_price: p.outer_price || (match ? match.outer_price : 0),
-                qty_basis: r.products.length > 1 ? _this2.global_qty_basis : p.qty_basis || 'outer',
+                qty_basis: r.products.length > 1 ? _this3.global_qty_basis : p.qty_basis || 'outer',
                 min_qty: p.min_qty,
                 max_qty: p.max_qty,
                 discount_type: p.discount_type || 'percentage',
@@ -858,7 +998,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
             });
           } else if (r.product_ids && r.product_ids.length > 0) {
             // Fallback from legacy scheme
-            _this2.record.products = _this2.availableProducts.filter(function (p) {
+            _this3.record.products = _this3.availableProducts.filter(function (p) {
               return r.product_ids.includes(p.id);
             }).map(function (p) {
               return {
@@ -884,8 +1024,8 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
           }
         }
       })["catch"](function () {
-        _this2.isLoading = false;
-        _this2.showError("Something went wrong");
+        _this3.isLoading = false;
+        _this3.showError("Something went wrong");
       });
     },
     openProductModal: function openProductModal() {
@@ -904,7 +1044,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       this.selectedModalProductIds = [];
     },
     addSelectedModalProducts: function addSelectedModalProducts() {
-      var _this3 = this;
+      var _this4 = this;
       var existingMap = {};
       this.record.products.forEach(function (p) {
         existingMap[p.id || p.seller_product_id] = p;
@@ -914,7 +1054,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         if (existingMap[id]) {
           newProducts.push(existingMap[id]);
         } else {
-          var p = _this3.availableProducts.find(function (ap) {
+          var p = _this4.availableProducts.find(function (ap) {
             return ap.id == id;
           });
           if (p) {
@@ -929,13 +1069,13 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
               secondary_unit_value: p.secondary_unit_value,
               price: p.price,
               outer_price: p.outer_price,
-              qty_basis: _this3.global_qty_basis || 'outer',
-              min_qty: _this3.global_min_qty || 1,
-              max_qty: _this3.global_max_qty || null,
-              discount_type: _this3.global_discount_type || 'percentage',
-              discount_value: _this3.global_discount_value !== null ? _this3.global_discount_value : 10,
-              free_qty: _this3.global_free_qty !== null ? _this3.global_free_qty : 1,
-              free_qty_basis: _this3.global_free_qty_basis || 'inner'
+              qty_basis: _this4.global_qty_basis || 'outer',
+              min_qty: _this4.global_min_qty || 1,
+              max_qty: _this4.global_max_qty || null,
+              discount_type: _this4.global_discount_type || 'percentage',
+              discount_value: _this4.global_discount_value !== null ? _this4.global_discount_value : 10,
+              free_qty: _this4.global_free_qty !== null ? _this4.global_free_qty : 1,
+              free_qty_basis: _this4.global_free_qty_basis || 'inner'
             });
           }
         }
@@ -952,7 +1092,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
           this.global_free_qty_basis = first.free_qty_basis || 'inner';
         }
         newProducts.forEach(function (p) {
-          p.qty_basis = _this3.global_qty_basis;
+          p.qty_basis = _this4.global_qty_basis;
         });
       }
       this.record.products = newProducts;
@@ -964,13 +1104,64 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         p.qty_basis = basis;
       });
     },
+    // Cart Value tiers in ascending order of From (blank From last), so checks and the saved order never depend
+    // on the order they were typed in.
+    sortedValueTiers: function sortedValueTiers() {
+      var key = function key(v) {
+        return v === null || v === undefined || v === '' ? Infinity : Number(v);
+      };
+      return this.valueTiers.slice().sort(function (a, b) {
+        return key(a.min_value) - key(b.min_value);
+      });
+    },
+    addValueTier: function addValueTier() {
+      if (this.valueTiers.length >= 10) {
+        this.showError(this.t('tier_limit', 'A scheme can have at most 10 tiers.'));
+        return;
+      }
+      var rows = this.sortedValueTiers();
+      var last = rows[rows.length - 1];
+      if (last.max_value === null || last.max_value === undefined || last.max_value === '' || Number(last.max_value) <= 0) {
+        this.showError(this.t('cart_value_set_to_first', 'Enter the To amount of the last tier before adding another tier.'));
+        return;
+      }
+      this.valueTiers.push({
+        min_value: Number(last.max_value) + 1,
+        max_value: null,
+        discount_value: null,
+        discount_type: 'flat'
+      });
+    },
+    removeValueTier: function removeValueTier(index) {
+      this.valueTiers.splice(index, 1);
+    },
+    // First problem in the Cart Value tiers as a message, or '' when fine. Mirrors the server rules: every tier
+    // needs From and a discount, only the last may have no To, tiers never overlap.
+    validateValueTiers: function validateValueTiers() {
+      var rows = this.sortedValueTiers();
+      var blank = function blank(v) {
+        return v === null || v === undefined || v === '';
+      };
+      for (var i = 0; i < rows.length; i++) {
+        var r = rows[i];
+        var n = i + 1;
+        var isLast = i === rows.length - 1;
+        if (blank(r.min_value) || Number(r.min_value) <= 0) return 'Tier ' + n + ': please enter a valid From amount.';
+        if (!blank(r.max_value) && Number(r.max_value) < Number(r.min_value)) return 'Tier ' + n + ': To amount cannot be less than From amount.';
+        if (!isLast && blank(r.max_value)) return 'Tier ' + n + ': To amount is required - only the last tier can have no upper limit.';
+        if (i > 0 && Number(r.min_value) <= Number(rows[i - 1].max_value)) return 'Tier ' + n + ": From amount must be more than Tier " + i + "'s To amount.";
+        if (blank(r.discount_value) || Number(r.discount_value) <= 0) return 'Tier ' + n + ': please enter the discount amount.';
+        if (r.discount_type === 'percentage' && Number(r.discount_value) > 100) return 'Tier ' + n + ': discount percentage cannot exceed 100%.';
+      }
+      return '';
+    },
     // The extra tiers hold an amount in the OLD discount type (₹ vs % vs free qty) — meaningless after a
     // type change, so they go back to empty for the distributor to fill in.
     resetTierAmounts: function resetTierAmounts() {
-      var _this4 = this;
+      var _this5 = this;
       this.extraTiers.forEach(function (t) {
         t.discount_value = null;
-        t.free_qty = _this4.tierDiscountType === 'free_product' ? 1 : null;
+        t.free_qty = _this5.tierDiscountType === 'free_product' ? 1 : null;
       });
     },
     // Tier 1 = what is already on screen (shared fields of a combined scheme, or the single product's row).
@@ -1083,10 +1274,20 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       }
     },
     saveRecord: function saveRecord() {
-      var _this5 = this;
+      var _this6 = this;
       if (this.record.type === 'buy_x_get_y') {
         if (!this.record.buy_product || !this.record.free_product) {
           this.showError("Please select buy and free products.");
+          return;
+        }
+      } else if (this.record.type === 'cart_value') {
+        if (!this.record.applies_to_all && this.record.products.length === 0) {
+          this.showError(this.t('cart_value_need_products', 'Please add at least one product, or choose Entire cart.'));
+          return;
+        }
+        var valueTierError = this.validateValueTiers();
+        if (valueTierError) {
+          this.showError(valueTierError);
           return;
         }
       } else {
@@ -1114,13 +1315,13 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
           // Sync all products with global multi-product settings
           this.record.products.forEach(function (p) {
-            p.qty_basis = _this5.global_qty_basis;
-            p.min_qty = _this5.global_min_qty;
-            p.max_qty = _this5.global_max_qty;
-            p.discount_type = _this5.global_discount_type;
-            p.discount_value = _this5.global_discount_value;
-            p.free_qty = _this5.global_free_qty;
-            p.free_qty_basis = _this5.global_free_qty_basis;
+            p.qty_basis = _this6.global_qty_basis;
+            p.min_qty = _this6.global_min_qty;
+            p.max_qty = _this6.global_max_qty;
+            p.discount_type = _this6.global_discount_type;
+            p.discount_value = _this6.global_discount_value;
+            p.free_qty = _this6.global_free_qty;
+            p.free_qty_basis = _this6.global_free_qty_basis;
           });
         } else {
           var p = this.record.products[0];
@@ -1142,7 +1343,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
           }
         }
       }
-      if (this.record.type !== 'buy_x_get_y') {
+      if (this.record.type === 'group_discount') {
         var tierError = this.validateTiers();
         if (tierError) {
           this.showError(tierError);
@@ -1153,7 +1354,8 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       var url = this.$sellerApiUrl + '/schemes/' + (this.id ? 'update' : 'save');
       var payload = {
         name: this.record.name,
-        type: this.record.type,
+        // The form's Cart Value Discount is the engine's basket-value scheme (group_discount_price).
+        type: this.record.type === 'cart_value' ? 'group_discount_price' : this.record.type,
         description: this.record.description,
         tax_option: this.record.tax_option,
         start_date: this.record.start_date,
@@ -1170,6 +1372,24 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         payload.free_seller_product_id = this.record.free_product.id;
         payload.free_qty = this.record.free_qty;
         payload.free_qty_basis = this.record.free_qty_basis || 'outer';
+      } else if (this.record.type === 'cart_value') {
+        payload.applies_to_all = !!this.record.applies_to_all;
+        // Plain product ids (no per-product quantity rules) when only some products count.
+        if (!this.record.applies_to_all) {
+          payload.product_ids = this.record.products.map(function (p) {
+            return p.seller_product_id || p.id;
+          });
+        }
+        payload.slabs = this.sortedValueTiers().map(function (tr) {
+          return {
+            min_value: tr.min_value,
+            max_value: tr.max_value === '' || tr.max_value === undefined ? null : tr.max_value,
+            discount_type: tr.discount_type || 'flat',
+            discount_value: tr.discount_value,
+            // Every tier follows the scheme's Discount Option (before / after tax).
+            tax_option: _this6.record.tax_option
+          };
+        });
       } else {
         payload.products = this.record.products.map(function (p) {
           return {
@@ -1196,24 +1416,24 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       axios__WEBPACK_IMPORTED_MODULE_1___default().post(url, payload).then(function (response) {
         var data = response.data;
         if (data.status === 1) {
-          _this5.showMessage("success", data.message);
+          _this6.showMessage("success", data.message);
           setTimeout(function () {
-            _this5.$router.push({
+            _this6.$router.push({
               path: '/seller/schemes'
             });
           }, 1000);
         } else {
-          _this5.showError(data.message);
-          _this5.isLoading = false;
+          _this6.showError(data.message);
+          _this6.isLoading = false;
         }
       })["catch"](function (error) {
-        _this5.isLoading = false;
+        _this6.isLoading = false;
         if (error.response && error.response.data && error.response.data.message) {
-          _this5.showError(error.response.data.message);
+          _this6.showError(error.response.data.message);
         } else if (error.message) {
-          _this5.showError(error.message);
+          _this6.showError(error.message);
         } else {
-          _this5.showError("Something went wrong!");
+          _this6.showError("Something went wrong!");
         }
       });
     }
@@ -1631,6 +1851,14 @@ var render = function () {
                       _c("option", { attrs: { value: "group_discount" } }, [
                         _vm._v(
                           _vm._s(_vm.__("group_discount", "Group Discount"))
+                        ),
+                      ]),
+                      _vm._v(" "),
+                      _c("option", { attrs: { value: "cart_value" } }, [
+                        _vm._v(
+                          _vm._s(
+                            _vm.t("cart_value_discount", "Cart Value Discount")
+                          )
                         ),
                       ]),
                       _vm._v(" "),
@@ -2235,7 +2463,659 @@ var render = function () {
                   ]),
                 ]),
               ])
-            : _c("div", { staticClass: "card scheme-card shadow-sm mb-4" }, [
+            : _vm.record.type === "cart_value"
+            ? _c("div", { staticClass: "card scheme-card shadow-sm mb-4" }, [
+                _c(
+                  "div",
+                  { staticClass: "card-body p-4" },
+                  [
+                    _c(
+                      "div",
+                      { staticClass: "d-flex align-items-center mb-3" },
+                      [
+                        _c("span", { staticClass: "step-num-badge me-2" }, [
+                          _vm._v("2"),
+                        ]),
+                        _vm._v(" "),
+                        _c("div", [
+                          _c("h5", { staticClass: "mb-0 font-weight-bold" }, [
+                            _vm._v(
+                              _vm._s(
+                                _vm.t("cart_value_tiers", "Cart Value Tiers")
+                              )
+                            ),
+                          ]),
+                          _vm._v(" "),
+                          _c("p", { staticClass: "text-muted small mb-0" }, [
+                            _vm._v(
+                              _vm._s(
+                                _vm.t(
+                                  "cart_value_subtitle",
+                                  "Give a discount that depends on how much the retailer orders. The cart value is the total including GST, before any scheme discount."
+                                )
+                              )
+                            ),
+                          ]),
+                        ]),
+                      ]
+                    ),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "mb-3" }, [
+                      _c(
+                        "label",
+                        { staticClass: "form-label font-weight-bold d-block" },
+                        [
+                          _vm._v(
+                            _vm._s(
+                              _vm.t(
+                                "cart_value_applies_to",
+                                "Cart value counted on"
+                              )
+                            )
+                          ),
+                        ]
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "div",
+                        {
+                          staticClass:
+                            "d-flex flex-wrap align-items-center gap-4",
+                        },
+                        [
+                          _c(
+                            "div",
+                            { staticClass: "form-check form-check-inline m-0" },
+                            [
+                              _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.record.applies_to_all,
+                                    expression: "record.applies_to_all",
+                                  },
+                                ],
+                                staticClass: "form-check-input cursor-pointer",
+                                attrs: {
+                                  type: "radio",
+                                  name: "cv_scope",
+                                  id: "cv_scope_all",
+                                },
+                                domProps: {
+                                  value: true,
+                                  checked: _vm._q(
+                                    _vm.record.applies_to_all,
+                                    true
+                                  ),
+                                },
+                                on: {
+                                  change: function ($event) {
+                                    return _vm.$set(
+                                      _vm.record,
+                                      "applies_to_all",
+                                      true
+                                    )
+                                  },
+                                },
+                              }),
+                              _vm._v(" "),
+                              _c(
+                                "label",
+                                {
+                                  staticClass:
+                                    "form-check-label ms-1 cursor-pointer fw-semibold",
+                                  attrs: { for: "cv_scope_all" },
+                                },
+                                [
+                                  _vm._v(
+                                    _vm._s(
+                                      _vm.t(
+                                        "entire_cart",
+                                        "Entire cart (any product)"
+                                      )
+                                    )
+                                  ),
+                                ]
+                              ),
+                            ]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "form-check form-check-inline m-0" },
+                            [
+                              _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.record.applies_to_all,
+                                    expression: "record.applies_to_all",
+                                  },
+                                ],
+                                staticClass: "form-check-input cursor-pointer",
+                                attrs: {
+                                  type: "radio",
+                                  name: "cv_scope",
+                                  id: "cv_scope_products",
+                                },
+                                domProps: {
+                                  value: false,
+                                  checked: _vm._q(
+                                    _vm.record.applies_to_all,
+                                    false
+                                  ),
+                                },
+                                on: {
+                                  change: function ($event) {
+                                    return _vm.$set(
+                                      _vm.record,
+                                      "applies_to_all",
+                                      false
+                                    )
+                                  },
+                                },
+                              }),
+                              _vm._v(" "),
+                              _c(
+                                "label",
+                                {
+                                  staticClass:
+                                    "form-check-label ms-1 cursor-pointer fw-semibold",
+                                  attrs: { for: "cv_scope_products" },
+                                },
+                                [
+                                  _vm._v(
+                                    _vm._s(
+                                      _vm.t(
+                                        "selected_products_only",
+                                        "Selected products only"
+                                      )
+                                    )
+                                  ),
+                                ]
+                              ),
+                            ]
+                          ),
+                        ]
+                      ),
+                    ]),
+                    _vm._v(" "),
+                    !_vm.record.applies_to_all
+                      ? _c(
+                          "div",
+                          { staticClass: "mb-4 p-3 rounded-3 border bg-light" },
+                          [
+                            _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2",
+                              },
+                              [
+                                _c(
+                                  "span",
+                                  { staticClass: "fw-semibold small" },
+                                  [
+                                    _vm._v(
+                                      _vm._s(
+                                        _vm.t(
+                                          "cart_value_products_hint",
+                                          "Only the value of these products counts towards the tiers."
+                                        )
+                                      )
+                                    ),
+                                  ]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "button",
+                                  {
+                                    staticClass:
+                                      "btn btn-outline-primary btn-sm px-3 d-inline-flex align-items-center gap-2",
+                                    attrs: { type: "button" },
+                                    on: { click: _vm.openProductModal },
+                                  },
+                                  [
+                                    _c("i", { staticClass: "fa fa-plus" }),
+                                    _c("span", [
+                                      _vm._v(
+                                        _vm._s(
+                                          _vm.t("add_products", "Add Products")
+                                        )
+                                      ),
+                                    ]),
+                                  ]
+                                ),
+                              ]
+                            ),
+                            _vm._v(" "),
+                            _vm.record.products.length
+                              ? _c(
+                                  "div",
+                                  { staticClass: "d-flex flex-wrap gap-2" },
+                                  _vm._l(
+                                    _vm.record.products,
+                                    function (item, index) {
+                                      return _c(
+                                        "span",
+                                        {
+                                          key:
+                                            "cvp" +
+                                            (item.id ||
+                                              item.seller_product_id ||
+                                              index),
+                                          staticClass:
+                                            "badge bg-white text-dark border px-2 py-2 d-inline-flex align-items-center gap-2",
+                                        },
+                                        [
+                                          _c("span", [
+                                            _vm._v(_vm._s(item.name)),
+                                            _c(
+                                              "span",
+                                              { staticClass: "text-muted" },
+                                              [
+                                                _vm._v(
+                                                  " · " +
+                                                    _vm._s(item.sku || "N/A")
+                                                ),
+                                              ]
+                                            ),
+                                          ]),
+                                          _vm._v(" "),
+                                          _c(
+                                            "a",
+                                            {
+                                              staticClass:
+                                                "text-danger text-decoration-none",
+                                              attrs: {
+                                                href: "javascript:void(0)",
+                                                title: _vm.t(
+                                                  "remove",
+                                                  "Remove"
+                                                ),
+                                              },
+                                              on: {
+                                                click: function ($event) {
+                                                  return _vm.removeProductRow(
+                                                    index
+                                                  )
+                                                },
+                                              },
+                                            },
+                                            [
+                                              _c("i", {
+                                                staticClass: "fa fa-times",
+                                              }),
+                                            ]
+                                          ),
+                                        ]
+                                      )
+                                    }
+                                  ),
+                                  0
+                                )
+                              : _c(
+                                  "p",
+                                  { staticClass: "text-muted small mb-0" },
+                                  [
+                                    _vm._v(
+                                      _vm._s(
+                                        _vm.__(
+                                          "no_products_added_yet",
+                                          "No products added yet."
+                                        )
+                                      )
+                                    ),
+                                  ]
+                                ),
+                          ]
+                        )
+                      : _vm._e(),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "table-responsive" }, [
+                      _c(
+                        "table",
+                        {
+                          staticClass:
+                            "table table-bordered align-middle scheme-products-table mb-2",
+                          staticStyle: { "min-width": "640px" },
+                        },
+                        [
+                          _c("thead", { staticClass: "bg-light text-muted" }, [
+                            _c("tr", [
+                              _c(
+                                "th",
+                                {
+                                  staticClass: "text-center",
+                                  staticStyle: { width: "90px" },
+                                },
+                                [_vm._v(_vm._s(_vm.t("tier", "Tier")))]
+                              ),
+                              _vm._v(" "),
+                              _c("th", [
+                                _vm._v(
+                                  _vm._s(_vm.t("cart_value_from", "From (₹)")) +
+                                    " "
+                                ),
+                                _c("span", { staticClass: "text-danger" }, [
+                                  _vm._v("*"),
+                                ]),
+                              ]),
+                              _vm._v(" "),
+                              _c("th", [
+                                _vm._v(
+                                  _vm._s(_vm.t("cart_value_to", "To (₹)"))
+                                ),
+                              ]),
+                              _vm._v(" "),
+                              _c("th", [
+                                _vm._v(
+                                  _vm._s(
+                                    _vm.t(
+                                      "cart_value_discount_amount",
+                                      "Discount"
+                                    )
+                                  ) + " "
+                                ),
+                                _c("span", { staticClass: "text-danger" }, [
+                                  _vm._v("*"),
+                                ]),
+                              ]),
+                              _vm._v(" "),
+                              _c(
+                                "th",
+                                {
+                                  staticClass: "text-center",
+                                  staticStyle: { width: "70px" },
+                                },
+                                [_vm._v(_vm._s(_vm.t("actions", "Actions")))]
+                              ),
+                            ]),
+                          ]),
+                          _vm._v(" "),
+                          _c(
+                            "tbody",
+                            _vm._l(_vm.valueTiers, function (tier, ti) {
+                              return _c("tr", { key: "vt" + ti }, [
+                                _c(
+                                  "td",
+                                  {
+                                    staticClass:
+                                      "text-center font-weight-bold text-muted",
+                                  },
+                                  [_vm._v(_vm._s(ti + 1))]
+                                ),
+                                _vm._v(" "),
+                                _c("td", [
+                                  _c(
+                                    "div",
+                                    {
+                                      staticClass: "input-group input-group-sm",
+                                    },
+                                    [
+                                      _c(
+                                        "span",
+                                        {
+                                          staticClass:
+                                            "input-group-text bg-light text-muted px-2",
+                                        },
+                                        [_vm._v("₹")]
+                                      ),
+                                      _vm._v(" "),
+                                      _c("input", {
+                                        directives: [
+                                          {
+                                            name: "model",
+                                            rawName: "v-model",
+                                            value: tier.min_value,
+                                            expression: "tier.min_value",
+                                          },
+                                        ],
+                                        staticClass:
+                                          "form-control text-center fw-bold",
+                                        attrs: {
+                                          type: "number",
+                                          min: "1",
+                                          step: "0.01",
+                                          placeholder: "5000",
+                                          required: "",
+                                        },
+                                        domProps: { value: tier.min_value },
+                                        on: {
+                                          input: function ($event) {
+                                            if ($event.target.composing) {
+                                              return
+                                            }
+                                            _vm.$set(
+                                              tier,
+                                              "min_value",
+                                              $event.target.value
+                                            )
+                                          },
+                                        },
+                                      }),
+                                    ]
+                                  ),
+                                ]),
+                                _vm._v(" "),
+                                _c("td", [
+                                  _c(
+                                    "div",
+                                    {
+                                      staticClass: "input-group input-group-sm",
+                                    },
+                                    [
+                                      _c(
+                                        "span",
+                                        {
+                                          staticClass:
+                                            "input-group-text bg-light text-muted px-2",
+                                        },
+                                        [_vm._v("₹")]
+                                      ),
+                                      _vm._v(" "),
+                                      _c("input", {
+                                        directives: [
+                                          {
+                                            name: "model",
+                                            rawName: "v-model",
+                                            value: tier.max_value,
+                                            expression: "tier.max_value",
+                                          },
+                                        ],
+                                        staticClass: "form-control text-center",
+                                        attrs: {
+                                          type: "number",
+                                          min: "1",
+                                          step: "0.01",
+                                          placeholder:
+                                            ti === _vm.valueTiers.length - 1
+                                              ? _vm.t("no_limit", "No limit")
+                                              : _vm.t(
+                                                  "cart_value_to",
+                                                  "To (₹)"
+                                                ),
+                                        },
+                                        domProps: { value: tier.max_value },
+                                        on: {
+                                          input: function ($event) {
+                                            if ($event.target.composing) {
+                                              return
+                                            }
+                                            _vm.$set(
+                                              tier,
+                                              "max_value",
+                                              $event.target.value
+                                            )
+                                          },
+                                        },
+                                      }),
+                                    ]
+                                  ),
+                                ]),
+                                _vm._v(" "),
+                                _c("td", [
+                                  _c(
+                                    "div",
+                                    {
+                                      staticClass: "input-group input-group-sm",
+                                    },
+                                    [
+                                      _c("input", {
+                                        directives: [
+                                          {
+                                            name: "model",
+                                            rawName: "v-model",
+                                            value: tier.discount_value,
+                                            expression: "tier.discount_value",
+                                          },
+                                        ],
+                                        staticClass:
+                                          "form-control text-center fw-bold",
+                                        attrs: {
+                                          type: "number",
+                                          min: "0.01",
+                                          max:
+                                            tier.discount_type === "percentage"
+                                              ? 100
+                                              : null,
+                                          step: "0.01",
+                                          placeholder:
+                                            tier.discount_type === "percentage"
+                                              ? "5"
+                                              : "150",
+                                          required: "",
+                                        },
+                                        domProps: {
+                                          value: tier.discount_value,
+                                        },
+                                        on: {
+                                          input: function ($event) {
+                                            if ($event.target.composing) {
+                                              return
+                                            }
+                                            _vm.$set(
+                                              tier,
+                                              "discount_value",
+                                              $event.target.value
+                                            )
+                                          },
+                                        },
+                                      }),
+                                      _vm._v(" "),
+                                      _c(
+                                        "span",
+                                        {
+                                          staticClass:
+                                            "input-group-text bg-light text-muted px-2",
+                                        },
+                                        [
+                                          _vm._v(
+                                            _vm._s(
+                                              tier.discount_type ===
+                                                "percentage"
+                                                ? "%"
+                                                : "₹ " +
+                                                    _vm.t(
+                                                      "flat_off",
+                                                      "flat off"
+                                                    )
+                                            )
+                                          ),
+                                        ]
+                                      ),
+                                    ]
+                                  ),
+                                ]),
+                                _vm._v(" "),
+                                _c("td", { staticClass: "text-center" }, [
+                                  _vm.valueTiers.length > 1
+                                    ? _c(
+                                        "button",
+                                        {
+                                          staticClass:
+                                            "btn btn-sm btn-outline-danger action-trash-btn",
+                                          attrs: {
+                                            type: "button",
+                                            title: _vm.t(
+                                              "remove_tier",
+                                              "Remove tier"
+                                            ),
+                                          },
+                                          on: {
+                                            click: function ($event) {
+                                              return _vm.removeValueTier(ti)
+                                            },
+                                          },
+                                        },
+                                        [
+                                          _c("i", {
+                                            staticClass: "fa fa-trash",
+                                          }),
+                                        ]
+                                      )
+                                    : _vm._e(),
+                                ]),
+                              ])
+                            }),
+                            0
+                          ),
+                        ]
+                      ),
+                    ]),
+                    _vm._v(" "),
+                    _c(
+                      "button",
+                      {
+                        staticClass:
+                          "btn btn-outline-primary btn-sm px-3 d-inline-flex align-items-center gap-2 mb-2",
+                        attrs: { type: "button" },
+                        on: { click: _vm.addValueTier },
+                      },
+                      [
+                        _c("i", { staticClass: "fa fa-plus" }),
+                        _c("span", [
+                          _vm._v(_vm._s(_vm.t("add_tier", "Add tier"))),
+                        ]),
+                      ]
+                    ),
+                    _vm._v(" "),
+                    _c("p", { staticClass: "text-muted small mb-1" }, [
+                      _c("i", { staticClass: "fa fa-info-circle me-1" }),
+                      _vm._v(
+                        _vm._s(
+                          _vm.t(
+                            "cart_value_tiers_hint",
+                            "Only the tier the cart value falls in applies. Leave the last To empty for no upper limit. Amounts include GST. A cart value outside every tier gets no discount."
+                          )
+                        )
+                      ),
+                    ]),
+                    _vm._v(" "),
+                    _vm._l(_vm.valueTierWarnings, function (w, wi) {
+                      return _c(
+                        "div",
+                        {
+                          key: "cvw" + wi,
+                          staticClass:
+                            "alert alert-warning small py-2 px-3 mb-1 d-flex align-items-center gap-2",
+                        },
+                        [
+                          _c("i", {
+                            staticClass: "fa fa-exclamation-triangle",
+                          }),
+                          _c("span", [_vm._v(_vm._s(w))]),
+                        ]
+                      )
+                    }),
+                  ],
+                  2
+                ),
+              ])
+            : _vm.record.type === "group_discount"
+            ? _c("div", { staticClass: "card scheme-card shadow-sm mb-4" }, [
                 _c("div", { staticClass: "card-body p-4" }, [
                   _c(
                     "div",
@@ -6179,7 +7059,8 @@ var render = function () {
                         ),
                   ]),
                 ]),
-              ]),
+              ])
+            : _vm._e(),
           _vm._v(" "),
           _c("div", { staticClass: "card scheme-card shadow-sm mb-4" }, [
             _c("div", { staticClass: "card-body p-4" }, [

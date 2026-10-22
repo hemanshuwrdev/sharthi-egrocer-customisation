@@ -152,6 +152,18 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -611,6 +623,17 @@ var render = function () {
                           { staticClass: "badge bg-warning text-dark" },
                           [_vm._v(_vm._s(_vm.__("group_discount_qty")))]
                         )
+                      : row.item.type === "group_discount_price"
+                      ? _c("span", { staticClass: "badge bg-success" }, [
+                          _vm._v(
+                            _vm._s(
+                              _vm.t(
+                                "cart_value_discount",
+                                "Cart Value Discount"
+                              )
+                            )
+                          ),
+                        ])
                       : _c("span", { staticClass: "badge bg-primary" }, [
                           _vm._v(_vm._s(_vm.__("group_discount_price"))),
                         ]),
@@ -660,6 +683,89 @@ var render = function () {
                                 _vm._s(_vm.t("free", "Free"))
                             ),
                           ]),
+                        ]
+                      : row.item.type === "group_discount_price"
+                      ? [
+                          _c(
+                            "div",
+                            { staticClass: "small mb-1 text-start" },
+                            [
+                              _c(
+                                "span",
+                                {
+                                  staticClass:
+                                    "badge bg-primary text-white mb-1",
+                                },
+                                [
+                                  _c("i", {
+                                    staticClass: "fa fa-shopping-cart me-1",
+                                  }),
+                                  _vm._v(
+                                    " " +
+                                      _vm._s(
+                                        row.item.applies_to_all
+                                          ? _vm.t(
+                                              "entire_cart",
+                                              "Entire cart (any product)"
+                                            )
+                                          : _vm.t(
+                                              "selected_products_only",
+                                              "Selected products only"
+                                            )
+                                      )
+                                  ),
+                                ]
+                              ),
+                              _vm._v(" "),
+                              !row.item.applies_to_all &&
+                              row.item.products &&
+                              row.item.products.length
+                                ? _c(
+                                    "div",
+                                    { staticClass: "text-muted small mb-1" },
+                                    [
+                                      _vm._v(
+                                        _vm._s(row.item.products.join(", "))
+                                      ),
+                                    ]
+                                  )
+                                : _vm._e(),
+                              _vm._v(" "),
+                              _vm._l(row.item.slabs, function (s, i) {
+                                return _c("div", { key: "cv" + i }, [
+                                  _c("strong", [
+                                    _vm._v(
+                                      "₹" +
+                                        _vm._s(s.min_value) +
+                                        _vm._s(
+                                          s.max_value !== null &&
+                                            s.max_value !== undefined
+                                            ? " – ₹" + s.max_value
+                                            : "+"
+                                        )
+                                    ),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c(
+                                    "span",
+                                    { staticClass: "badge bg-success ms-1" },
+                                    [
+                                      _vm._v(
+                                        _vm._s(
+                                          s.discount_type === "percentage"
+                                            ? s.discount_value + "%"
+                                            : "₹" + s.discount_value
+                                        ) +
+                                          " " +
+                                          _vm._s(_vm.__("off"))
+                                      ),
+                                    ]
+                                  ),
+                                ])
+                              }),
+                            ],
+                            2
+                          ),
                         ]
                       : row.item.is_multi_combo
                       ? [

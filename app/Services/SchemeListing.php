@@ -212,6 +212,10 @@ class SchemeListing
             if (!$scheme) {
                 return false;
             }
+            // Counting the whole cart: every product in the cart took part in earning it.
+            if ($scheme->applies_to_all) {
+                return true;
+            }
             $involved = array_map('intval', array_merge(
                 [$scheme->buy_seller_product_id, $scheme->free_seller_product_id],
                 $scheme->schemeProducts->pluck('seller_product_id')->all()
@@ -265,7 +269,8 @@ class SchemeListing
             ];
         } else {
             $rows = $s->schemeProducts->filter(fn ($p) => $p->sellerProduct && $isOrderable($p->sellerProduct));
-            if ($rows->isEmpty()) {
+            // A Cart Value Discount counting the whole cart has no products of its own, and still applies.
+            if ($rows->isEmpty() && !$s->applies_to_all) {
                 return null;
             }
 
@@ -325,10 +330,14 @@ class SchemeListing
             'combo_reward'    => $comboReward,
             'tiers'           => $tiers,
             'products'        => $products,
-            // Slab threshold meaning: 'amount' = basket value in ₹, 'qty' = basket quantity.
+            // Cart Value Discount: true = the value counted is the whole cart (`products` is then empty).
+            'applies_to_all'  => (bool) $s->applies_to_all,
+            // Slab threshold meaning: 'amount' = basket value in ₹ (tax-inclusive), 'qty' = basket quantity.
+            // Each slab runs min_value..max_value inclusive; max_value null = no upper limit.
             'slab_basis'      => $isBxgy || $s->schemeSlabs->isEmpty() ? null : ($s->type === Scheme::TYPE_GROUP_DISCOUNT_QTY ? 'qty' : 'amount'),
             'slabs'           => $isBxgy ? [] : $s->schemeSlabs->sortBy('min_value')->map(fn ($sl) => [
                 'min_value'      => (float) $sl->min_value,
+                'max_value'      => $sl->max_value !== null ? (float) $sl->max_value : null,
                 'discount_type'  => $sl->discount_type,
                 'discount_value' => (float) $sl->discount_value,
                 'tax_option'     => $sl->tax_option ?? 'inclusive',

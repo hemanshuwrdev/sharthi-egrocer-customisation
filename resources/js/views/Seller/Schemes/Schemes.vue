@@ -61,6 +61,7 @@
                     <template #cell(type)="row">
                         <span v-if="row.item.type === 'buy_x_get_y'" class="badge bg-info">{{ __('buy_x_get_y') }}</span>
                         <span v-else-if="row.item.type === 'group_discount_qty'" class="badge bg-warning text-dark">{{ __('group_discount_qty') }}</span>
+                        <span v-else-if="row.item.type === 'group_discount_price'" class="badge bg-success">{{ t('cart_value_discount', 'Cart Value Discount') }}</span>
                         <span v-else class="badge bg-primary">{{ __('group_discount_price') }}</span>
                     </template>
 
@@ -68,6 +69,17 @@
                         <template v-if="row.item.type === 'buy_x_get_y'">
                             {{ t('buy', 'Buy') }} {{ row.item.buy_qty }} {{ row.item.buy_qty_basis === 'outer' ? 'Outer' : (row.item.buy_qty_basis === 'inner' ? 'Inner' : '') }} × {{ row.item.buy_product }}<br>
                             <strong>{{ t('get', 'Get') }} {{ row.item.free_qty }} {{ row.item.free_qty_basis === 'outer' ? 'Outer' : (row.item.free_qty_basis === 'inner' ? 'Inner' : '') }} × {{ row.item.free_product }} {{ t('free', 'Free') }}</strong>
+                        </template>
+                        <!-- Cart Value Discount: tiers of cart value -> flat discount, on the whole cart or on selected products -->
+                        <template v-else-if="row.item.type === 'group_discount_price'">
+                            <div class="small mb-1 text-start">
+                                <span class="badge bg-primary text-white mb-1"><i class="fa fa-shopping-cart me-1"></i> {{ row.item.applies_to_all ? t('entire_cart', 'Entire cart (any product)') : t('selected_products_only', 'Selected products only') }}</span>
+                                <div v-if="!row.item.applies_to_all && row.item.products && row.item.products.length" class="text-muted small mb-1">{{ row.item.products.join(', ') }}</div>
+                                <div v-for="(s, i) in row.item.slabs" :key="'cv' + i">
+                                    <strong>₹{{ s.min_value }}{{ s.max_value !== null && s.max_value !== undefined ? ' – ₹' + s.max_value : '+' }}</strong>
+                                    <span class="badge bg-success ms-1">{{ s.discount_type === 'percentage' ? s.discount_value + '%' : '₹' + s.discount_value }} {{ __('off') }}</span>
+                                </div>
+                            </div>
                         </template>
                         <template v-else-if="row.item.is_multi_combo">
                             <div class="small mb-1 text-start">
