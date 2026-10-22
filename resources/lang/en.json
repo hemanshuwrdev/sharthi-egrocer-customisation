@@ -2674,5 +2674,14 @@
     "location_outside_serviceable_area": "This location is outside every serviceable zone.",
     "mobile_number_already_taken": "This mobile number is already registered.",
     "area_city": "City",
-    "area_city_hint": "Shown to retailers as the city when they search this pincode in the app (registration and address change)."
+    "area_city_hint": "Shown to retailers as the city when they search this pincode in the app (registration and address change).",
+    "signature_settings": "Authorised Signature",
+    "signature_settings_hint": "Printed above \"Authorised Signatory\" on invoices and credit notes. Upload a PNG with a transparent background for the cleanest result. Without one, your name is printed as before.",
+    "signature_upload_prompt": "Click or drop a PNG / JPG signature image here",
+    "signature_not_set_hint": "No signature uploaded - invoices print your name.",
+    "signature_must_be_png_jpg_webp": "The signature must be a PNG, JPG or WEBP image.",
+    "signature_image_too_large": "The signature image must not be larger than 1 MB.",
+    "signature_saved_successfully": "Signature saved successfully",
+    "signature_removed_successfully": "Signature removed - invoices print your name again",
+    "please_choose_a_signature_image": "Please choose a signature image."
 }

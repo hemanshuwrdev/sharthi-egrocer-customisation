@@ -874,9 +874,10 @@
                         <tr>
                             <th style="width: 5%; text-align: center;">Sr No.</th>
                             <th>Description</th>
-                            <th style="width: 10%; text-align: center;">Qty</th>
-                            <th style="width: 12%; text-align: right;">Rate</th>
-                            <th style="width: 14%; text-align: right;">Net Taxable Amt.</th>
+                            <th style="width: 10%; text-align: center;">Alt. Qty</th>
+                            <th style="width: 9%; text-align: center;">Qty</th>
+                            <th style="width: 9%; text-align: right;">Rate</th>
+                            <th style="width: 11%; text-align: right;">Net Taxable Amt.</th>
                             <th style="width: 17%; text-align: right;">Tax (GST)</th>
                             <th style="width: 14%; text-align: right;">Total Amt.</th>
                         </tr>
@@ -885,21 +886,11 @@
                         @foreach ($orderedItems as $itemIndex => $item)
                             @php
                                 $pkgFormat = '';
-                                $boxQty = '';
                                 if (isset($item->secondary_unit_value) && $item->secondary_unit_value > 1) {
-                                    $pkgFormat = (int) $item->secondary_unit_value . ' * ' . $item->variant_name;
-                                    $boxes = floor($item->quantity / $item->secondary_unit_value);
-                                    $loose = $item->quantity % $item->secondary_unit_value;
-                                    $secName = $item->secondary_unit_name ?: 'Box';
-
-                                    if ($boxes > 0 && $loose > 0) {
-                                        $boxQty = $boxes . ' ' . $secName . ' + ' . $loose . ' nos';
-                                    } elseif ($boxes > 0) {
-                                        $boxQty = $boxes . ' ' . $secName;
-                                    } else {
-                                        $boxQty = $loose . ' nos';
-                                    }
+                                    $pkgFormat = (int) $item->secondary_unit_value . ' * ' . \App\Helpers\CommonHelper::variantSize($item->variant_name);
                                 }
+                                // Alt. Quantity column: the pieces ordered, as outer packs ("5 BAG").
+                                $boxQty = \App\Helpers\CommonHelper::altQuantity($item->quantity, $item->secondary_unit_value ?? null, $item->secondary_unit_name ?? null);
 
                                 $hsn = '';
                                 if (!empty($item->master_product_variant_id)) {
@@ -941,10 +932,8 @@
                                     @if ($pkgFormat)
                                         <br><span class="item-format">Format: {{ $pkgFormat }}</span>
                                     @endif
-                                    @if ($boxQty)
-                                        <span class="item-boxqty">({{ $boxQty }})</span>
-                                    @endif
                                 </td>
+                                <td class="num" style="text-align: center; font-weight: bold;">{{ $boxQty ?: '-' }}</td>
                                 <td class="num" style="text-align: center; font-weight: bold;">
                                     {{ number_format($item->quantity, 1) }}
                                     @if ($mergedFreeQty > 0)
@@ -965,6 +954,7 @@
                         <tr style="font-weight: bold; background-color: #f2f2f2;">
                             <td></td>
                             <td>Total</td>
+                            <td></td>
                             <td style="text-align: center;">{{ number_format($totalBillQty, 1) }}</td>
                             <td></td>
                             <td style="text-align: right; white-space: nowrap;">₹{{ number_format($totalNetTaxable, 2) }}</td>
@@ -1030,6 +1020,13 @@
                                     ₹{{ number_format($order->delivery_charge, 2) }}</td>
                             </tr>
                         @endif
+                        {{-- Orders are rounded to the nearest rupee when placed; the paise that added or took off shows here. --}}
+                        @if (((float) ($order->round_off ?? 0)) != 0 && abs($order->final_total - round($order->final_total)) < 0.005)
+                            <tr>
+                                <td style="text-align: left; color: #555;">Round Off</td>
+                                <td style="text-align: right; font-weight: bold;">{{ $order->round_off > 0 ? '+' : '-' }}₹{{ number_format(abs($order->round_off), 2) }}</td>
+                            </tr>
+                        @endif
                         <tr class="grand-total">
                             <td style="text-align: left;">Grand Total</td>
                             <td style="text-align: right;">₹{{ number_format($order->final_total, 2) }}</td>
@@ -1038,30 +1035,12 @@
                 </div>
 
                 @if (isset($seller) && (!empty($seller->bank_name) || !empty($seller->account_number)))
-                    <!-- Distributor Bank Details -->
-                    <div style="border: 1px solid #ddd; padding: 10px 15px; margin-bottom: 15px;">
-                        <div style="font-size: 12px; color: #222; margin-bottom: 8px;"><strong>Bank Details</strong></div>
-                        <table width="100%" style="border-collapse: collapse;">
-                            <tr>
-                                <td style="border: none; padding: 0 15px 0 0; width: 25%; font-size: 11px; color: #555;">
-                                    Bank Name<br>
-                                    <strong style="color: #222;">{{ $seller->bank_name ?: '-' }}</strong>
-                                </td>
-                                <td style="border: none; padding: 0 15px 0 0; width: 25%; font-size: 11px; color: #555;">
-                                    Account Number<br>
-                                    <strong style="color: #222;">{{ $seller->account_number ?: '-' }}</strong>
-                                </td>
-                                <td style="border: none; padding: 0 15px 0 0; width: 25%; font-size: 11px; color: #555;">
-                                    Bank's IFSC Code<br>
-                                    <strong style="color: #222;">{{ $seller->bank_ifsc_code ?: '-' }}</strong>
-                                </td>
-                                <td style="border: none; padding: 0; width: 25%; font-size: 11px; color: #555;">
-                                    Bank Account Name<br>
-                                    <strong style="color: #222;">{{ $seller->account_name ?: '-' }}</strong>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
+                    @include('partials.invoice_bank_details', [
+                        'bankName'      => $seller->bank_name,
+                        'accountNumber' => $seller->account_number,
+                        'ifscCode'      => $seller->bank_ifsc_code,
+                        'accountName'   => $seller->account_name,
+                    ])
                 @endif
 
                 <!-- Advertisement Banner -->
@@ -1081,9 +1060,7 @@
                     </div>
                     <div
                         style="text-align: right; min-width: 150px; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end;">
-                        <div
-                            style="font-family: 'Courier New', Courier, monospace; font-size: 11px; margin-bottom: 2px; color: #555; font-style: italic; font-weight: bold;">
-                            {{ $seller->name }}</div>
+                        @include('partials.invoice_signature', ['seller' => $seller, 'name' => $seller->name, 'nameSize' => 11])
                         <div
                             style="border-top: 1px solid #000; width: 120px; text-align: center; padding-top: 3px; font-weight: bold; font-size: 8px;">
                             Authorised Signatory</div>

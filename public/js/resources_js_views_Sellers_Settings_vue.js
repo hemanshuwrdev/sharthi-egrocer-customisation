@@ -614,6 +614,50 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -663,6 +707,11 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
       loading_slip_prefix: "",
       loading_slip_suffix: "",
       loading_slip_next_number: 1,
+      isSignatureLoading: false,
+      signature_image: "",
+      signature_file: null,
+      signaturePickedUrl: "",
+      signatureDragOver: false,
       isCreditNoteLoading: false,
       credit_note_prefix: "",
       credit_note_suffix: "",
@@ -722,6 +771,7 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
     this.getInvoiceSettings();
     this.getLoadingSlipSettings();
     this.getCreditNoteSettings();
+    this.getSignatureSettings();
     this.getSensitivePasswordStatus();
   },
   beforeDestroy: function beforeDestroy() {
@@ -763,6 +813,11 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
     creditNoteNumberPreview: function creditNoteNumberPreview() {
       var padded = String(this.credit_note_next_number || 1).padStart(4, '0');
       return "".concat(this.credit_note_prefix || '').concat(padded).concat(this.credit_note_suffix || '');
+    },
+    // what the signature card shows: the file just picked, else the saved one
+    signaturePreviewUrl: function signaturePreviewUrl() {
+      if (this.signaturePickedUrl) return this.signaturePickedUrl;
+      return this.signature_image ? this.$storageUrl + this.signature_image : '';
     },
     loadingSlipNumberPreview: function loadingSlipNumberPreview() {
       var padded = String(this.loading_slip_next_number || 1).padStart(4, '0');
@@ -1141,21 +1196,102 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
         _this14.isOrderLoading = false;
       });
     },
-    // ================= INVOICE SETTINGS =================
-    getInvoiceSettings: function getInvoiceSettings() {
+    // ================= SIGNATURE (printed above "Authorised Signatory") =================
+    getSignatureSettings: function getSignatureSettings() {
       var _this15 = this;
-      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/invoice-settings').then(function (res) {
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/signature-settings').then(function (res) {
         if (res.data.status && res.data.data) {
-          _this15.invoice_prefix = res.data.data.invoice_prefix || "";
-          _this15.invoice_suffix = res.data.data.invoice_suffix || "";
-          _this15.invoice_next_number = res.data.data.invoice_next_number || 1;
+          _this15.signature_image = res.data.data.signature_image || "";
         }
       })["catch"](function () {
-        _this15.showError('Failed to load invoice settings');
+        _this15.showError('Failed to load signature settings');
+      });
+    },
+    pickSignature: function pickSignature(file) {
+      if (!file) return;
+      // same limits the server enforces, caught here first so the user isn't made to wait for a rejection
+      if (!/^image\/(png|jpe?g|webp)$/.test(file.type)) {
+        this.showError(__('signature_must_be_png_jpg_webp'));
+        return;
+      }
+      if (file.size > 1024 * 1024) {
+        this.showError(__('signature_image_too_large'));
+        return;
+      }
+      this.clearPickedSignature();
+      this.signature_file = file;
+      this.signaturePickedUrl = URL.createObjectURL(file);
+    },
+    handleSignaturePicked: function handleSignaturePicked(event) {
+      this.pickSignature(event.target.files[0]);
+      event.target.value = '';
+    },
+    dropSignature: function dropSignature(event) {
+      this.signatureDragOver = false;
+      this.pickSignature(event.dataTransfer.files[0]);
+    },
+    clearPickedSignature: function clearPickedSignature() {
+      if (this.signaturePickedUrl) URL.revokeObjectURL(this.signaturePickedUrl);
+      this.signature_file = null;
+      this.signaturePickedUrl = "";
+    },
+    saveSignature: function saveSignature() {
+      var _this16 = this;
+      if (!this.signature_file) return;
+      this.isSignatureLoading = true;
+      var formData = new FormData();
+      formData.append('signature', this.signature_file);
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/signature-settings/save', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      }).then(function (res) {
+        if (res.data.status) {
+          _this16.showMessage('success', __(res.data.message));
+          _this16.clearPickedSignature();
+          _this16.getSignatureSettings();
+        } else {
+          _this16.showError(res.data.message || 'Failed to save');
+        }
+        _this16.isSignatureLoading = false;
+      })["catch"](function () {
+        _this16.showError('Failed to save signature');
+        _this16.isSignatureLoading = false;
+      });
+    },
+    removeSignature: function removeSignature() {
+      var _this17 = this;
+      this.isSignatureLoading = true;
+      var formData = new FormData();
+      formData.append('remove', 1);
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/signature-settings/save', formData).then(function (res) {
+        if (res.data.status) {
+          _this17.showMessage('success', __(res.data.message));
+          _this17.signature_image = "";
+        } else {
+          _this17.showError(res.data.message || 'Failed to remove');
+        }
+        _this17.isSignatureLoading = false;
+      })["catch"](function () {
+        _this17.showError('Failed to remove signature');
+        _this17.isSignatureLoading = false;
+      });
+    },
+    // ================= INVOICE SETTINGS =================
+    getInvoiceSettings: function getInvoiceSettings() {
+      var _this18 = this;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/invoice-settings').then(function (res) {
+        if (res.data.status && res.data.data) {
+          _this18.invoice_prefix = res.data.data.invoice_prefix || "";
+          _this18.invoice_suffix = res.data.data.invoice_suffix || "";
+          _this18.invoice_next_number = res.data.data.invoice_next_number || 1;
+        }
+      })["catch"](function () {
+        _this18.showError('Failed to load invoice settings');
       });
     },
     saveInvoiceSettings: function saveInvoiceSettings() {
-      var _this16 = this;
+      var _this19 = this;
       this.isInvoiceLoading = true;
       var formData = new FormData();
       formData.append('invoice_prefix', this.invoice_prefix || '');
@@ -1163,30 +1299,30 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
       formData.append('invoice_next_number', this.invoice_next_number || 1);
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/invoice-settings/save', formData).then(function (res) {
         if (res.data.status) {
-          _this16.showMessage('success', __(res.data.message));
+          _this19.showMessage('success', __(res.data.message));
         } else {
-          _this16.showError(res.data.message || 'Failed to save');
+          _this19.showError(res.data.message || 'Failed to save');
         }
-        _this16.isInvoiceLoading = false;
+        _this19.isInvoiceLoading = false;
       })["catch"](function () {
-        _this16.showError('Failed to save invoice settings');
-        _this16.isInvoiceLoading = false;
+        _this19.showError('Failed to save invoice settings');
+        _this19.isInvoiceLoading = false;
       });
     },
     getLoadingSlipSettings: function getLoadingSlipSettings() {
-      var _this17 = this;
+      var _this20 = this;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/loading-slip-settings').then(function (res) {
         if (res.data.status && res.data.data) {
-          _this17.loading_slip_prefix = res.data.data.loading_slip_prefix || "";
-          _this17.loading_slip_suffix = res.data.data.loading_slip_suffix || "";
-          _this17.loading_slip_next_number = res.data.data.loading_slip_next_number || 1;
+          _this20.loading_slip_prefix = res.data.data.loading_slip_prefix || "";
+          _this20.loading_slip_suffix = res.data.data.loading_slip_suffix || "";
+          _this20.loading_slip_next_number = res.data.data.loading_slip_next_number || 1;
         }
       })["catch"](function () {
-        _this17.showError('Failed to load loading slip settings');
+        _this20.showError('Failed to load loading slip settings');
       });
     },
     saveLoadingSlipSettings: function saveLoadingSlipSettings() {
-      var _this18 = this;
+      var _this21 = this;
       this.isLoadingSlipSettingsLoading = true;
       var formData = new FormData();
       formData.append('loading_slip_prefix', this.loading_slip_prefix || '');
@@ -1194,30 +1330,30 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
       formData.append('loading_slip_next_number', this.loading_slip_next_number || 1);
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/loading-slip-settings/save', formData).then(function (res) {
         if (res.data.status) {
-          _this18.showMessage('success', __(res.data.message));
+          _this21.showMessage('success', __(res.data.message));
         } else {
-          _this18.showError(res.data.message || 'Failed to save');
+          _this21.showError(res.data.message || 'Failed to save');
         }
-        _this18.isLoadingSlipSettingsLoading = false;
+        _this21.isLoadingSlipSettingsLoading = false;
       })["catch"](function () {
-        _this18.showError('Failed to save loading slip settings');
-        _this18.isLoadingSlipSettingsLoading = false;
+        _this21.showError('Failed to save loading slip settings');
+        _this21.isLoadingSlipSettingsLoading = false;
       });
     },
     getCreditNoteSettings: function getCreditNoteSettings() {
-      var _this19 = this;
+      var _this22 = this;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/credit-note-settings').then(function (res) {
         if (res.data.status && res.data.data) {
-          _this19.credit_note_prefix = res.data.data.credit_note_prefix || "";
-          _this19.credit_note_suffix = res.data.data.credit_note_suffix || "";
-          _this19.credit_note_next_number = res.data.data.credit_note_next_number || 1;
+          _this22.credit_note_prefix = res.data.data.credit_note_prefix || "";
+          _this22.credit_note_suffix = res.data.data.credit_note_suffix || "";
+          _this22.credit_note_next_number = res.data.data.credit_note_next_number || 1;
         }
       })["catch"](function () {
-        _this19.showError('Failed to load credit note settings');
+        _this22.showError('Failed to load credit note settings');
       });
     },
     saveCreditNoteSettings: function saveCreditNoteSettings() {
-      var _this20 = this;
+      var _this23 = this;
       this.isCreditNoteLoading = true;
       var formData = new FormData();
       formData.append('credit_note_prefix', this.credit_note_prefix || '');
@@ -1225,22 +1361,22 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
       formData.append('credit_note_next_number', this.credit_note_next_number || 1);
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/credit-note-settings/save', formData).then(function (res) {
         if (res.data.status) {
-          _this20.showMessage('success', __(res.data.message));
+          _this23.showMessage('success', __(res.data.message));
         } else {
-          _this20.showError(res.data.message || 'Failed to save');
+          _this23.showError(res.data.message || 'Failed to save');
         }
-        _this20.isCreditNoteLoading = false;
+        _this23.isCreditNoteLoading = false;
       })["catch"](function () {
-        _this20.showError('Failed to save credit note settings');
-        _this20.isCreditNoteLoading = false;
+        _this23.showError('Failed to save credit note settings');
+        _this23.isCreditNoteLoading = false;
       });
     },
     // ================= SENSITIVE OPERATIONS PASSWORD =================
     getSensitivePasswordStatus: function getSensitivePasswordStatus() {
-      var _this21 = this;
+      var _this24 = this;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$sellerApiUrl + '/sensitive-password').then(function (res) {
         if (res.data.status && res.data.data) {
-          _this21.sensitivePasswordIsSet = !!res.data.data.is_set;
+          _this24.sensitivePasswordIsSet = !!res.data.data.is_set;
         }
       })["catch"](function () {});
     },
@@ -1259,32 +1395,32 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
       this.otpResendCooldown = 0;
     },
     sendSensitiveOtp: function sendSensitiveOtp() {
-      var _this22 = this;
+      var _this25 = this;
       if (this.isSendingOtp || this.otpResendCooldown > 0) return;
       this.isSendingOtp = true;
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + '/sensitive-password/send-otp').then(function (res) {
         if (res.data.status) {
-          _this22.showMessage('success', __(res.data.message));
-          _this22.otpResendCooldown = 60;
-          if (_this22.otpCooldownTimer) clearInterval(_this22.otpCooldownTimer);
-          _this22.otpCooldownTimer = setInterval(function () {
-            _this22.otpResendCooldown--;
-            if (_this22.otpResendCooldown <= 0) {
-              clearInterval(_this22.otpCooldownTimer);
-              _this22.otpCooldownTimer = null;
+          _this25.showMessage('success', __(res.data.message));
+          _this25.otpResendCooldown = 60;
+          if (_this25.otpCooldownTimer) clearInterval(_this25.otpCooldownTimer);
+          _this25.otpCooldownTimer = setInterval(function () {
+            _this25.otpResendCooldown--;
+            if (_this25.otpResendCooldown <= 0) {
+              clearInterval(_this25.otpCooldownTimer);
+              _this25.otpCooldownTimer = null;
             }
           }, 1000);
         } else {
-          _this22.showError(res.data.message || 'Failed to send OTP');
+          _this25.showError(res.data.message || 'Failed to send OTP');
         }
-        _this22.isSendingOtp = false;
+        _this25.isSendingOtp = false;
       })["catch"](function () {
-        _this22.showError('Failed to send OTP');
-        _this22.isSendingOtp = false;
+        _this25.showError('Failed to send OTP');
+        _this25.isSendingOtp = false;
       });
     },
     saveSensitivePassword: function saveSensitivePassword() {
-      var _this23 = this;
+      var _this26 = this;
       this.isSensitiveLoading = true;
       var formData = new FormData();
       if (this.sensitiveForgotMode) {
@@ -1302,19 +1438,19 @@ var TAB_KEYS = ['orders', 'numbering', 'notifications', 'security', 'profile'];
       var endpoint = this.sensitiveForgotMode ? '/sensitive-password/reset-with-otp' : '/sensitive-password/save';
       axios__WEBPACK_IMPORTED_MODULE_0___default().post(this.$sellerApiUrl + endpoint, formData).then(function (res) {
         if (res.data.status) {
-          _this23.showMessage('success', __(res.data.message));
-          _this23.sensitivePasswordIsSet = true;
-          _this23.sensitiveOldPassword = '';
-          _this23.sensitiveNewPassword = '';
-          _this23.sensitiveConfirmPassword = '';
-          _this23.cancelSensitiveForgotMode();
+          _this26.showMessage('success', __(res.data.message));
+          _this26.sensitivePasswordIsSet = true;
+          _this26.sensitiveOldPassword = '';
+          _this26.sensitiveNewPassword = '';
+          _this26.sensitiveConfirmPassword = '';
+          _this26.cancelSensitiveForgotMode();
         } else {
-          _this23.showError(res.data.message || 'Failed to save');
+          _this26.showError(res.data.message || 'Failed to save');
         }
-        _this23.isSensitiveLoading = false;
+        _this26.isSensitiveLoading = false;
       })["catch"](function () {
-        _this23.showError('Failed to save');
-        _this23.isSensitiveLoading = false;
+        _this26.showError('Failed to save');
+        _this26.isSensitiveLoading = false;
       });
     }
   }
@@ -1338,7 +1474,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.custom-image[data-v-7d055d3d] {\n    height: auto;\n    width: 60%;\n    border: 1px solid #ddd;\n    padding: 5px;\n}\n\n/* tabs: same pill look as the Export Center */\n[data-v-7d055d3d] .settings-tabs {\n    flex-wrap: wrap;\n    gap: 8px;\n    border-bottom: 0;\n}\n[data-v-7d055d3d] .settings-tabs .nav-link {\n    border: 1px solid rgba(128, 128, 128, 0.3);\n    border-radius: 10px;\n    padding: 10px 18px;\n    font-weight: 600;\n    font-size: 13.5px;\n    color: #64748b;\n    background: transparent;\n}\n[data-v-7d055d3d] .settings-tabs .nav-link:hover {\n    border-color: rgba(128, 128, 128, 0.55);\n}\n[data-v-7d055d3d] .settings-tabs .nav-link.active {\n    background: rgba(var(--brand-rgb, 4, 42, 95), 0.12);\n    border-color: var(--brand, #042A5F);\n    color: var(--brand, #042A5F);\n}\n.settings-card[data-v-7d055d3d] {\n    border: 1px solid rgba(128, 128, 128, 0.22);\n    border-radius: 14px;\n}\n.settings-card-head[data-v-7d055d3d] {\n    display: flex;\n    align-items: center;\n    gap: 12px;\n    padding: 18px 20px 14px;\n}\n.settings-icon[data-v-7d055d3d] {\n    width: 38px;\n    height: 38px;\n    border-radius: 10px;\n    background: rgba(37, 99, 235, 0.1);\n    color: #2563eb;\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    flex-shrink: 0;\n}\n.settings-icon--danger[data-v-7d055d3d] {\n    background: rgba(239, 68, 68, 0.12);\n    color: #dc2626;\n}\n.settings-card--danger[data-v-7d055d3d] {\n    border-color: rgba(239, 68, 68, 0.35);\n}\n\n/* delete-account window (colours come from the --ui-* tokens of .ui-modern) */\n.del-modal[data-v-7d055d3d] { color: var(--ui-text);\n}\n.del-modal__head[data-v-7d055d3d] { display: flex; align-items: flex-start; gap: 14px; padding: 22px 22px 14px;\n}\n.del-modal__title[data-v-7d055d3d] { flex: 1 1 auto; min-width: 0;\n}\n.del-modal__title h5[data-v-7d055d3d] { margin: 0 0 4px; font-size: 18px; font-weight: 800; letter-spacing: -0.01em; color: var(--ui-text);\n}\n.del-modal__title p[data-v-7d055d3d] { margin: 0; font-size: 14px; line-height: 1.45; color: var(--ui-muted);\n}\n.del-modal__close[data-v-7d055d3d] {\n    flex-shrink: 0; width: 32px; height: 32px; margin: -4px -6px 0 0; border: 0; border-radius: 10px; background: transparent;\n    font-size: 24px; line-height: 1; color: var(--ui-muted); cursor: pointer;\n}\n.del-modal__close[data-v-7d055d3d]:hover { background: var(--ui-soft); color: var(--ui-text);\n}\n.del-modal__state[data-v-7d055d3d] { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 26px 22px; font-size: 14px; color: var(--ui-muted);\n}\n.del-modal__body[data-v-7d055d3d] { padding: 4px 22px 0;\n}\n.del-modal__lead[data-v-7d055d3d] { margin: 0 0 14px; font-size: 14px; line-height: 1.5; color: var(--ui-text);\n}\n.del-modal .del-otp[data-v-7d055d3d] { height: 54px; text-align: center; font-size: 24px; font-weight: 700; letter-spacing: 0.5em; padding-left: 0.5em; font-variant-numeric: tabular-nums;\n}\n.del-modal__error[data-v-7d055d3d] { margin-top: 10px;\n}\n.del-modal__resend[data-v-7d055d3d] { margin-top: 12px; font-size: 13px;\n}\n.del-modal__notice[data-v-7d055d3d] {\n    display: flex; align-items: flex-start; gap: 10px; margin: 4px 22px 0; padding: 12px 14px; border-radius: 12px;\n    font-size: 13.5px; font-weight: 600; background: var(--tone-bg); color: var(--tone-fg);\n}\n.del-modal__notice i[data-v-7d055d3d] { margin-top: 2px;\n}\n.del-modal__actions[data-v-7d055d3d] { display: flex; justify-content: flex-end; gap: 10px; padding: 18px 22px 22px;\n}\n.del-modal__actions .btn[data-v-7d055d3d] { min-width: 120px; height: 44px; border-radius: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px;\n}\n@media (max-width: 575px) {\n.del-modal__actions[data-v-7d055d3d] { flex-direction: column-reverse;\n}\n.del-modal__actions .btn[data-v-7d055d3d] { width: 100%;\n}\n}\n\n/* notifications: status name, then a mail switch and an SMS switch */\n.notify-row[data-v-7d055d3d] {\n    display: grid;\n    grid-template-columns: minmax(0, 1fr) 72px 72px;\n    align-items: center;\n    gap: 8px;\n    padding: 11px 0;\n    border-bottom: 1px solid rgba(128, 128, 128, 0.15);\n}\n.notify-row[data-v-7d055d3d]:last-child {\n    border-bottom: 0;\n}\n.notify-row--head[data-v-7d055d3d] {\n    padding-top: 4px;\n    font-size: 12px;\n    font-weight: 700;\n    letter-spacing: 0.06em;\n    text-transform: uppercase;\n    color: #6c757d;\n}\n.notify-label[data-v-7d055d3d] {\n    margin: 0;\n    font-weight: 600;\n}\n.settings-card-foot[data-v-7d055d3d] {\n    padding: 14px 20px;\n    border-top: 1px solid rgba(128, 128, 128, 0.18);\n    display: flex;\n    justify-content: flex-end;\n}\n.setting-hint[data-v-7d055d3d] {\n    color: #6c757d;\n    font-size: 12.5px;\n    line-height: 1.45;\n}\n\n/* a setting = text on the left, its control on the right */\n.setting-row[data-v-7d055d3d] {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    gap: 16px;\n    padding: 14px 0;\n    border-bottom: 1px solid rgba(128, 128, 128, 0.15);\n}\n.setting-row[data-v-7d055d3d]:last-child {\n    border-bottom: 0;\n}\n.setting-text[data-v-7d055d3d] {\n    flex: 1 1 220px;\n    min-width: 0;\n}\n.setting-title[data-v-7d055d3d] {\n    font-weight: 600;\n    margin-bottom: 2px;\n    display: block;\n}\n.setting-control[data-v-7d055d3d] {\n    flex: 0 0 150px;\n}\n.setting-control-switch[data-v-7d055d3d] {\n    flex: 0 0 auto;\n}\n\n/* payment method tiles */\n.method-tile[data-v-7d055d3d] {\n    border: 1px solid rgba(128, 128, 128, 0.3);\n    border-radius: 12px;\n    padding: 14px 16px;\n    transition: border-color 0.15s, background 0.15s;\n}\n.method-tile.is-on[data-v-7d055d3d] {\n    border-color: var(--brand, #042A5F);\n    background: rgba(var(--brand-rgb, 4, 42, 95), 0.07);\n}\n.method-tile.is-locked[data-v-7d055d3d] {\n    opacity: 0.65;\n}\n.method-icon[data-v-7d055d3d] {\n    width: 32px;\n    height: 32px;\n    border-radius: 8px;\n    background: rgba(128, 128, 128, 0.14);\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n}\n.method-tile.is-on .method-icon[data-v-7d055d3d] {\n    background: rgba(var(--brand-rgb, 4, 42, 95), 0.2);\n    color: var(--brand, #042A5F);\n}\n\n/* numbering preview chip */\n.series-preview[data-v-7d055d3d] {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    gap: 12px;\n    padding: 10px 14px;\n    border-radius: 10px;\n    background: rgba(128, 128, 128, 0.1);\n}\n.series-preview strong[data-v-7d055d3d] {\n    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;\n    font-size: 1.05rem;\n}\n@media (max-width: 575px) {\n.setting-control[data-v-7d055d3d] {\n        flex: 1 1 100%;\n}\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.custom-image[data-v-7d055d3d] {\n    height: auto;\n    width: 60%;\n    border: 1px solid #ddd;\n    padding: 5px;\n}\n\n/* tabs: same pill look as the Export Center */\n[data-v-7d055d3d] .settings-tabs {\n    flex-wrap: wrap;\n    gap: 8px;\n    border-bottom: 0;\n}\n[data-v-7d055d3d] .settings-tabs .nav-link {\n    border: 1px solid rgba(128, 128, 128, 0.3);\n    border-radius: 10px;\n    padding: 10px 18px;\n    font-weight: 600;\n    font-size: 13.5px;\n    color: #64748b;\n    background: transparent;\n}\n[data-v-7d055d3d] .settings-tabs .nav-link:hover {\n    border-color: rgba(128, 128, 128, 0.55);\n}\n[data-v-7d055d3d] .settings-tabs .nav-link.active {\n    background: rgba(var(--brand-rgb, 4, 42, 95), 0.12);\n    border-color: var(--brand, #042A5F);\n    color: var(--brand, #042A5F);\n}\n.settings-card[data-v-7d055d3d] {\n    border: 1px solid rgba(128, 128, 128, 0.22);\n    border-radius: 14px;\n}\n.settings-card-head[data-v-7d055d3d] {\n    display: flex;\n    align-items: center;\n    gap: 12px;\n    padding: 18px 20px 14px;\n}\n.settings-icon[data-v-7d055d3d] {\n    width: 38px;\n    height: 38px;\n    border-radius: 10px;\n    background: rgba(37, 99, 235, 0.1);\n    color: #2563eb;\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    flex-shrink: 0;\n}\n.settings-icon--danger[data-v-7d055d3d] {\n    background: rgba(239, 68, 68, 0.12);\n    color: #dc2626;\n}\n.settings-card--danger[data-v-7d055d3d] {\n    border-color: rgba(239, 68, 68, 0.35);\n}\n\n/* delete-account window (colours come from the --ui-* tokens of .ui-modern) */\n.del-modal[data-v-7d055d3d] { color: var(--ui-text);\n}\n.del-modal__head[data-v-7d055d3d] { display: flex; align-items: flex-start; gap: 14px; padding: 22px 22px 14px;\n}\n.del-modal__title[data-v-7d055d3d] { flex: 1 1 auto; min-width: 0;\n}\n.del-modal__title h5[data-v-7d055d3d] { margin: 0 0 4px; font-size: 18px; font-weight: 800; letter-spacing: -0.01em; color: var(--ui-text);\n}\n.del-modal__title p[data-v-7d055d3d] { margin: 0; font-size: 14px; line-height: 1.45; color: var(--ui-muted);\n}\n.del-modal__close[data-v-7d055d3d] {\n    flex-shrink: 0; width: 32px; height: 32px; margin: -4px -6px 0 0; border: 0; border-radius: 10px; background: transparent;\n    font-size: 24px; line-height: 1; color: var(--ui-muted); cursor: pointer;\n}\n.del-modal__close[data-v-7d055d3d]:hover { background: var(--ui-soft); color: var(--ui-text);\n}\n.del-modal__state[data-v-7d055d3d] { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 26px 22px; font-size: 14px; color: var(--ui-muted);\n}\n.del-modal__body[data-v-7d055d3d] { padding: 4px 22px 0;\n}\n.del-modal__lead[data-v-7d055d3d] { margin: 0 0 14px; font-size: 14px; line-height: 1.5; color: var(--ui-text);\n}\n.del-modal .del-otp[data-v-7d055d3d] { height: 54px; text-align: center; font-size: 24px; font-weight: 700; letter-spacing: 0.5em; padding-left: 0.5em; font-variant-numeric: tabular-nums;\n}\n.del-modal__error[data-v-7d055d3d] { margin-top: 10px;\n}\n.del-modal__resend[data-v-7d055d3d] { margin-top: 12px; font-size: 13px;\n}\n.del-modal__notice[data-v-7d055d3d] {\n    display: flex; align-items: flex-start; gap: 10px; margin: 4px 22px 0; padding: 12px 14px; border-radius: 12px;\n    font-size: 13.5px; font-weight: 600; background: var(--tone-bg); color: var(--tone-fg);\n}\n.del-modal__notice i[data-v-7d055d3d] { margin-top: 2px;\n}\n.del-modal__actions[data-v-7d055d3d] { display: flex; justify-content: flex-end; gap: 10px; padding: 18px 22px 22px;\n}\n.del-modal__actions .btn[data-v-7d055d3d] { min-width: 120px; height: 44px; border-radius: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px;\n}\n@media (max-width: 575px) {\n.del-modal__actions[data-v-7d055d3d] { flex-direction: column-reverse;\n}\n.del-modal__actions .btn[data-v-7d055d3d] { width: 100%;\n}\n}\n\n/* notifications: status name, then a mail switch and an SMS switch */\n.notify-row[data-v-7d055d3d] {\n    display: grid;\n    grid-template-columns: minmax(0, 1fr) 72px 72px;\n    align-items: center;\n    gap: 8px;\n    padding: 11px 0;\n    border-bottom: 1px solid rgba(128, 128, 128, 0.15);\n}\n.notify-row[data-v-7d055d3d]:last-child {\n    border-bottom: 0;\n}\n.notify-row--head[data-v-7d055d3d] {\n    padding-top: 4px;\n    font-size: 12px;\n    font-weight: 700;\n    letter-spacing: 0.06em;\n    text-transform: uppercase;\n    color: #6c757d;\n}\n.notify-label[data-v-7d055d3d] {\n    margin: 0;\n    font-weight: 600;\n}\n.settings-card-foot[data-v-7d055d3d] {\n    padding: 14px 20px;\n    border-top: 1px solid rgba(128, 128, 128, 0.18);\n    display: flex;\n    justify-content: flex-end;\n}\n.setting-hint[data-v-7d055d3d] {\n    color: #6c757d;\n    font-size: 12.5px;\n    line-height: 1.45;\n}\n\n/* a setting = text on the left, its control on the right */\n.setting-row[data-v-7d055d3d] {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    gap: 16px;\n    padding: 14px 0;\n    border-bottom: 1px solid rgba(128, 128, 128, 0.15);\n}\n.setting-row[data-v-7d055d3d]:last-child {\n    border-bottom: 0;\n}\n.setting-text[data-v-7d055d3d] {\n    flex: 1 1 220px;\n    min-width: 0;\n}\n.setting-title[data-v-7d055d3d] {\n    font-weight: 600;\n    margin-bottom: 2px;\n    display: block;\n}\n.setting-control[data-v-7d055d3d] {\n    flex: 0 0 150px;\n}\n.setting-control-switch[data-v-7d055d3d] {\n    flex: 0 0 auto;\n}\n\n/* payment method tiles */\n.method-tile[data-v-7d055d3d] {\n    border: 1px solid rgba(128, 128, 128, 0.3);\n    border-radius: 12px;\n    padding: 14px 16px;\n    transition: border-color 0.15s, background 0.15s;\n}\n.method-tile.is-on[data-v-7d055d3d] {\n    border-color: var(--brand, #042A5F);\n    background: rgba(var(--brand-rgb, 4, 42, 95), 0.07);\n}\n.method-tile.is-locked[data-v-7d055d3d] {\n    opacity: 0.65;\n}\n.method-icon[data-v-7d055d3d] {\n    width: 32px;\n    height: 32px;\n    border-radius: 8px;\n    background: rgba(128, 128, 128, 0.14);\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n}\n.method-tile.is-on .method-icon[data-v-7d055d3d] {\n    background: rgba(var(--brand-rgb, 4, 42, 95), 0.2);\n    color: var(--brand, #042A5F);\n}\n\n/* signature upload box */\n.signature-drop[data-v-7d055d3d] {\n    display: flex;\n    flex-direction: column;\n    align-items: center;\n    justify-content: center;\n    gap: 8px;\n    min-height: 120px;\n    padding: 12px;\n    border: 2px dashed rgba(128, 128, 128, 0.45);\n    border-radius: 10px;\n    background: rgba(128, 128, 128, 0.06);\n    color: var(--text-muted, #6c757d);\n    text-align: center;\n    cursor: pointer;\n    transition: border-color .15s, background .15s;\n}\n.signature-drop[data-v-7d055d3d]:hover,\n.signature-drop.is-over[data-v-7d055d3d] {\n    border-color: var(--brand, #042A5F);\n    background: rgba(var(--brand-rgb, 4, 42, 95), 0.08);\n}\n\n/* white card behind the image so a transparent PNG is judged the way it will print */\n.signature-drop__img[data-v-7d055d3d] {\n    max-width: 100%;\n    max-height: 90px;\n    padding: 6px 10px;\n    border-radius: 6px;\n    background: #fff;\n}\n\n/* numbering preview chip */\n.series-preview[data-v-7d055d3d] {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    gap: 12px;\n    padding: 10px 14px;\n    border-radius: 10px;\n    background: rgba(128, 128, 128, 0.1);\n}\n.series-preview strong[data-v-7d055d3d] {\n    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;\n    font-size: 1.05rem;\n}\n@media (max-width: 575px) {\n.setting-control[data-v-7d055d3d] {\n        flex: 1 1 100%;\n}\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -2704,6 +2840,182 @@ var render = function () {
                             ],
                             1
                           ),
+                        ],
+                        1
+                      ),
+                    ]),
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "col-lg-4" }, [
+                    _c("div", { staticClass: "card settings-card h-100" }, [
+                      _c("div", { staticClass: "settings-card-head" }, [
+                        _c("span", { staticClass: "settings-icon" }, [
+                          _c("i", { staticClass: "fa fa-file-signature" }),
+                        ]),
+                        _vm._v(" "),
+                        _c("h5", { staticClass: "mb-0" }, [
+                          _vm._v(_vm._s(_vm.__("signature_settings"))),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "card-body pt-0" }, [
+                        _c("p", { staticClass: "setting-hint" }, [
+                          _vm._v(_vm._s(_vm.__("signature_settings_hint"))),
+                        ]),
+                        _vm._v(" "),
+                        _c("input", {
+                          ref: "file_signature",
+                          staticClass: "d-none",
+                          attrs: {
+                            type: "file",
+                            accept: "image/png,image/jpeg,image/webp",
+                          },
+                          on: { change: _vm.handleSignaturePicked },
+                        }),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          {
+                            staticClass: "signature-drop",
+                            class: { "is-over": _vm.signatureDragOver },
+                            on: {
+                              click: function ($event) {
+                                return _vm.$refs.file_signature.click()
+                              },
+                              dragover: function ($event) {
+                                $event.preventDefault()
+                                _vm.signatureDragOver = true
+                              },
+                              dragleave: function ($event) {
+                                _vm.signatureDragOver = false
+                              },
+                              drop: function ($event) {
+                                $event.preventDefault()
+                                return _vm.dropSignature.apply(null, arguments)
+                              },
+                            },
+                          },
+                          [
+                            _vm.signaturePreviewUrl
+                              ? _c("img", {
+                                  staticClass: "signature-drop__img",
+                                  attrs: {
+                                    src: _vm.signaturePreviewUrl,
+                                    alt: "",
+                                  },
+                                })
+                              : [
+                                  _c("i", {
+                                    staticClass: "fa fa-cloud-upload-alt fa-2x",
+                                  }),
+                                  _vm._v(" "),
+                                  _c("span", [
+                                    _vm._v(
+                                      _vm._s(_vm.__("signature_upload_prompt"))
+                                    ),
+                                  ]),
+                                ],
+                          ],
+                          2
+                        ),
+                        _vm._v(" "),
+                        _vm.signature_file && _vm.signature_file.name
+                          ? _c(
+                              "p",
+                              { staticClass: "text-muted small mt-2 mb-0" },
+                              [
+                                _vm._v(
+                                  "\n                                " +
+                                    _vm._s(_vm.__("selected_file_name")) +
+                                    " " +
+                                    _vm._s(_vm.signature_file.name) +
+                                    "\n                            "
+                                ),
+                              ]
+                            )
+                          : !_vm.signature_image
+                          ? _c(
+                              "p",
+                              { staticClass: "text-muted small mt-2 mb-0" },
+                              [
+                                _vm._v(
+                                  "\n                                " +
+                                    _vm._s(_vm.__("signature_not_set_hint")) +
+                                    "\n                            "
+                                ),
+                              ]
+                            )
+                          : _vm._e(),
+                      ]),
+                      _vm._v(" "),
+                      _c(
+                        "div",
+                        { staticClass: "settings-card-foot" },
+                        [
+                          _c(
+                            "b-button",
+                            {
+                              attrs: {
+                                variant: "primary",
+                                disabled:
+                                  _vm.isSignatureLoading || !_vm.signature_file,
+                              },
+                              on: { click: _vm.saveSignature },
+                            },
+                            [
+                              _vm._v(
+                                "\n                                " +
+                                  _vm._s(_vm.__("save")) +
+                                  "\n                                "
+                              ),
+                              _vm.isSignatureLoading
+                                ? _c("b-spinner", { attrs: { small: "" } })
+                                : _vm._e(),
+                            ],
+                            1
+                          ),
+                          _vm._v(" "),
+                          _vm.signature_image && !_vm.signature_file
+                            ? _c(
+                                "b-button",
+                                {
+                                  staticClass: "ms-2",
+                                  attrs: {
+                                    variant: "outline-danger",
+                                    disabled: _vm.isSignatureLoading,
+                                  },
+                                  on: { click: _vm.removeSignature },
+                                },
+                                [
+                                  _vm._v(
+                                    "\n                                " +
+                                      _vm._s(_vm.__("remove")) +
+                                      "\n                            "
+                                  ),
+                                ]
+                              )
+                            : _vm._e(),
+                          _vm._v(" "),
+                          _vm.signature_file
+                            ? _c(
+                                "b-button",
+                                {
+                                  staticClass: "ms-2",
+                                  attrs: {
+                                    variant: "outline-secondary",
+                                    disabled: _vm.isSignatureLoading,
+                                  },
+                                  on: { click: _vm.clearPickedSignature },
+                                },
+                                [
+                                  _vm._v(
+                                    "\n                                " +
+                                      _vm._s(_vm.__("cancel")) +
+                                      "\n                            "
+                                  ),
+                                ]
+                              )
+                            : _vm._e(),
                         ],
                         1
                       ),

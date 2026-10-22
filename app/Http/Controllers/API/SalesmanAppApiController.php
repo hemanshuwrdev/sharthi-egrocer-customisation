@@ -1256,7 +1256,8 @@ class SalesmanAppApiController extends Controller
             $group['applied_scheme']  = $scheme['schemes'][0] ?? null;
             $group['applied_schemes'] = $scheme['schemes'] ?? [];
             $group['scheme_discount'] = $scheme['scheme_discount'] ?? 0;
-            $group['final_total']     = ($group['sub_total'] ?? 0) - $group['scheme_discount'];
+            // Same nearest-rupee rounding placeOrder applies, so the cart shows what the order will be.
+            [$group['final_total'], $group['round_off']] = CommonHelper::roundOrderTotal(($group['sub_total'] ?? 0) - $group['scheme_discount']);
             $group['nearest_scheme']  = $nearestList[0] ?? null;
             $group['nearest_schemes'] = $nearestList;
 
@@ -1484,7 +1485,8 @@ class SalesmanAppApiController extends Controller
                     // Inclusive pricing: sellerSubtotal (unit_price*qty) already contains
                     // tax, so it is NOT added again here — $sellerTaxAmount is only the
                     // backed-out portion kept for the billing-summary breakdown.
-                    $finalTotal = max(0, $sellerSubtotal - $schemeDiscount - $salesmanDiscountAmount - $cashDiscountAmount);
+                    // Whole rupees (nearest): the paise rounding added or took off is kept in round_off for the invoice.
+                    [$finalTotal, $roundOff] = CommonHelper::roundOrderTotal(max(0, $sellerSubtotal - $schemeDiscount - $salesmanDiscountAmount - $cashDiscountAmount));
 
                     $ordersId = 'OD' . date('YmdHis') . rand(10, 99);
                     $deliveryDate = method_exists(CommonHelper::class, 'computeDeliveryDate')
@@ -1523,7 +1525,7 @@ class SalesmanAppApiController extends Controller
                         'updated_at'              => now(),
                     // Snapshot so the invoice can show a before-tax ("Inclusive") scheme discount as a
                     // deduction from Net Taxable, whatever the scheme says later (no-op pre-migration).
-                    ] + CommonHelper::schemeSnapshotColumns($scheme, (float) $schemeDiscount) + $orderAddress['columns']);
+                    ] + CommonHelper::schemeSnapshotColumns($scheme, (float) $schemeDiscount) + $orderAddress['columns'] + CommonHelper::roundOffColumns($roundOff));
 
                     // Schemes stack: orders.scheme_discount is their total, this keeps each one.
                     \App\Models\OrderScheme::record($orderId, $scheme);
@@ -1609,6 +1611,7 @@ class SalesmanAppApiController extends Controller
                         'orders_id'   => $ordersId,
                         'seller_id'   => (int) $sellerId,
                         'final_total' => $finalTotal,
+                        'round_off'   => $roundOff,
                         'salesman_discount' => $salesmanDiscountAmount,
                         'cash_discount_amount' => $cashDiscountAmount,
                         'cash_discount_percent' => $cashDiscountPercent,

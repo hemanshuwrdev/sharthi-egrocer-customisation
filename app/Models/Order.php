@@ -28,6 +28,17 @@ class Order extends Model
         static::deleting(function ($data) { // before delete() method call this
             $data->items()->delete();
         });
+        // round_off is the paise rounding added to the total when the order was placed. Once final_total is
+        // recalculated afterwards (partial delivery, an edited item, a cash discount...) it no longer describes
+        // the total, so drop it rather than let the invoice print a Round Off line that doesn't add up.
+        // (Only when the column was loaded: a partial select or a database without it is left alone.)
+        static::saving(function ($order) {
+            if ($order->isDirty('final_total') && !$order->isDirty('round_off')
+                && array_key_exists('round_off', $order->getAttributes())
+                && (float) $order->getAttribute('round_off') != 0) {
+                $order->setAttribute('round_off', 0);
+            }
+        });
     }
 
     function getActiveStatusNameAttribute()

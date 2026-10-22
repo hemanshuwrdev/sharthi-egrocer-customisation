@@ -88,7 +88,8 @@ class NotificationFeed
                 'order_id'   => $orderId ?: null,
                 'is_read'    => $row->read_at !== null,
                 'created_at' => $row->created_at,
-                'data'       => self::factsFor($orderId, $facts),
+                // In the distributor and driver apps `distributor` holds the retailer (see orderFactsForStaff).
+                'data'       => self::factsFor($orderId, $facts, true),
             ]);
         }
 
@@ -270,13 +271,15 @@ class NotificationFeed
     }
 
     /** The order's card facts, looked up once per order per request. Null when there's no (live) order. */
-    private static function factsFor(?int $orderId, array &$cache): ?array
+    private static function factsFor(?int $orderId, array &$cache, bool $retailerAsDistributor = false): ?array
     {
         if (!$orderId) {
             return null;
         }
         if (!array_key_exists($orderId, $cache)) {
-            $cache[$orderId] = CustomerNotificationService::orderFacts($orderId);
+            $cache[$orderId] = $retailerAsDistributor
+                ? CustomerNotificationService::orderFactsForStaff($orderId)
+                : CustomerNotificationService::orderFacts($orderId);
         }
 
         return $cache[$orderId];

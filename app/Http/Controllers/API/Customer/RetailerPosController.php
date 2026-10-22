@@ -248,6 +248,8 @@ class RetailerPosController extends Controller
 
         $scheme         = SchemeEngine::evaluate($sellerId, $schemeLines);
         $schemeDiscount = $scheme['scheme_discount'] ?? 0;
+        // Whole rupees (nearest): the paise rounding added or took off is kept in round_off for the invoice.
+        [$finalTotal, $roundOff] = CommonHelper::roundOrderTotal($sellerTotal - $schemeDiscount);
 
         $orderId = null;
         $ordersId = 'OD' . date('YmdHis') . rand(10, 99);
@@ -255,7 +257,7 @@ class RetailerPosController extends Controller
         try {
             DB::transaction(function () use (
                 $resolved, $request, $user, $sellerId,
-                $sellerTotal, $sellerTaxTotal, $sellerTaxPercentage, $schemeDiscount, $scheme, $ordersId, $orderAddress, &$orderId
+                $sellerTotal, $sellerTaxTotal, $sellerTaxPercentage, $schemeDiscount, $finalTotal, $roundOff, $scheme, $ordersId, $orderAddress, &$orderId
             ) {
                 $deliveryDate = method_exists(CommonHelper::class, 'computeDeliveryDate')
                     ? CommonHelper::computeDeliveryDate(now(), $sellerId)
@@ -279,8 +281,8 @@ class RetailerPosController extends Controller
                     // Inclusive pricing: $sellerTotal already contains tax ($sellerTaxTotal is backed out of it
                     // for the tax_amount column only) — adding it again would charge the tax twice. Matches the
                     // retailer / salesman checkouts and the total this endpoint returns.
-                    'final_total'     => $sellerTotal - $schemeDiscount,
-                    'remaining_final' => $sellerTotal - $schemeDiscount,
+                    'final_total'     => $finalTotal,
+                    'remaining_final' => $finalTotal,
                     'payment_method'  => $request->payment_method,
                     'address'         => $orderAddress['address'],
                     'latitude'        => $request->latitude,
@@ -297,7 +299,7 @@ class RetailerPosController extends Controller
                     'updated_at'      => now(),
                 // Snapshot so the invoice can show a before-tax ("Inclusive") scheme discount as a
                 // deduction from Net Taxable, whatever the scheme says later (no-op pre-migration).
-                ] + CommonHelper::schemeSnapshotColumns($scheme, (float) $schemeDiscount) + $orderAddress['columns']);
+                ] + CommonHelper::schemeSnapshotColumns($scheme, (float) $schemeDiscount) + $orderAddress['columns'] + CommonHelper::roundOffColumns($roundOff));
 
                 // Schemes stack: orders.scheme_discount is their total, this keeps each one.
                 \App\Models\OrderScheme::record($orderId, $scheme);
@@ -387,7 +389,7 @@ class RetailerPosController extends Controller
                             'order_id'      => $orderId,
                             'retailer_name' => $retailerName,
                             'currency'      => $currency,
-                            'final_total'   => $sellerTotal - $schemeDiscount,
+                            'final_total'   => $finalTotal,
                         ],
                         'new_order', 0, '', null, null, 'order', $orderId
                     );
@@ -402,7 +404,8 @@ class RetailerPosController extends Controller
             'orders_id'       => $ordersId,
             'sub_total'       => round($sellerTotal, 2),
             'scheme_discount' => round($schemeDiscount, 2),
-            'final_total'     => round($sellerTotal - $schemeDiscount, 2),
+            'final_total'     => $finalTotal,
+            'round_off'       => $roundOff,
             // applied_scheme = the biggest scheme on its own (as before); applied_schemes = every scheme applied.
             'applied_scheme'  => $scheme ? [
                 'scheme_id'       => $scheme['schemes'][0]['scheme_id'],

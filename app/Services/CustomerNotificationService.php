@@ -138,6 +138,37 @@ class CustomerNotificationService
     }
 
     /**
+     * The same card facts for the DISTRIBUTOR and DRIVER apps. There the distributor is not useful — it is their own
+     * distributor — so the `distributor` key carries the RETAILER, the shop the order is for ({ id: the retailer's
+     * user id, name: shop name, else party name, else account name }). The key keeps its name because those apps are
+     * already built against it. Null `distributor` for an order with no customer (a POS walk-in sale).
+     */
+    public static function orderFactsForStaff($orderId): ?array
+    {
+        $order = $orderId ? Order::find($orderId) : null;
+        if (!$order) {
+            return null;
+        }
+
+        $facts = self::context($order, 'order_update', []);
+        $facts['distributor'] = null;
+
+        if (!empty($order->user_id)) {
+            $profile = DB::table('retailer_profiles')->where('user_id', $order->user_id)->first(['shop_name', 'party_name']);
+            $name    = trim((string) ($profile->shop_name ?? ''));
+            if ($name === '') {
+                $name = trim((string) ($profile->party_name ?? ''));
+            }
+            if ($name === '') {
+                $name = trim((string) DB::table('users')->where('id', $order->user_id)->value('name'));
+            }
+            $facts['distributor'] = ['id' => (int) $order->user_id, 'name' => $name];
+        }
+
+        return $facts;
+    }
+
+    /**
      * Title + message for an event, in $locale. Pure — takes the already-built facts, touches no
      * database — so the wording can be checked without any data.
      *

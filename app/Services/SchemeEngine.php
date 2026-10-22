@@ -239,12 +239,7 @@ class SchemeEngine
 
         $schemes = Scheme::active()
             ->where('seller_id', $sellerId)
-            ->with([
-                'schemeSlabs',
-                'schemeProducts.sellerProduct.masterProductVariant.masterProduct',
-                'buyProduct.masterProductVariant.masterProduct',
-                'freeProduct.masterProductVariant.masterProduct',
-            ])
+            ->with(SchemeListing::eagerLoads())
             ->get();
 
 
@@ -567,6 +562,10 @@ class SchemeEngine
             'minimum_group_qty'   => $type === Scheme::TYPE_GROUP_DISCOUNT_QTY ? $nearest['minimumGroupQty'] : null,
             // shared group fields
             'next_slab'           => !$isBxgy ? $nextSlabData : null,
+            // Wording for schemes with per-product quantity conditions (what most distributors create), plus
+            // every quantity tier when the scheme has 2+ — same keys as the product-level nearest_scheme.
+            // `tiers` is [] otherwise. Buy X Get Y / slab schemes describe themselves through the fields above.
+        ] + SchemeListing::nearestWording($s) + [
             'products'            => $productsData,
             'slabs'               => !$isBxgy ? $s->schemeSlabs->sortBy('min_value')->map(fn ($sl) => [
                 'min_value'      => (float) $sl->min_value,

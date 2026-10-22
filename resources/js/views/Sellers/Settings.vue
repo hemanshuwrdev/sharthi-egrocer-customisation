@@ -327,6 +327,50 @@
                             </div>
                         </div>
                     </div>
+                    <div class="col-lg-4">
+                        <div class="card settings-card h-100">
+                            <div class="settings-card-head">
+                                <span class="settings-icon"><i class="fa fa-file-signature"></i></span>
+                                <h5 class="mb-0">{{ __('signature_settings') }}</h5>
+                            </div>
+                            <div class="card-body pt-0">
+                                <p class="setting-hint">{{ __('signature_settings_hint') }}</p>
+                                <input type="file" accept="image/png,image/jpeg,image/webp" ref="file_signature"
+                                    class="d-none" @change="handleSignaturePicked">
+                                <div class="signature-drop" :class="{ 'is-over': signatureDragOver }"
+                                    @click="$refs.file_signature.click()"
+                                    @dragover.prevent="signatureDragOver = true"
+                                    @dragleave="signatureDragOver = false"
+                                    @drop.prevent="dropSignature">
+                                    <img v-if="signaturePreviewUrl" :src="signaturePreviewUrl" class="signature-drop__img" alt="" />
+                                    <template v-else>
+                                        <i class="fa fa-cloud-upload-alt fa-2x"></i>
+                                        <span>{{ __('signature_upload_prompt') }}</span>
+                                    </template>
+                                </div>
+                                <p class="text-muted small mt-2 mb-0" v-if="signature_file && signature_file.name">
+                                    {{ __('selected_file_name') }} {{ signature_file.name }}
+                                </p>
+                                <p class="text-muted small mt-2 mb-0" v-else-if="!signature_image">
+                                    {{ __('signature_not_set_hint') }}
+                                </p>
+                            </div>
+                            <div class="settings-card-foot">
+                                <b-button variant="primary" :disabled="isSignatureLoading || !signature_file" @click="saveSignature">
+                                    {{ __('save') }}
+                                    <b-spinner small v-if="isSignatureLoading"></b-spinner>
+                                </b-button>
+                                <b-button variant="outline-danger" class="ms-2" v-if="signature_image && !signature_file"
+                                    :disabled="isSignatureLoading" @click="removeSignature">
+                                    {{ __('remove') }}
+                                </b-button>
+                                <b-button variant="outline-secondary" class="ms-2" v-if="signature_file"
+                                    :disabled="isSignatureLoading" @click="clearPickedSignature">
+                                    {{ __('cancel') }}
+                                </b-button>
+                            </div>
+                        </div>
+                    </div>
                     </div>
                 </b-tab>
 
@@ -625,6 +669,11 @@ export default {
             loading_slip_prefix: "",
             loading_slip_suffix: "",
             loading_slip_next_number: 1,
+            isSignatureLoading: false,
+            signature_image: "",
+            signature_file: null,
+            signaturePickedUrl: "",
+            signatureDragOver: false,
             isCreditNoteLoading: false,
             credit_note_prefix: "",
             credit_note_suffix: "",
@@ -688,6 +737,7 @@ export default {
         this.getInvoiceSettings();
         this.getLoadingSlipSettings();
         this.getCreditNoteSettings();
+        this.getSignatureSettings();
         this.getSensitivePasswordStatus();
     },
 
@@ -725,6 +775,11 @@ export default {
         creditNoteNumberPreview() {
             const padded = String(this.credit_note_next_number || 1).padStart(4, '0');
             return `${this.credit_note_prefix || ''}${padded}${this.credit_note_suffix || ''}`;
+        },
+        // what the signature card shows: the file just picked, else the saved one
+        signaturePreviewUrl() {
+            if (this.signaturePickedUrl) return this.signaturePickedUrl;
+            return this.signature_image ? this.$storageUrl + this.signature_image : '';
         },
         loadingSlipNumberPreview() {
             const padded = String(this.loading_slip_next_number || 1).padStart(4, '0');
@@ -1111,6 +1166,99 @@ export default {
                 .catch(() => {
                     this.showError('Failed to save order settings');
                     this.isOrderLoading = false;
+                });
+        },
+
+        // ================= SIGNATURE (printed above "Authorised Signatory") =================
+        getSignatureSettings() {
+            axios.get(this.$sellerApiUrl + '/signature-settings')
+                .then(res => {
+                    if (res.data.status && res.data.data) {
+                        this.signature_image = res.data.data.signature_image || "";
+                    }
+                })
+                .catch(() => {
+                    this.showError('Failed to load signature settings');
+                });
+        },
+
+        pickSignature(file) {
+            if (!file) return;
+            // same limits the server enforces, caught here first so the user isn't made to wait for a rejection
+            if (!/^image\/(png|jpe?g|webp)$/.test(file.type)) {
+                this.showError(__('signature_must_be_png_jpg_webp'));
+                return;
+            }
+            if (file.size > 1024 * 1024) {
+                this.showError(__('signature_image_too_large'));
+                return;
+            }
+            this.clearPickedSignature();
+            this.signature_file = file;
+            this.signaturePickedUrl = URL.createObjectURL(file);
+        },
+
+        handleSignaturePicked(event) {
+            this.pickSignature(event.target.files[0]);
+            event.target.value = '';
+        },
+
+        dropSignature(event) {
+            this.signatureDragOver = false;
+            this.pickSignature(event.dataTransfer.files[0]);
+        },
+
+        clearPickedSignature() {
+            if (this.signaturePickedUrl) URL.revokeObjectURL(this.signaturePickedUrl);
+            this.signature_file = null;
+            this.signaturePickedUrl = "";
+        },
+
+        saveSignature() {
+            if (!this.signature_file) return;
+            this.isSignatureLoading = true;
+
+            let formData = new FormData();
+            formData.append('signature', this.signature_file);
+
+            axios.post(this.$sellerApiUrl + '/signature-settings/save', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            })
+                .then(res => {
+                    if (res.data.status) {
+                        this.showMessage('success', __(res.data.message));
+                        this.clearPickedSignature();
+                        this.getSignatureSettings();
+                    } else {
+                        this.showError(res.data.message || 'Failed to save');
+                    }
+                    this.isSignatureLoading = false;
+                })
+                .catch(() => {
+                    this.showError('Failed to save signature');
+                    this.isSignatureLoading = false;
+                });
+        },
+
+        removeSignature() {
+            this.isSignatureLoading = true;
+
+            let formData = new FormData();
+            formData.append('remove', 1);
+
+            axios.post(this.$sellerApiUrl + '/signature-settings/save', formData)
+                .then(res => {
+                    if (res.data.status) {
+                        this.showMessage('success', __(res.data.message));
+                        this.signature_image = "";
+                    } else {
+                        this.showError(res.data.message || 'Failed to remove');
+                    }
+                    this.isSignatureLoading = false;
+                })
+                .catch(() => {
+                    this.showError('Failed to remove signature');
+                    this.isSignatureLoading = false;
                 });
         },
 
@@ -1524,6 +1672,39 @@ export default {
 .method-tile.is-on .method-icon {
     background: rgba(var(--brand-rgb, 4, 42, 95), 0.2);
     color: var(--brand, #042A5F);
+}
+
+/* signature upload box */
+.signature-drop {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 120px;
+    padding: 12px;
+    border: 2px dashed rgba(128, 128, 128, 0.45);
+    border-radius: 10px;
+    background: rgba(128, 128, 128, 0.06);
+    color: var(--text-muted, #6c757d);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+}
+
+.signature-drop:hover,
+.signature-drop.is-over {
+    border-color: var(--brand, #042A5F);
+    background: rgba(var(--brand-rgb, 4, 42, 95), 0.08);
+}
+
+/* white card behind the image so a transparent PNG is judged the way it will print */
+.signature-drop__img {
+    max-width: 100%;
+    max-height: 90px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: #fff;
 }
 
 /* numbering preview chip */

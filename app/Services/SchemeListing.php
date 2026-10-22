@@ -21,7 +21,7 @@ use Illuminate\Support\Collection;
 class SchemeListing
 {
     /** Everything format() reads, so a list of schemes costs a handful of queries, not one per scheme. */
-    private static function eagerLoads(): array
+    public static function eagerLoads(): array
     {
         $productChain = 'masterProductVariant.masterProduct';
 
@@ -86,6 +86,34 @@ class SchemeListing
 
             return [$spId => $nearest];
         });
+    }
+
+    /**
+     * The scheme wording the cart's nearest_scheme / nearest_schemes[] carry: is_multi_combo, conditions,
+     * reward and tiers — the same keys, same text, as the product-level nearest_scheme (nearestPayload).
+     * Buy X Get Y and the older slab types keep describing themselves through their own fields, so they
+     * get empty values here. Needs the scheme loaded with eagerLoads() (or it lazy-loads).
+     */
+    public static function nearestWording(Scheme $s): array
+    {
+        $none = ['is_multi_combo' => false, 'conditions' => '', 'reward' => '', 'tiers' => []];
+        if ($s->type === Scheme::TYPE_BUY_X_GET_Y) {
+            return $none;
+        }
+
+        $f = self::format($s, fn () => true);
+        if (!$f) {
+            return $none;
+        }
+
+        $row = $f['is_multi_combo'] ? null : ($f['products'][0] ?? null);
+
+        return [
+            'is_multi_combo' => $f['is_multi_combo'],
+            'conditions'     => $f['is_multi_combo'] ? $f['combo_condition'] : ($row['conditions'] ?? ''),
+            'reward'         => $f['is_multi_combo'] ? $f['combo_reward'] : ($row['reward'] ?? ''),
+            'tiers'          => $f['tiers'],
+        ];
     }
 
     private static function nearestPayload(Scheme $s, int $sellerProductId): ?array

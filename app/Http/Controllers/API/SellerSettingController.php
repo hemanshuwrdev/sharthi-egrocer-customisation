@@ -119,6 +119,60 @@ class SellerSettingController extends Controller
     }
 
     /**
+     * The distributor's signature image for the "Authorised Signatory" block on invoices and credit notes.
+     * Optional: without one those keep printing the distributor's name.
+     */
+    public function getSignatureSettings()
+    {
+        $seller = auth()->user()->seller;
+        return CommonHelper::responseWithData([
+            'signature_image' => $seller->signature_image,
+        ]);
+    }
+
+    /**
+     * POST /seller/signature-settings/save
+     * Body: signature (image file: png / jpg / webp, max 1 MB) to set or replace it, or remove=1 to go back to
+     * printing the name. Anything else is left as it is.
+     */
+    public function saveSignatureSettings(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'signature' => 'nullable|file|mimes:png,jpg,jpeg,webp|max:1024',
+            'remove'    => 'nullable|boolean',
+        ], [
+            'signature.mimes' => 'The signature must be a PNG, JPG or WEBP image.',
+            'signature.max'   => 'The signature image must not be larger than 1 MB.',
+        ]);
+        if ($validator->fails()) {
+            return CommonHelper::responseError($validator->errors()->first());
+        }
+
+        try {
+            $seller   = auth()->user()->seller;
+            $previous = $seller->signature_image;
+
+            if ($request->hasFile('signature')) {
+                $seller->signature_image = $request->file('signature')->store('seller_signatures', 'public');
+            } elseif ($request->boolean('remove')) {
+                $seller->signature_image = null;
+            } else {
+                return CommonHelper::responseError('please_choose_a_signature_image');
+            }
+            $seller->save();
+
+            // The old file is only dead weight once the new state is saved.
+            if ($previous && $previous !== $seller->signature_image) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($previous);
+            }
+
+            return CommonHelper::responseSuccess($seller->signature_image ? 'signature_saved_successfully' : 'signature_removed_successfully');
+        } catch (\Exception $e) {
+            return CommonHelper::responseError($e->getMessage());
+        }
+    }
+
+    /**
      * Credit note numbering: {prefix}{number}{suffix}, same shape as invoice numbering
      * above but its own independent prefix/suffix/counter — kept deliberately separate
      * so a credit note isn't visually indistinguishable from an invoice number.

@@ -706,6 +706,8 @@ Route::middleware('auth:api')->group(function () {
         Route::post('sensitive-password/reset-with-otp', [App\Http\Controllers\API\SellerSettingController::class, 'resetSensitivePasswordWithOtp']);
         Route::get('invoice-settings', [App\Http\Controllers\API\SellerSettingController::class, 'getInvoiceSettings']);
         Route::post('invoice-settings/save', [App\Http\Controllers\API\SellerSettingController::class, 'saveInvoiceSettings']);
+        Route::get('signature-settings', [App\Http\Controllers\API\SellerSettingController::class, 'getSignatureSettings']);
+        Route::post('signature-settings/save', [App\Http\Controllers\API\SellerSettingController::class, 'saveSignatureSettings']);
         Route::get('credit-note-settings', [App\Http\Controllers\API\SellerSettingController::class, 'getCreditNoteSettings']);
         Route::post('credit-note-settings/save', [App\Http\Controllers\API\SellerSettingController::class, 'saveCreditNoteSettings']);
         Route::get('loading-slip-settings', [App\Http\Controllers\API\SellerSettingController::class, 'getLoadingSlipSettings']);

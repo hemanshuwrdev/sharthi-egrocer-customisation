@@ -334,9 +334,7 @@
                         <p style="margin: 0;"><strong>DECLARATION:</strong> We declare that this Credit Note shows the actual value of returned goods / cancelled transaction and that all particulars are true and correct. Issued in accordance with Section 34 of the CGST Act, 2017.</p>
                     </td>
                     <td width="30%" style="text-align: right; vertical-align: bottom; border: none; min-width: 150px; padding: 0;">
-                        <div style="font-family: 'Courier New', Courier, monospace; font-size: 11px; margin-bottom: 2px; color: #555; font-style: italic; font-weight: bold;">
-                            {{ $seller->store_name ?? $seller->name }}
-                        </div>
+                        @include('partials.invoice_signature', ['seller' => $seller, 'name' => $seller->store_name ?? $seller->name, 'nameSize' => 11, 'embed' => true])
                         <div style="border-top: 1px solid #000; width: 120px; text-align: center; padding-top: 3px; font-weight: bold; font-size: 8px; display: inline-block;">
                             Authorised Signatory
                         </div>

@@ -211,10 +211,11 @@
             <tr>
                 <th style="width: 30%;">Description</th>
                 <th style="width: 60px; text-align: center;">HSN</th>
+                <th style="width: 58px; text-align: center;">Alt. Qty</th>
                 <th style="width: 45px; text-align: center;">Qty</th>
-                <th style="width: 70px; text-align: right;">Rate</th>
+                <th style="width: 58px; text-align: right;">Rate</th>
                 <th style="width: 60px; text-align: right;">Disc. Rate</th>
-                <th style="width: 80px; text-align: right;">Net Taxable Amt.</th>
+                <th style="width: 68px; text-align: right;">Net Taxable Amt.</th>
                 <th style="width: 80px; text-align: center;">Tax Type</th>
                 <th style="width: 70px; text-align: right;">Tax</th>
                 <th style="width: 80px; text-align: right;">Total Amt.</th>
@@ -229,30 +230,15 @@
             @endphp
             @foreach ($order_items as $itemIndex => $item)
                 @php
-                    $pv = \DB::table('product_variants as pv')
-                        ->select('pv.secondary_unit_value', 'u2.short_code as secondary_unit_name')
-                        ->leftJoin('units as u2', 'pv.secondary_unit_id', '=', 'u2.id')
-                        ->where('pv.id', $item->product_variant_id)
-                        ->first();
-                    $secondary_unit_value = $pv->secondary_unit_value ?? null;
-                    $secondary_unit_name = $pv->secondary_unit_name ?? null;
+                    // Pack size from the Master Catalog variant (what orders carry), else the old variant row.
+                    [$secondary_unit_value, $secondary_unit_name] = \App\Helpers\CommonHelper::itemPackInfo($item);
 
                     $pkgFormat = '';
-                    $boxQty = '';
                     if (isset($secondary_unit_value) && $secondary_unit_value > 1) {
-                        $pkgFormat = (int) $secondary_unit_value . ' * ' . $item->variant_name;
-                        $boxes = floor($item->quantity / $secondary_unit_value);
-                        $loose = $item->quantity % $secondary_unit_value;
-                        $secName = $secondary_unit_name ?: 'Box';
-
-                        if ($boxes > 0 && $loose > 0) {
-                            $boxQty = $boxes . ' ' . $secName . ' + ' . $loose . ' nos';
-                        } elseif ($boxes > 0) {
-                            $boxQty = $boxes . ' ' . $secName;
-                        } else {
-                            $boxQty = $loose . ' nos';
-                        }
+                        $pkgFormat = (int) $secondary_unit_value . ' * ' . \App\Helpers\CommonHelper::variantSize($item->variant_name);
                     }
+                    // Alt. Qty column: the pieces ordered, as outer packs ("5 BAG").
+                    $boxQty = \App\Helpers\CommonHelper::altQuantity($item->quantity, $secondary_unit_value, $secondary_unit_name);
 
                     $hsn = '';
                     if (!empty($item->master_product_variant_id)) {
@@ -293,11 +279,9 @@
                         @if ($pkgFormat)
                             <br><span style="color: #111; font-weight: bold; font-size: 10px;">Format: {{ $pkgFormat }}</span>
                         @endif
-                        @if ($boxQty)
-                            <span style="color: #df2029; font-weight: bold; margin-left: 10px; font-size: 10px;">({{ $boxQty }})</span>
-                        @endif
                     </td>
                     <td style="text-align: center;">{{ $hsn }}</td>
+                    <td style="text-align: center; font-weight: bold;">{{ $boxQty ?: '-' }}</td>
                     <td style="text-align: center; font-weight: bold;">
                         {{ number_format($item->quantity, 1) }}
                     </td>
@@ -320,6 +304,7 @@
             <!-- Total row -->
             <tr style="font-weight: bold; background-color: #f2f2f2;">
                 <td>Total</td>
+                <td></td>
                 <td></td>
                 <td style="text-align: center;">{{ number_format($totalBillQty, 1) }}</td>
                 <td></td>
@@ -388,6 +373,13 @@
                             <td align="right" style="font-weight: bold;">{{ $currency }}{{ number_format($order->delivery_charge, 2) }}</td>
                         </tr>
                     @endif
+                    {{-- Orders are rounded to the nearest rupee when placed; the paise that added or took off shows here. --}}
+                    @if (((float) ($order->round_off ?? 0)) != 0 && abs($order->final_total - round($order->final_total)) < 0.005)
+                        <tr>
+                            <td align="left" style="color: #555;">Round Off</td>
+                            <td align="right" style="font-weight: bold;">{{ $order->round_off > 0 ? '+' : '-' }}{{ $currency }}{{ number_format(abs($order->round_off), 2) }}</td>
+                        </tr>
+                    @endif
                     <tr class="grand-total">
                         <td align="left" style="padding: 6px 10px; font-weight: bold; background-color: #343a40; color: #fff;">Grand Total</td>
                         <td align="right" style="padding: 6px 10px; font-weight: bold; background-color: #343a40; color: #fff;">{{ $currency }}{{ number_format($order->final_total, 2) }}</td>
@@ -398,30 +390,12 @@
     </table>
 
     @if (!empty($order->seller_bank_name) || !empty($order->seller_bank_account_number))
-        <!-- Distributor Bank Details -->
-        <div style="border: 1px solid #ddd; padding: 10px 15px; margin-bottom: 15px;">
-            <div style="font-size: 12px; color: #222; margin-bottom: 8px;"><strong>Bank Details</strong></div>
-            <table width="100%" style="border-collapse: collapse;">
-                <tr>
-                    <td style="border: none; padding: 0 15px 0 0; width: 25%; font-size: 11px; color: #555;">
-                        Bank Name<br>
-                        <strong style="color: #222;">{{ $order->seller_bank_name ?: '-' }}</strong>
-                    </td>
-                    <td style="border: none; padding: 0 15px 0 0; width: 25%; font-size: 11px; color: #555;">
-                        Account Number<br>
-                        <strong style="color: #222;">{{ $order->seller_bank_account_number ?: '-' }}</strong>
-                    </td>
-                    <td style="border: none; padding: 0 15px 0 0; width: 25%; font-size: 11px; color: #555;">
-                        Bank's IFSC Code<br>
-                        <strong style="color: #222;">{{ $order->seller_bank_ifsc_code ?: '-' }}</strong>
-                    </td>
-                    <td style="border: none; padding: 0; width: 25%; font-size: 11px; color: #555;">
-                        Bank Account Name<br>
-                        <strong style="color: #222;">{{ $order->seller_bank_account_name ?: '-' }}</strong>
-                    </td>
-                </tr>
-            </table>
-        </div>
+        @include('partials.invoice_bank_details', [
+            'bankName'      => $order->seller_bank_name,
+            'accountNumber' => $order->seller_bank_account_number,
+            'ifscCode'      => $order->seller_bank_ifsc_code,
+            'accountName'   => $order->seller_bank_account_name,
+        ])
     @endif
 
     <!-- Advertisement Banner Table -->
@@ -441,9 +415,7 @@
                 <p style="margin: 0;"><strong>DECLARATION:</strong> We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct. This is a computer generated invoice.</p>
             </td>
             <td width="30%" style="text-align: right; vertical-align: bottom; border: none; min-width: 150px; padding: 0;">
-                <div style="font-family: 'Courier New', Courier, monospace; font-size: 12px; margin-bottom: 2px; color: #555; font-style: italic; font-weight: bold;">
-                    {{ $seller->name }}
-                </div>
+                @include('partials.invoice_signature', ['seller' => $seller, 'name' => $seller->name, 'nameSize' => 12])
                 <div style="border-top: 1px solid #000; width: 120px; text-align: center; padding-top: 3px; font-weight: bold; font-size: 9px; display: inline-block;">
                     Authorised Signatory
                 </div>

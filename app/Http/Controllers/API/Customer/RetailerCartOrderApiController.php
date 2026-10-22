@@ -248,7 +248,8 @@ class RetailerCartOrderApiController extends Controller
             $group['actual_price']    = round($group['actual_price'] ?? 0, 2);
             // Inclusive pricing: sub_total already contains tax, so it is NOT added
             // again here — tax_amount/actual_price are only the billing-summary breakdown.
-            $group['final_total']     = ($group['sub_total'] ?? 0) - $group['scheme_discount'];
+            // Same nearest-rupee rounding placeOrder applies, so the cart shows what the order will be.
+            [$group['final_total'], $group['round_off']] = CommonHelper::roundOrderTotal(($group['sub_total'] ?? 0) - $group['scheme_discount']);
             // nearest_schemes = for each product in the cart, the scheme closest to unlocking (closest first);
             // nearest_scheme = just the overall closest one, exactly as before.
             $nearestList = SchemeEngine::nearestUnappliedList((int) $sellerId, $schemeLines, $appliedIds);
@@ -673,7 +674,9 @@ class RetailerCartOrderApiController extends Controller
                     //     }
                     // }
 
-                    $finalTotal = $sellerTotal - $schemeDiscount + $deliveryCharge;
+                    // Whole rupees: what the retailer pays is the nearest rupee; the paise rounding added or took
+                    // off is kept in round_off so the invoice can show it.
+                    [$finalTotal, $roundOff] = CommonHelper::roundOrderTotal($sellerTotal - $schemeDiscount + $deliveryCharge);
 
                     // Per-distributor minimum order amount — enforced here as the final
                     // authority (getCart() already surfaces this to the app beforehand so
@@ -729,7 +732,7 @@ class RetailerCartOrderApiController extends Controller
                         'updated_at' => now(),
                     // Snapshot so the invoice can show a before-tax ("Inclusive") scheme discount as a
                     // deduction from Net Taxable, whatever the scheme says later (no-op pre-migration).
-                    ] + CommonHelper::schemeSnapshotColumns($scheme, (float) $schemeDiscount) + $orderAddress['columns']);
+                    ] + CommonHelper::schemeSnapshotColumns($scheme, (float) $schemeDiscount) + $orderAddress['columns'] + CommonHelper::roundOffColumns($roundOff));
 
                     // Schemes stack: orders.scheme_discount is their total, this keeps each one.
                     \App\Models\OrderScheme::record($orderId, $scheme);
@@ -825,6 +828,7 @@ class RetailerCartOrderApiController extends Controller
                         'seller_id' => (int) $sellerId,
                         'delivery_charge' => $deliveryCharge,
                         'final_total' => $finalTotal,
+                        'round_off' => $roundOff,
                         // scheme = the biggest scheme on its own (as before); schemes = every scheme applied.
                         'scheme' => $scheme ? [
                             'scheme_id' => $scheme['schemes'][0]['scheme_id'],

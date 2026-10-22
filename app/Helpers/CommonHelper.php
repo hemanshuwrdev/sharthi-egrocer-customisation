@@ -3323,6 +3323,124 @@ class CommonHelper
      * when the orders table doesn't have them yet, so code deployed before `php artisan migrate` still places orders].
      */
     /**
+     * Nearest-rupee rounding of an order total, as [rounded total, round-off] — the round-off being what rounding
+     * added (+) or took off (-): 20424.80 -> [20425.0, 0.20], 20424.40 -> [20424.0, -0.40]. Every place that
+     * works out an order's final_total at placement uses this, so the cart, the order, the invoice and what the
+     * driver collects all agree on one whole-rupee amount.
+     */
+    public static function roundOrderTotal($amount): array
+    {
+        $exact   = round((float) $amount, 2);
+        $rounded = (float) round($exact);
+
+        return [$rounded, round($rounded - $exact, 2)];
+    }
+
+    /**
+     * The orders.round_off value to merge into an order insert — or [] when that column doesn't exist yet, so
+     * code deployed before `php artisan migrate` still places orders (the invoice just shows no Round Off line).
+     */
+    public static function roundOffColumns(float $roundOff): array
+    {
+        static $columnExists = null;
+        if ($columnExists === null) {
+            $columnExists = \Illuminate\Support\Facades\Schema::hasColumn('orders', 'round_off');
+        }
+
+        return $columnExists ? ['round_off' => $roundOff] : [];
+    }
+
+    /**
+     * The "Alt. Quantity" an invoice line shows next to its quantity in pieces: how many outer packs that is.
+     * 125 pieces in packs of 25 -> "5 BAG"; 128 -> "5 BAG + 3 NOS"; fewer than a pack -> "3 NOS".
+     * Empty when the item has no pack size (nothing to convert to).
+     */
+    public static function altQuantity($quantity, $packSize, $packUnitName = null): string
+    {
+        $pack = (float) $packSize;
+        if ($pack <= 1) {
+            return '';
+        }
+
+        $qty   = (int) round((float) $quantity);
+        $boxes = intdiv($qty, (int) round($pack));
+        $loose = $qty % (int) round($pack);
+        $unit  = strtoupper(trim((string) $packUnitName) ?: 'Box');
+
+        if ($boxes > 0 && $loose > 0) {
+            return $boxes . ' ' . $unit . ' + ' . $loose . ' NOS';
+        }
+
+        return $boxes > 0 ? $boxes . ' ' . $unit : $loose . ' NOS';
+    }
+
+    /**
+     * Just the size part of an order item's variant name: "1KG | 20 NOS/BAG" -> "1KG". Order items keep the pack
+     * after the size in the same field, which the "Format: 20 * 1KG" line must not repeat.
+     */
+    public static function variantSize($variantName): string
+    {
+        return trim(explode('|', (string) $variantName)[0]);
+    }
+
+    /**
+     * Pack size + pack unit name of an order item, as [size, unit name]. The Master Catalog variant is what
+     * orders carry now (product_variant_id is 0 for them); the old product_variants row is only the fallback for
+     * orders that predate it. [null, null] when the item has no pack.
+     */
+    public static function itemPackInfo($item): array
+    {
+        if (!empty($item->master_product_variant_id)) {
+            $row = DB::table('master_product_variants as mpv')
+                ->leftJoin('units as u2', 'mpv.secondary_unit_id', '=', 'u2.id')
+                ->where('mpv.id', $item->master_product_variant_id)
+                ->select('mpv.secondary_unit_value', 'u2.short_code as secondary_unit_name')
+                ->first();
+            if ($row && (float) $row->secondary_unit_value > 0) {
+                return [$row->secondary_unit_value, $row->secondary_unit_name];
+            }
+        }
+
+        if (!empty($item->product_variant_id)) {
+            $row = DB::table('product_variants as pv')
+                ->leftJoin('units as u2', 'pv.secondary_unit_id', '=', 'u2.id')
+                ->where('pv.id', $item->product_variant_id)
+                ->select('pv.secondary_unit_value', 'u2.short_code as secondary_unit_name')
+                ->first();
+            if ($row && (float) $row->secondary_unit_value > 0) {
+                return [$row->secondary_unit_value, $row->secondary_unit_name];
+            }
+        }
+
+        return [null, null];
+    }
+
+    /**
+     * The distributor's uploaded signature image for the "Authorised Signatory" block, or null when they have
+     * none (or the file is gone) — the invoice then keeps printing their name as before.
+     * $embed = a base64 data URI (for the PDF renderer, which needs no network or storage link); otherwise a
+     * normal storage URL (for pages the browser prints, where many bills can share one cached image).
+     */
+    public static function sellerSignatureSrc($seller, bool $embed = false): ?string
+    {
+        $path = trim((string) ($seller->signature_image ?? ''));
+        if ($path === '') {
+            return null;
+        }
+
+        $file = \Illuminate\Support\Facades\Storage::disk('public')->path($path);
+        if (!is_file($file)) {
+            return null;
+        }
+        if (!$embed) {
+            return url('storage/' . ltrim($path, '/'));
+        }
+
+        $mime = ['png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'webp' => 'image/webp'][strtolower(pathinfo($path, PATHINFO_EXTENSION))] ?? 'image/png';
+        return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($file));
+    }
+
+    /**
      * "Product + variant" as one label, without saying the size twice.
      * An order item keeps product_name and variant_name apart, and variant_name starts with the variant's
      * SKU / size ("1KG | 20 NOS/BAG") — which many master products already carry in their own name
