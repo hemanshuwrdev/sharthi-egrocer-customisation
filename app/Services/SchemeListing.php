@@ -56,10 +56,21 @@ class SchemeListing
      * For each seller product, the running scheme it takes part in that ends soonest (as the buy
      * product of a Buy X Get Y, or one of the products of any other scheme) —
      * [seller_product_id => array|null]. Same keys as the retailer app's nearest_scheme (id, name, type,
-     * end_date, buy_qty, free_product, free_qty, slabs) plus is_multi_combo / conditions / reward, because
-     * that retailer helper skips the row-condition schemes (most of what distributors create).
+     * end_date, buy_qty, free_product, free_qty, slabs) plus is_multi_combo / conditions / reward / tiers,
+     * because that retailer helper skips the row-condition schemes (most of what distributors create).
+     * Just the first of nearestListForSellerProducts().
      */
     public static function nearestForSellerProducts(Collection $sellerProductIds): Collection
+    {
+        return self::nearestListForSellerProducts($sellerProductIds)->map(fn ($list) => $list[0] ?? null);
+    }
+
+    /**
+     * Every running scheme each seller product takes part in, soonest-ending first —
+     * [seller_product_id => list of nearest_scheme-shaped arrays]. A product can be in several schemes
+     * (a plain one and a tiered one, say) and a single nearest_scheme shows only one of them.
+     */
+    public static function nearestListForSellerProducts(Collection $sellerProductIds): Collection
     {
         $ids = $sellerProductIds->unique()->values();
         if ($ids->isEmpty()) {
@@ -75,17 +86,53 @@ class SchemeListing
             ->get();
 
         return $ids->mapWithKeys(function ($spId) use ($schemes) {
-            $nearest = $schemes
+            $list = $schemes
                 ->filter(fn ($s) => $s->type === Scheme::TYPE_BUY_X_GET_Y
                     ? (int) $s->buy_seller_product_id === (int) $spId
                     : $s->schemeProducts->contains('seller_product_id', $spId))
                 ->sortBy([['end_date', 'asc'], ['id', 'asc']])
                 ->map(fn ($s) => self::nearestPayload($s, (int) $spId))
                 ->filter()
-                ->first();
+                ->values()
+                ->all();
 
-            return [$spId => $nearest];
+            return [$spId => $list];
         });
+    }
+
+    /**
+     * Every quantity tier of a scheme with its own wording, lowest range first —
+     * [{min_qty, max_qty (null = no upper limit), conditions, reward}]. Empty unless the scheme has 2+ tiers:
+     * a plain scheme is fully described by its conditions / reward. The qty basis and discount type are the
+     * scheme's own (first product row); a tier only changes the range and the amount.
+     */
+    public static function tierList(Scheme $s): array
+    {
+        if ($s->type === Scheme::TYPE_BUY_X_GET_Y || !$s->isTiered() || !($firstRow = $s->schemeProducts->first())) {
+            return [];
+        }
+
+        $isMultiCombo = $s->schemeProducts->count() > 1;
+        $tierProduct  = $isMultiCombo ? null : $firstRow->sellerProduct;
+
+        return $s->schemeTiers->map(function ($t) use ($firstRow, $isMultiCombo, $tierProduct) {
+            $tierRow = (object) [
+                'qty_basis'      => $firstRow->qty_basis,
+                'min_qty'        => $t->min_qty,
+                'max_qty'        => $t->max_qty,
+                'discount_type'  => $firstRow->discount_type,
+                'discount_value' => $t->discount_value ?? $firstRow->discount_value,
+                'free_qty'       => $t->free_qty ?? $firstRow->free_qty,
+                'free_qty_basis' => $firstRow->free_qty_basis,
+            ];
+
+            return [
+                'min_qty'    => (float) $t->min_qty,
+                'max_qty'    => $t->max_qty !== null ? (float) $t->max_qty : null,
+                'conditions' => self::conditions($tierRow, $tierProduct, $isMultiCombo ? 'Combined ' : ''),
+                'reward'     => self::reward($tierRow, $tierProduct),
+            ];
+        })->values()->all();
     }
 
     /**
@@ -250,27 +297,7 @@ class SchemeListing
 
         // Quantity tiers: every range with its own wording — empty unless the scheme has 2+. The product rows
         // above (and conditions / reward / combo_*) describe tier 1 only, which is all an older app shows.
-        $tiers = [];
-        if (!$isBxgy && $s->isTiered() && ($firstRow = $s->schemeProducts->first())) {
-            foreach ($s->schemeTiers as $t) {
-                $tierRow = (object) [
-                    'qty_basis'      => $firstRow->qty_basis,
-                    'min_qty'        => $t->min_qty,
-                    'max_qty'        => $t->max_qty,
-                    'discount_type'  => $firstRow->discount_type,
-                    'discount_value' => $t->discount_value ?? $firstRow->discount_value,
-                    'free_qty'       => $t->free_qty ?? $firstRow->free_qty,
-                    'free_qty_basis' => $firstRow->free_qty_basis,
-                ];
-                $tierProduct = $isMultiCombo ? null : $firstRow->sellerProduct;
-                $tiers[] = [
-                    'min_qty'    => (float) $t->min_qty,
-                    'max_qty'    => $t->max_qty !== null ? (float) $t->max_qty : null,
-                    'conditions' => self::conditions($tierRow, $tierProduct, $isMultiCombo ? 'Combined ' : ''),
-                    'reward'     => self::reward($tierRow, $tierProduct),
-                ];
-            }
-        }
+        $tiers = $isBxgy ? [] : self::tierList($s);
 
         $seller = $s->seller;
 

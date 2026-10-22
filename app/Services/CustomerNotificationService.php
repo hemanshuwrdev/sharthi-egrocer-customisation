@@ -138,10 +138,10 @@ class CustomerNotificationService
     }
 
     /**
-     * The same card facts for the DISTRIBUTOR and DRIVER apps. There the distributor is not useful — it is their own
-     * distributor — so the `distributor` key carries the RETAILER, the shop the order is for ({ id: the retailer's
-     * user id, name: shop name, else party name, else account name }). The key keeps its name because those apps are
-     * already built against it. Null `distributor` for an order with no customer (a POS walk-in sale).
+     * The same card facts for the DISTRIBUTOR, DRIVER and SALESMAN apps. There the distributor is not useful — it is
+     * their own distributor — so the `distributor` key is dropped and `retailer_name` (in the same place) says who the
+     * order is for, as a plain string: shop name, else party name, else account name. Null for an order with no
+     * customer (a POS walk-in sale). Only the retailer app keeps `distributor` ({ id, name }), from orderFacts().
      */
     public static function orderFactsForStaff($orderId): ?array
     {
@@ -150,9 +150,7 @@ class CustomerNotificationService
             return null;
         }
 
-        $facts = self::context($order, 'order_update', []);
-        $facts['distributor'] = null;
-
+        $retailerName = null;
         if (!empty($order->user_id)) {
             $profile = DB::table('retailer_profiles')->where('user_id', $order->user_id)->first(['shop_name', 'party_name']);
             $name    = trim((string) ($profile->shop_name ?? ''));
@@ -162,7 +160,17 @@ class CustomerNotificationService
             if ($name === '') {
                 $name = trim((string) DB::table('users')->where('id', $order->user_id)->value('name'));
             }
-            $facts['distributor'] = ['id' => (int) $order->user_id, 'name' => $name];
+            $retailerName = $name !== '' ? $name : null;
+        }
+
+        // Rebuilt so retailer_name takes the place `distributor` had in the card's data block.
+        $facts = [];
+        foreach (self::context($order, 'order_update', []) as $key => $value) {
+            if ($key === 'distributor') {
+                $facts['retailer_name'] = $retailerName;
+            } else {
+                $facts[$key] = $value;
+            }
         }
 
         return $facts;

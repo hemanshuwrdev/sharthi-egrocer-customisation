@@ -77,7 +77,7 @@ class SchemeEngine
             }
 
             if ($result !== null) {
-                $results[] = $result;
+                $results[] = self::withTierInfo($result, $scheme);
             }
         }
 
@@ -89,6 +89,30 @@ class SchemeEngine
         usort($results, fn ($a, $b) => [$b['benefit'], $a['scheme_id']] <=> [$a['benefit'], $b['scheme_id']]);
 
         return self::stack($results, $qtyByProduct, array_sum($totalByProduct));
+    }
+
+    /**
+     * Adds the tier wording to one applied scheme's result, so the app can show every tier and which one
+     * the cart is on: `tiers` (every tier — see SchemeListing::tierList) and `applied_tier` (the tier that
+     * applied, as one `tiers` entry plus its 0-based `index` into that list). `[]` / `null` for a plain scheme.
+     */
+    private static function withTierInfo(array $result, Scheme $scheme): array
+    {
+        $matched = $result['applied_tier'] ?? null;
+        $tiers   = SchemeListing::tierList($scheme);
+        $applied = null;
+
+        if ($matched && $tiers) {
+            $index = $scheme->schemeTiers->search(fn ($t) => (int) $t->id === (int) $matched->id);
+            if ($index !== false && isset($tiers[$index])) {
+                $applied = ['index' => $index] + $tiers[$index];
+            }
+        }
+
+        $result['tiers']        = $tiers;
+        $result['applied_tier'] = $applied;
+
+        return $result;
     }
 
     /**
@@ -184,32 +208,34 @@ class SchemeEngine
     }
 
     /**
-     * Not-yet-triggered schemes worth showing for this cart: for EACH product in the cart, the scheme
-     * closest to unlocking among the ones it takes part in (a scheme shared by two cart products is
-     * listed once), closest first. So a cart with two products that each have a scheme shows both —
-     * not just whichever is closest overall. [0] is always that overall closest scheme.
+     * Every not-yet-triggered scheme that involves a product in the cart, closest to unlocking first
+     * (a scheme shared by two cart products is listed once). Schemes stack, so a product in two schemes
+     * shows both — keeping only the closest one per product used to hide the other (a tiered scheme next to
+     * a plain one, say). [0] is always the overall closest scheme.
      */
     public static function nearestUnappliedList(int $sellerId, array $lines, $appliedSchemeIds = null): array
     {
         [$candidates, $qtyByProduct] = self::nearestCandidates($sellerId, $lines, $appliedSchemeIds);
 
-        $closest = [];   // seller_product_id => index of its closest candidate
+        $picked = [];
+        $seen   = [];   // scheme id => already listed
         foreach ($candidates as $i => $c) {
             $s = $c['scheme'];
+            if (isset($seen[$s->id])) {
+                continue;
+            }
             $involved = $s->type === Scheme::TYPE_BUY_X_GET_Y
                 ? [(int) $s->buy_seller_product_id]
                 : array_map('intval', $s->schemeProducts->pluck('seller_product_id')->all());
             foreach ($involved as $spId) {
-                if (($qtyByProduct[$spId] ?? 0) <= 0) {
-                    continue;   // only products actually in the cart
-                }
-                if (!isset($closest[$spId]) || $c['amountNeeded'] < $candidates[$closest[$spId]]['amountNeeded']) {
-                    $closest[$spId] = $i;
+                if (($qtyByProduct[$spId] ?? 0) > 0) {   // only products actually in the cart
+                    $picked[] = $i;
+                    $seen[$s->id] = true;
+                    break;
                 }
             }
         }
 
-        $picked = array_values(array_unique($closest));
         usort($picked, fn ($a, $b) => [$candidates[$a]['amountNeeded'], $a] <=> [$candidates[$b]['amountNeeded'], $b]);
 
         return array_map(fn ($i) => self::formatNearest($candidates[$i]), $picked);
@@ -813,6 +839,7 @@ class SchemeEngine
         $schemeDiscount = 0.0;
         $freeItems      = [];
         $hasAnyMatch    = false;
+        $appliedTier    = null;   // the SchemeTier the quantity fell in (tiered schemes only)
 
         $isPreTax = ($scheme->tax_option ?? 'inclusive') === 'inclusive';
         $isMultiProduct = $scheme->schemeProducts->count() > 1;
@@ -888,6 +915,7 @@ class SchemeEngine
                 $maxQty  = $tier->max_qty !== null ? (float) $tier->max_qty : null;
                 $discVal = $tier->discount_value !== null ? (float) $tier->discount_value : $discVal;
                 $freeQty = $tier->free_qty !== null ? (float) $tier->free_qty : $freeQty;
+                $appliedTier = $tier;
             }
 
             if ($minQty > 0 && $combinedEffectiveQty < $minQty) {
@@ -1012,6 +1040,7 @@ class SchemeEngine
                 }
 
                 $hasAnyMatch = true;
+                $appliedTier = $tier;
                 $lineTotal   = (float) ($totalByProduct[$spId] ?? 0);
                 $actualLine  = (float) ($actualTotalByProduct[$spId] ?? $lineTotal);
 
@@ -1105,6 +1134,8 @@ class SchemeEngine
             // Taxable (and the tax saved = scheme_discount - this). Otherwise null.
             'scheme_discount_pretax' => ($isPreTax && $pretaxPart > 0 && $otherPart <= 0) ? round($pretaxPart, 2) : null,
             'free_items'      => $freeItems,
+            // Internal: the matched SchemeTier (or null); evaluate() turns it into the app-facing applied_tier.
+            'applied_tier'    => $appliedTier,
         ];
     }
 }

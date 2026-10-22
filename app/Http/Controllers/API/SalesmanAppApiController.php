@@ -859,8 +859,118 @@ class SalesmanAppApiController extends Controller
     }
 
     /**
+     * The variants this salesman can sell: his own distributor's live offers — product, variant and offer all
+     * active, a price above zero, not a free-only (scheme gift) item — limited to the brands assigned to him
+     * when he has any. One query for listProducts() and listCategories(), so a category's count is always
+     * exactly what the product list returns for it. Out-of-stock variants are deliberately still in (the app
+     * shows them with their `stock`).
+     */
+    private function salesmanCatalogQuery(Salesman $salesman)
+    {
+        $sellerId = (int) $salesman->seller_id;
+
+        $query = MasterProductVariant::query()
+            ->join('master_products', 'master_product_variants.master_product_id', '=', 'master_products.id')
+            ->join('seller_products', function ($j) use ($sellerId) {
+                $j->on('seller_products.master_product_variant_id', '=', 'master_product_variants.id')
+                  ->where('seller_products.seller_id', '=', $sellerId);
+            })
+            ->where('master_products.status', 1)
+            ->where('master_product_variants.status', 1)
+            ->where('seller_products.status', 1)
+            ->where('seller_products.selling_price', '>', 0)
+            ->when(\App\Models\SellerProduct::hasFreeOnlyColumn(), fn ($q) => $q->where('seller_products.is_free_only', 0));
+
+        $assignedBrands = $salesman->brands;
+        if (!empty($assignedBrands)) {
+            $query->whereIn('master_products.brand_id', $assignedBrands);
+        }
+
+        return $query;
+    }
+
+    /**
+     * The given category ids plus every active sub-category under them. Products are saved on a sub-category,
+     * never on its parent, so filtering by a parent has to reach down to them.
+     */
+    private function categoryIdsWithDescendants(array $categoryIds): array
+    {
+        $all     = $categoryIds;
+        $toCheck = $categoryIds;
+        while (!empty($toCheck)) {
+            $children = \App\Models\Category::whereIn('parent_id', $toCheck)->where('status', 1)->pluck('id')->all();
+            $toCheck  = array_values(array_diff($children, $all));
+            $all      = array_merge($all, $toCheck);
+        }
+
+        return array_values(array_unique($all));
+    }
+
+    /**
+     * GET /api/salesman/categories
+     *
+     * The category chips of the Assisted Order screen: top-level categories, each with its active
+     * sub-categories under `children` and a `product_count` (variants — the same number the product list
+     * reports as `total` for that category). Only categories that are active and hold at least one product the
+     * salesman can sell (see salesmanCatalogQuery) are returned; a parent counts its sub-categories' products.
+     * The app's "All" chip is its own. Tapping a chip calls GET /api/salesman/products?category_id={id}.
+     */
+    public function listCategories(Request $request)
+    {
+        $salesman = $this->currentSalesman();
+        if (!$salesman) {
+            return CommonHelper::responseError('salesman_not_found');
+        }
+
+        $counts = $this->salesmanCatalogQuery($salesman)
+            ->select('master_products.category_id', DB::raw('COUNT(*) as variant_count'))
+            ->groupBy('master_products.category_id')
+            ->get()
+            ->pluck('variant_count', 'category_id');
+
+        if ($counts->isEmpty()) {
+            return CommonHelper::responseWithData([], 0);
+        }
+
+        $byParent = DB::table('categories')
+            ->where('status', 1)
+            ->orderBy('row_order')
+            ->orderBy('name')
+            ->get(['id', 'parent_id', 'name', 'slug', 'image'])
+            ->groupBy(fn ($c) => (int) $c->parent_id); // 0 = top level
+
+        $build = function (int $parentId) use (&$build, $byParent, $counts) {
+            return $byParent->get($parentId, collect())
+                ->map(function ($c) use (&$build, $counts) {
+                    $children = $build((int) $c->id);
+                    $count    = (int) ($counts[$c->id] ?? 0) + (int) $children->sum('product_count');
+                    if ($count === 0) {
+                        return null;
+                    }
+
+                    return [
+                        'id'            => (int) $c->id,
+                        'parent_id'     => (int) $c->parent_id,
+                        'name'          => $c->name,
+                        'slug'          => $c->slug,
+                        'image_url'     => $c->image ? asset('storage/' . $c->image) : null,
+                        'product_count' => $count,
+                        'children'      => $children->all(),
+                    ];
+                })
+                ->filter()
+                ->values();
+        };
+
+        $tree = $build(0);
+
+        return CommonHelper::responseWithData($tree->all(), $tree->count());
+    }
+
+    /**
      * GET /api/salesman/products
-     * Query: filter, brand_id, category_id, parent_company_id, page, per_page,
+     * Query: filter, brand_id, category_id (a top-level category also returns its sub-categories' products),
+     *        category_ids (comma-separated), parent_company_id, page, per_page,
      *        retailer_id (optional — fills applied_scheme(s) from the salesman's draft cart for that retailer)
      *
      * Returns the logged-in salesman's distributor catalog so he can pick
@@ -890,18 +1000,8 @@ class SalesmanAppApiController extends Controller
             }
         }
 
-        $query = MasterProductVariant::query()
+        $query = $this->salesmanCatalogQuery($salesman)
             ->with(['masterProduct.brand', 'masterProduct.parentCompany', 'masterProduct.category', 'unit', 'secondaryUnit', 'weightUnit'])
-            ->join('master_products', 'master_product_variants.master_product_id', '=', 'master_products.id')
-            ->join('seller_products', function ($j) use ($sellerId) {
-                $j->on('seller_products.master_product_variant_id', '=', 'master_product_variants.id')
-                  ->where('seller_products.seller_id', '=', $sellerId);
-            })
-            ->where('master_products.status', 1)
-            ->where('master_product_variants.status', 1)
-            ->where('seller_products.status', 1)
-            ->where('seller_products.selling_price', '>', 0)
-            ->when(\App\Models\SellerProduct::hasFreeOnlyColumn(), fn ($q) => $q->where('seller_products.is_free_only', 0))
             ->select(
                 'master_product_variants.*',
                 'seller_products.id as sp_id',
@@ -914,11 +1014,6 @@ class SalesmanAppApiController extends Controller
                 'seller_products.max_qty_mode as sp_max_qty_mode',
                 'seller_products.max_qty_value as sp_max_qty_value'
             );
-
-        $assignedBrands = $salesman->brands;
-        if (!empty($assignedBrands)) {
-            $query->whereIn('master_products.brand_id', $assignedBrands);
-        }
 
         if ($filter !== '') {
             $query->where(function ($w) use ($filter) {
@@ -935,8 +1030,10 @@ class SalesmanAppApiController extends Controller
         if ($request->filled('brand_id')) {
             $query->where('master_products.brand_id', (int) $request->brand_id);
         }
-        if ($request->filled('category_id')) {
-            $query->where('master_products.category_id', (int) $request->category_id);
+        // category_id / category_ids (comma-separated): a top-level category also brings its sub-categories' products.
+        $categoryIds = array_values(array_filter(array_map('intval', explode(',', (string) $request->input('category_ids', $request->input('category_id', ''))))));
+        if (!empty($categoryIds)) {
+            $query->whereIn('master_products.category_id', $this->categoryIdsWithDescendants($categoryIds));
         }
         if ($request->filled('parent_company_id')) {
             $query->where('master_products.parent_company_id', (int) $request->parent_company_id);
@@ -1008,7 +1105,7 @@ class SalesmanAppApiController extends Controller
         // Scheme hints, for this page only. nearest_scheme = the running scheme the product takes part in that
         // ends soonest. applied_schemes = schemes already applied to the salesman's draft cart for retailer_id
         // that involve this product (they stack); applied_scheme = the first of them, or {} — same as the retailer app.
-        $nearestBySp = SchemeListing::nearestForSellerProducts($paged->pluck('offer.seller_product_id'));
+        $nearestBySp = SchemeListing::nearestListForSellerProducts($paged->pluck('offer.seller_product_id'));
         $appliedSchemes = [];
         if ($schemeRetailer) {
             $cartGroup = collect($this->buildCartListPayload($schemeRetailer, $salesman)['groups'])->first();
@@ -1017,7 +1114,9 @@ class SalesmanAppApiController extends Controller
         $paged = $paged->map(function ($item) use ($nearestBySp, $appliedSchemes) {
             $spId = (int) $item['offer']['seller_product_id'];
             $appliedHere = SchemeListing::appliedInvolving($appliedSchemes, $spId);
-            $item['offer']['nearest_scheme']  = $nearestBySp[$spId] ?? null;
+            // nearest_scheme = the one ending soonest; nearest_schemes = every running scheme this product is in.
+            $item['offer']['nearest_scheme']  = ($nearestBySp[$spId] ?? [])[0] ?? null;
+            $item['offer']['nearest_schemes'] = $nearestBySp[$spId] ?? [];
             $item['offer']['applied_schemes'] = $appliedHere;
             $item['offer']['applied_scheme']  = $appliedHere[0] ?? new \stdClass();
 
@@ -1247,7 +1346,7 @@ class SalesmanAppApiController extends Controller
         foreach ($groups as $sellerId => &$group) {
             $schemeLines = $group['scheme_lines'] ?? [];
             $scheme  = SchemeEngine::evaluate((int) $sellerId, $schemeLines);
-            // nearest_schemes = for each product in the cart, the scheme closest to unlocking (closest first);
+            // nearest_schemes = every scheme not yet unlocked that involves a product in the cart (closest first);
             // nearest_scheme = just the overall closest one, exactly as before.
             $nearestList = SchemeEngine::nearestUnappliedList((int) $sellerId, $schemeLines, array_column($scheme['schemes'] ?? [], 'scheme_id'));
             unset($group['scheme_lines']);

@@ -218,7 +218,7 @@ class RetailerCatalogApiController extends Controller
             ->get()
             ->groupBy('seller_product_id');
 
-        $nearestSchemesBySp = SchemeListing::nearestForSellerProducts($rows->pluck('sp_id'));
+        $nearestSchemesBySp = SchemeListing::nearestListForSellerProducts($rows->pluck('sp_id'));
 
         // Preload ratings grouped by (product_id, seller_id) for seller-wise avg/count
         $masterProductIds = $rows->pluck('master_product_id')->unique();
@@ -267,7 +267,9 @@ class RetailerCatalogApiController extends Controller
                         : [],
                     'avg_rating'    => $ratingGroup ? round($ratingGroup->avg('rate'), 1) : null,
                     'total_ratings' => $ratingGroup ? $ratingGroup->count() : 0,
-                    'nearest_scheme' => $nearestSchemesBySp[$r->sp_id] ?? null,
+                    // nearest_scheme = the one ending soonest; nearest_schemes = every running scheme this product is in.
+                    'nearest_scheme' => ($nearestSchemesBySp[$r->sp_id] ?? [])[0] ?? null,
+                    'nearest_schemes' => $nearestSchemesBySp[$r->sp_id] ?? [],
                 ];
             })->sortBy(function ($o) {
                 return $o['discounted_price'] !== null && $o['discounted_price'] > 0 ? $o['discounted_price'] : $o['selling_price'];
@@ -413,7 +415,7 @@ class RetailerCatalogApiController extends Controller
         $brand = $variant->masterProduct->brand;
         $overlapAllowed = $brand && (int) $brand->is_overlap_allowed === 1;
 
-        $nearestSchemesBySp = SchemeListing::nearestForSellerProducts($sellerProducts->pluck('id'));
+        $nearestSchemesBySp = SchemeListing::nearestListForSellerProducts($sellerProducts->pluck('id'));
         $appliedSchemesBySeller = self::appliedSchemesForVariant($request->user('api-customers'), $variant->id);
 
         $offers = $sellerProducts->map(function ($sp) use ($nearestSchemesBySp, $appliedSchemesBySeller, $variant) {
@@ -447,7 +449,9 @@ class RetailerCatalogApiController extends Controller
                     'max_qty' => $s->max_qty,
                     'price' => (float) $s->price,
                 ])->values(),
-                'nearest_scheme' => $nearestSchemesBySp[$sp->id] ?? null,
+                // nearest_scheme = the one ending soonest; nearest_schemes = every running scheme this product is in.
+                'nearest_scheme' => ($nearestSchemesBySp[$sp->id] ?? [])[0] ?? null,
+                'nearest_schemes' => $nearestSchemesBySp[$sp->id] ?? [],
                 // Schemes the cart already applies because of this product (they stack, so a list); empty
                 // when it is not in the cart. applied_scheme = the first of them, or {} — kept for the
                 // one-scheme app.

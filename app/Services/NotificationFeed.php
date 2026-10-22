@@ -88,7 +88,7 @@ class NotificationFeed
                 'order_id'   => $orderId ?: null,
                 'is_read'    => $row->read_at !== null,
                 'created_at' => $row->created_at,
-                // In the distributor and driver apps `distributor` holds the retailer (see orderFactsForStaff).
+                // The distributor, driver and salesman apps get `retailer_name` instead of `distributor` (see orderFactsForStaff).
                 'data'       => self::factsFor($orderId, $facts, true),
             ]);
         }
@@ -204,7 +204,8 @@ class NotificationFeed
                 'order_id'   => $orderId,
                 'is_read'    => $row->read_at !== null,
                 'created_at' => $row->created_at,
-                'data'       => self::factsFor($orderId, $facts),
+                // Same facts as the distributor and driver apps: `retailer_name`, no `distributor`.
+                'data'       => self::factsFor($orderId, $facts, true),
             ]);
         }
 
@@ -271,13 +272,13 @@ class NotificationFeed
     }
 
     /** The order's card facts, looked up once per order per request. Null when there's no (live) order. */
-    private static function factsFor(?int $orderId, array &$cache, bool $retailerAsDistributor = false): ?array
+    private static function factsFor(?int $orderId, array &$cache, bool $forStaff = false): ?array
     {
         if (!$orderId) {
             return null;
         }
         if (!array_key_exists($orderId, $cache)) {
-            $cache[$orderId] = $retailerAsDistributor
+            $cache[$orderId] = $forStaff
                 ? CustomerNotificationService::orderFactsForStaff($orderId)
                 : CustomerNotificationService::orderFacts($orderId);
         }

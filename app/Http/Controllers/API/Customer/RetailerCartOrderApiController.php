@@ -250,7 +250,7 @@ class RetailerCartOrderApiController extends Controller
             // again here — tax_amount/actual_price are only the billing-summary breakdown.
             // Same nearest-rupee rounding placeOrder applies, so the cart shows what the order will be.
             [$group['final_total'], $group['round_off']] = CommonHelper::roundOrderTotal(($group['sub_total'] ?? 0) - $group['scheme_discount']);
-            // nearest_schemes = for each product in the cart, the scheme closest to unlocking (closest first);
+            // nearest_schemes = every scheme not yet unlocked that involves a product in the cart (closest first);
             // nearest_scheme = just the overall closest one, exactly as before.
             $nearestList = SchemeEngine::nearestUnappliedList((int) $sellerId, $schemeLines, $appliedIds);
             $group['nearest_scheme']  = $nearestList[0] ?? null;
