@@ -939,6 +939,7 @@ Route::middleware(['auth:api', 'active.app_user'])->group(function () {
             Route::get('pending',       [\App\Http\Controllers\API\SalesmanAppApiController::class, 'pendingRetailers'])->name('salesman.retailers.pending');
             Route::post('verify',       [\App\Http\Controllers\API\SalesmanAppApiController::class, 'verifyRetailer'])->name('salesman.retailers.verify');
             Route::get('my-retailers',  [\App\Http\Controllers\API\SalesmanAppApiController::class, 'myRetailers'])->name('salesman.retailers.my');
+            Route::get('areas',         [\App\Http\Controllers\API\SalesmanAppApiController::class, 'retailerAreas'])->name('salesman.retailers.areas');
             Route::post('scan',         [\App\Http\Controllers\API\SalesmanAppApiController::class, 'scanRetailer'])->name('salesman.retailers.scan');
             // Sarthi: combined verified+pending flat list (literal route must precede wildcard)
             Route::get('overview', [\App\Http\Controllers\API\SalesmanAppApiController::class, 'retailersOverview'])->name('salesman.retailers.overview');

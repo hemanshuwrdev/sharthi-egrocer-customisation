@@ -435,11 +435,72 @@ class SalesmanAppApiController extends Controller
         ]);
     }
 
+    /** A retailer is Active in the list when its last order with the salesman's distributor is within this many days. */
+    private const RETAILER_ACTIVE_WITHIN_DAYS = 15;
+
     /**
-     * GET /api/salesman/retailers/my
+     * GET /api/salesman/retailers/areas
+     *
+     * The area chips of the Retailer List screen: "All (120)", "Navrangpura (28)", … One chip per ACTIVE area that
+     * holds at least one retailer the salesman can see (the same set my-retailers lists — see
+     * visibleRetailersQuery), biggest first. `retailer_count` is the number my-retailers reports as `total` for
+     * that chip. The last chip, `id` 0 "Other", holds the retailers that are in no active area — none picked, or
+     * the area has since been deactivated — and is shown only when there are any, so the chips always add up to
+     * `all_count` (the "All" chip). Tapping a chip calls GET /api/salesman/retailers/my-retailers?area_id={id}.
+     * The counts do not change with the search box.
+     */
+    public function retailerAreas(Request $request)
+    {
+        $salesman = $this->currentSalesman();
+        if (!$salesman) {
+            return CommonHelper::responseError('salesman_not_found');
+        }
+
+        $counts = $this->visibleRetailersQuery($salesman)
+            ->select('retailer_profiles.area_id', DB::raw('COUNT(DISTINCT users.id) as retailer_count'))
+            ->groupBy('retailer_profiles.area_id')
+            ->get()
+            ->pluck('retailer_count', 'area_id');
+
+        $allCount = (int) $counts->sum();
+
+        $areas = \App\Models\Area::whereIn('id', $counts->keys()->filter()->values())
+            ->where('status', 1)
+            ->get(['id', 'name', 'pincode'])
+            ->map(fn ($a) => [
+                'id'             => (int) $a->id,
+                'name'           => $a->name,
+                'pincode'        => $a->pincode,
+                'retailer_count' => (int) $counts[$a->id],
+            ])
+            ->sortBy([['retailer_count', 'desc'], ['name', 'asc']])
+            ->values();
+
+        // Everyone not in an active area: no area picked, or an area the admin has deactivated (or deleted).
+        $other = $allCount - (int) $areas->sum('retailer_count');
+        if ($other > 0) {
+            $areas->push(['id' => 0, 'name' => 'Other', 'pincode' => null, 'retailer_count' => $other]);
+        }
+
+        $payload = CommonHelper::responseWithData($areas->all(), $areas->count())->getData(true);
+        $payload['all_count'] = $allCount;
+
+        return response()->json($payload);
+    }
+
+    /**
+     * GET /api/salesman/retailers/my-retailers
      * "My Retailers" — every verified retailer in this salesman's area (shared by all salesmen
      * of the area; see visibleRetailersQuery).
      * Returns shop info + status + last_order_at to feed the doc's Active/Pending/Inactive badges.
+     *
+     * Query: filter|search (shop / party / retailer name, mobile, address or area name), area_id (a chip of
+     * retailers/areas; 0 = the "Other" chip: no area, or an inactive one), sort (name_asc | name_desc | last_order | most_orders;
+     * omitted = newest registered first, as before).
+     * Per retailer, besides the shop info: gps_lat / gps_lng (Route button), orders_count and last_order_at —
+     * both for orders with THIS salesman's distributor, cancelled ones left out (a retailer can buy from
+     * several distributors; their orders elsewhere are not this salesman's business) — and activity_status
+     * ('active' = last order within RETAILER_ACTIVE_WITHIN_DAYS days, else 'inactive'; includes never ordered).
      */
     public function myRetailers(Request $request)
     {
@@ -448,8 +509,13 @@ class SalesmanAppApiController extends Controller
             return CommonHelper::responseError('salesman_not_found');
         }
 
-        // `filter` (what the app sends) or `search`: shop / party / retailer name or mobile number.
+        // `filter` (what the app sends) or `search`: shop / party / retailer name, mobile number, address or area.
         $filter = trim((string) ($request->input('filter') ?? $request->input('search', '')));
+
+        // "Their orders" for the Orders count, Last order and the Active badge: with THIS salesman's distributor,
+        // not cancelled. (orders has no seller column — an order's items carry it.)
+        $ownOrderSql = 'o_own.active_status <> ' . (int) OrderStatusList::$cancelled
+            . ' AND EXISTS (SELECT 1 FROM order_items oi_own WHERE oi_own.order_id = o_own.id AND oi_own.seller_id = ' . (int) $salesman->seller_id . ')';
 
         $rows = $this->visibleRetailersQuery($salesman)
             ->select(
@@ -469,11 +535,14 @@ class SalesmanAppApiController extends Controller
                 'retailer_profiles.state',
                 'retailer_profiles.gst_no',
                 'retailer_profiles.verified_at',
+                'retailer_profiles.gps_lat',
+                'retailer_profiles.gps_lng',
                 'cities.name as city_name',
                 'retailer_profiles.area_id',
                 'rp_area.name as area_name',
                 'rp_area.pincode as area_pincode',
-                DB::raw('(SELECT MAX(orders.created_at) FROM orders WHERE orders.user_id = users.id) as last_order_at'),
+                DB::raw('(SELECT MAX(o_own.created_at) FROM orders o_own WHERE o_own.user_id = users.id AND ' . $ownOrderSql . ') as last_order_at'),
+                DB::raw('(SELECT COUNT(*) FROM orders o_own WHERE o_own.user_id = users.id AND ' . $ownOrderSql . ') as orders_count'),
                 DB::raw('(
                     SELECT COALESCE(SUM(op.amount), 0) - COALESCE((
                         SELECT SUM(op2.amount)
@@ -520,14 +589,48 @@ class SalesmanAppApiController extends Controller
                 $query->where(function ($q) use ($filter, $mobileTerms) {
                     $q->where('users.name', 'like', "%{$filter}%")
                       ->orWhere('retailer_profiles.shop_name', 'like', "%{$filter}%")
-                      ->orWhere('retailer_profiles.party_name', 'like', "%{$filter}%");
+                      ->orWhere('retailer_profiles.party_name', 'like', "%{$filter}%")
+                      ->orWhere('retailer_profiles.address', 'like', "%{$filter}%")
+                      ->orWhere('retailer_profiles.address_line1', 'like', "%{$filter}%")
+                      ->orWhere('retailer_profiles.address_line2', 'like', "%{$filter}%")
+                      ->orWhere('rp_area.name', 'like', "%{$filter}%");
                     foreach ($mobileTerms as $term) {
                         $q->orWhere('users.mobile', 'like', "%{$term}%");
                     }
                 });
             })
-            ->orderByDesc('users.id')
-            ->get();
+            ->when($request->filled('area_id'), function ($query) use ($request) {
+                // 0 = the "Other" chip: no area, or an area that is no longer active.
+                (int) $request->area_id === 0
+                    ? $query->where(fn ($w) => $w->whereNull('rp_area.id')->orWhere('rp_area.status', '!=', 1))
+                    : $query->where('retailer_profiles.area_id', (int) $request->area_id);
+            });
+
+        $shopName = "COALESCE(NULLIF(TRIM(retailer_profiles.shop_name), ''), NULLIF(TRIM(retailer_profiles.party_name), ''), users.name)";
+        switch ((string) $request->input('sort', '')) {
+            case 'name_asc':
+                $rows->orderByRaw("{$shopName} ASC");
+                break;
+            case 'name_desc':
+                $rows->orderByRaw("{$shopName} DESC");
+                break;
+            case 'last_order':   // most recent first; never ordered last
+                $rows->orderByRaw('last_order_at IS NULL, last_order_at DESC')->orderByRaw("{$shopName} ASC");
+                break;
+            case 'most_orders':
+                $rows->orderByDesc('orders_count')->orderByRaw("{$shopName} ASC");
+                break;
+            default:
+                $rows->orderByDesc('users.id');
+        }
+
+        $rows = $rows->get();
+
+        $activeSince = now()->subDays(self::RETAILER_ACTIVE_WITHIN_DAYS);
+        $rows->each(function ($r) use ($activeSince) {
+            $r->orders_count     = (int) $r->orders_count;
+            $r->activity_status  = $r->last_order_at && Carbon::parse($r->last_order_at)->gte($activeSince) ? 'active' : 'inactive';
+        });
 
         return CommonHelper::responseWithData([
             'total' => $rows->count(),
