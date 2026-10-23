@@ -13,6 +13,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _driverStatusConfig__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./driverStatusConfig */ "./resources/js/views/Sellers/driverStatusConfig.js");
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
@@ -143,6 +144,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 
 
+
 // delivery_boys.status: 0 registered, 1 active, 2 not approved, 3 deactive, 4 blocked, 7 removed
 var STATUS = {
   registered: 0,
@@ -249,8 +251,11 @@ var STATUS = {
         label: __('all'),
         count: this.deliveryBoys.length
       }];
-      [STATUS.active, STATUS.notApproved, STATUS.deactive, STATUS.blocked, STATUS.removed].forEach(function (id) {
-        if (id !== STATUS.removed || count(id) > 0) {
+      // SIMPLE_DRIVER_STATUS (driverStatusConfig.js): Active / Deactive always get a chip; every other state only when a
+      // driver is in it, so nobody is hidden. Flip the flag to false and Not-Approved / Blocked chips are always shown again.
+      var alwaysShown = _driverStatusConfig__WEBPACK_IMPORTED_MODULE_1__.SIMPLE_DRIVER_STATUS ? [STATUS.active, STATUS.deactive] : [STATUS.active, STATUS.notApproved, STATUS.deactive, STATUS.blocked];
+      [STATUS.active, STATUS.registered, STATUS.notApproved, STATUS.deactive, STATUS.blocked, STATUS.removed].forEach(function (id) {
+        if (alwaysShown.includes(id) || count(id) > 0) {
           chips.push({
             key: id,
             id: id,
@@ -318,10 +323,9 @@ var STATUS = {
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$apiUrl + '/delivery_boys').then(function (response) {
         _this6.isLoading = false;
-        // status 0 = signed up but not yet taken on by the distributor; never listed
-        _this6.deliveryBoys = (response.data.data || []).filter(function (boy) {
-          return boy.status !== STATUS.registered;
-        });
+        // Every driver linked to this distributor, whatever the status. A "Registered" (0) driver used to be
+        // hidden here, so one saved with that status vanished from the panel with no way to bring it back.
+        _this6.deliveryBoys = response.data.data || [];
       })["catch"](function () {
         _this6.isLoading = false;
         _this6.showError(__('something_went_wrong'));
@@ -431,6 +435,29 @@ var STATUS = {
 
 /***/ }),
 
+/***/ "./resources/js/views/Sellers/driverStatusConfig.js":
+/*!**********************************************************!*\
+  !*** ./resources/js/views/Sellers/driverStatusConfig.js ***!
+  \**********************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   SIMPLE_DRIVER_STATUS: () => (/* binding */ SIMPLE_DRIVER_STATUS)
+/* harmony export */ });
+// Which driver statuses the DISTRIBUTOR panel offers (driver edit form status buttons + Drivers list chips).
+//
+//   true  = just Active / Deactive. Active can use the app; Deactive cannot log in and is logged out of the app
+//           (the server already does that for every status other than Active).
+//   false = the full set again: Not-Approved and Blocked come back in the form and as chips.
+//
+// Display only: the server accepts every status either way, and a driver already in another state (Registered,
+// Not-Approved, Blocked, Removed) is still shown with that state, so nobody disappears from the panel.
+// To bring the other statuses back, change this one word to false and rebuild (npm run dev).
+var SIMPLE_DRIVER_STATUS = true;
+
+/***/ }),
+
 /***/ "./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Sellers/DeliveryBoys.vue?vue&type=style&index=0&id=3bf09356&scoped=true&lang=css":
 /*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Sellers/DeliveryBoys.vue?vue&type=style&index=0&id=3bf09356&scoped=true&lang=css ***!
@@ -470,7 +497,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n/* Delete-blocked tooltip: not scoped, since bootstrap-vue teleports tooltips to <body>. */\n.text-nowrap-tooltip .tooltip-inner {\n    max-width: 260px;\n    white-space: normal;\n    text-align: left;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n/* Delete-blocked tooltip: not scoped, since bootstrap-vue teleports tooltips to <body>. */\n.text-nowrap-tooltip .tooltip-inner {\n    max-width: 260px;\n    white-space: normal;\n    text-align: left;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 

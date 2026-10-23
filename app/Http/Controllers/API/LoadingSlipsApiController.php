@@ -898,43 +898,8 @@ class LoadingSlipsApiController extends Controller
                 ->first();
         }
 
-        // Get aggregate items and quantities loaded with packaging details.
-        // Outer/inner pack unit + ratio come from the Master Catalog variant (what
-        // the admin actually edits — "Outerpack Unit" / "Inner Pack Value") when the
-        // order item is linked to one; the seller-side product_variants row is only
-        // a fallback for legacy items that predate the master-catalog link.
-        $itemSummary = DB::table('order_items')
-            ->select(
-                'order_items.product_name',
-                'order_items.variant_name',
-                DB::raw('SUM(order_items.quantity) as qty'),
-                DB::raw('COALESCE(mpv.secondary_unit_value, pv.secondary_unit_value) as secondary_unit_value'),
-                DB::raw('COALESCE(u2m.short_code, u2.short_code) as secondary_unit_name'),
-                'pv.measurement as primary_measurement',
-                DB::raw('COALESCE(u1m.short_code, u1.short_code) as primary_unit_name')
-            )
-            ->leftJoin('product_variants as pv', 'order_items.product_variant_id', '=', 'pv.id')
-            ->leftJoin('units as u1', 'pv.stock_unit_id', '=', 'u1.id')
-            ->leftJoin('units as u2', 'pv.secondary_unit_id', '=', 'u2.id')
-            ->leftJoin('master_product_variants as mpv', 'order_items.master_product_variant_id', '=', 'mpv.id')
-            ->leftJoin('units as u1m', 'mpv.unit_id', '=', 'u1m.id')
-            ->leftJoin('units as u2m', 'mpv.secondary_unit_id', '=', 'u2m.id')
-            ->whereIn('order_items.order_id', $orders->pluck('id'))
-            ->whereNotIn('order_items.active_status', [OrderStatusList::$cancelled, OrderStatusList::$returned])
-            ->groupBy(
-                'order_items.product_variant_id',
-                'order_items.master_product_variant_id',
-                'order_items.product_name',
-                'order_items.variant_name',
-                'pv.secondary_unit_value',
-                'u2.short_code',
-                'pv.measurement',
-                'u1.short_code',
-                'mpv.secondary_unit_value',
-                'u2m.short_code',
-                'u1m.short_code'
-            )
-            ->get();
+        // Aggregate items and quantities loaded, one row per variant (see itemSummaryForPrint).
+        $itemSummary = $this->itemSummaryForPrint($orders->pluck('id'));
 
         // Load items for each individual order for party name wise bills
         foreach ($orders as $order) {
@@ -976,6 +941,83 @@ class LoadingSlipsApiController extends Controller
         ])->render();
 
         return response($html)->header('Content-Type', 'text/html');
+    }
+
+    /**
+     * The "Item Name / Quantity" rows of the printed slip: every non-cancelled item on the given orders, one row
+     * per variant.
+     *
+     * Rows are keyed by variant id, never by the order item's own text. The retailer app saves variant_name as
+     * "5KG | 5 NOS/BAG" while the salesman app saves just "5KG", so grouping on that text split one variant
+     * into two rows. The name and pack come from the Master Catalog variant (what the admin edits): "Product
+     * SKU | <inner value> <inner unit>/<outer unit>", e.g. "FORTUNE KGMO 500ML | 24 NOS/CTN". Items that no
+     * longer have a catalog variant keep their own text, so nothing is dropped or renamed. The seller-side
+     * product_variants row is only the fallback for legacy items that predate the master-catalog link.
+     */
+    private function itemSummaryForPrint($orderIds)
+    {
+        $items = DB::table('order_items')
+            ->select(
+                'order_items.id',
+                'order_items.product_name',
+                'order_items.variant_name',
+                'order_items.quantity',
+                'order_items.product_variant_id',
+                'order_items.master_product_variant_id',
+                'mp.name as master_product_name',
+                'mpv.sku as master_sku',
+                DB::raw('COALESCE(mpv.secondary_unit_value, pv.secondary_unit_value) as secondary_unit_value'),
+                DB::raw('COALESCE(u2m.short_code, u2.short_code) as secondary_unit_name'),
+                DB::raw('u1m.short_code as inner_unit_name')
+            )
+            ->leftJoin('product_variants as pv', 'order_items.product_variant_id', '=', 'pv.id')
+            ->leftJoin('units as u2', 'pv.secondary_unit_id', '=', 'u2.id')
+            ->leftJoin('master_product_variants as mpv', 'order_items.master_product_variant_id', '=', 'mpv.id')
+            ->leftJoin('master_products as mp', 'mpv.master_product_id', '=', 'mp.id')
+            ->leftJoin('units as u1m', 'mpv.unit_id', '=', 'u1m.id')
+            ->leftJoin('units as u2m', 'mpv.secondary_unit_id', '=', 'u2m.id')
+            ->whereIn('order_items.order_id', $orderIds)
+            ->whereNotIn('order_items.active_status', [OrderStatusList::$cancelled, OrderStatusList::$returned])
+            ->orderBy('order_items.id')
+            ->get();
+
+        $rows = $items->groupBy(function ($item) {
+            if ((int) $item->master_product_variant_id > 0) {
+                return 'm' . $item->master_product_variant_id;
+            }
+            if ((int) $item->product_variant_id > 0) {
+                return 'p' . $item->product_variant_id;
+            }
+            return 'n' . mb_strtolower(trim($item->product_name . '|' . $item->variant_name));
+        })->map(function ($group) {
+            // Latest order line of the variant, for whatever the catalog can't supply.
+            $last = $group->last();
+            $packValue = (float) ($last->secondary_unit_value ?? 0);
+            $outerUnit = trim((string) $last->secondary_unit_name);
+            $hasPack = $packValue > 0 && $outerUnit !== '';
+
+            $productName = trim((string) $last->master_product_name) !== '' ? $last->master_product_name : $last->product_name;
+            $variantName = trim((string) $last->master_sku) !== '' ? $last->master_sku : $last->variant_name;
+            if ($hasPack) {
+                // The pack is printed below from the catalog, so drop it from the saved text rather than repeat it.
+                $variantName = CommonHelper::variantSize($variantName);
+            }
+
+            $displayName = strtoupper(CommonHelper::itemNameWithVariant($productName, $variantName));
+            if ($hasPack) {
+                $innerUnit = trim((string) $last->inner_unit_name) !== '' ? $last->inner_unit_name : 'NOS';
+                $displayName .= ' | ' . (int) $packValue . ' ' . strtoupper($innerUnit) . '/' . strtoupper($outerUnit);
+            }
+
+            return (object) [
+                'display_name' => $displayName,
+                'qty' => $group->sum('quantity'),
+                'secondary_unit_value' => $hasPack ? $packValue : null,
+                'secondary_unit_name' => $hasPack ? $outerUnit : null,
+            ];
+        });
+
+        return $rows->sortBy('display_name', SORT_NATURAL | SORT_FLAG_CASE)->values();
     }
 
     // Nearest Neighbor Routing algorithm to cluster and sequence order stops logically

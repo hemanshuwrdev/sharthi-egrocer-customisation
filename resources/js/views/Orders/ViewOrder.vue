@@ -286,6 +286,12 @@
                                     <span>{{ __('additional_charges') }}</span>
                                     <span>+ {{ $currency }}{{ money(getAdditionalChargesTotal(order.additional_charges)) }}</span>
                                 </div>
+                                <!-- Orders are rounded to the nearest rupee when placed; the paise that added or took off,
+                                     so the lines above add up to the payable total. 0 (hidden) on orders placed before that. -->
+                                <div class="money-row" v-if="num(order.round_off) !== 0">
+                                    <span>{{ __('Round Off') }}</span>
+                                    <span>{{ num(order.round_off) > 0 ? '+' : '-' }} {{ $currency }}{{ money(Math.abs(num(order.round_off))) }}</span>
+                                </div>
                                 <div class="money-row total">
                                     <span>{{ __('payable_total') }}</span>
                                     <span>{{ $currency }}{{ money(payableTotal) }}</span>

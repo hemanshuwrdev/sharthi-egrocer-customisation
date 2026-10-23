@@ -185,13 +185,8 @@
                         <div class="ui-grid ui-grid--1">
                             <div class="ui-field">
                                 <label class="ui-label">{{ __('status') }}<span class="ui-req">*</span></label>
-                                <b-form-radio-group v-model="deliveryBoys.status" :options="[
-                                    { text: __('registered'), 'value': 0 },
-                                    { text: __('active'), 'value': 1 },
-                                    { text: __('not_approved'), 'value': 2 },
-                                    { text: __('deactive'), 'value': 3 },
-                                    { text: __('block'), 'value': 4 },
-                                ]" buttons button-variant="outline-primary" class="ui-seg" required></b-form-radio-group>
+                                <b-form-radio-group v-model="deliveryBoys.status" :options="statusOptions"
+                                    buttons button-variant="outline-primary" class="ui-seg" required></b-form-radio-group>
                             </div>
                             <div class="ui-field" v-if="[2, 3, 4].includes(deliveryBoys.status)">
                                 <label class="ui-label" for="remark">{{ __('remark') }}<span class="ui-req">*</span></label>
@@ -288,6 +283,7 @@ import Multiselect from 'vue-multiselect';
 
 import Auth from '../../Auth.js';
 import TranslationHelper from '../../mixins/TranslationHelper.js';
+import { SIMPLE_DRIVER_STATUS } from './driverStatusConfig';
 
 export default {
     mixins: [TranslationHelper],
@@ -374,6 +370,21 @@ export default {
     computed: {
         isSellerRole() {
             return this.$roleSeller === this.login_user.role.name;
+        },
+        // What a distributor can set. SIMPLE_DRIVER_STATUS (driverStatusConfig.js) keeps it to Active / Deactive; flip it to
+        // false and Not-Approved / Block are back. "Registered" (0) is the state of a driver who has signed up and is
+        // waiting to be approved - not something to set on a driver who works for you (they cannot log in and drop out of
+        // the list). Whatever state the driver is in right now is always shown, so they can be moved out of it.
+        statusOptions() {
+            const all = [
+                { text: __('registered'), value: 0 },
+                { text: __('active'), value: 1 },
+                { text: __('not_approved'), value: 2 },
+                { text: __('deactive'), value: 3 },
+                { text: __('block'), value: 4 },
+            ];
+            const offered = SIMPLE_DRIVER_STATUS ? [1, 3] : [1, 2, 3, 4];
+            return all.filter(o => offered.includes(o.value) || o.value === this.deliveryBoys.status);
         },
     },
     created: function () {

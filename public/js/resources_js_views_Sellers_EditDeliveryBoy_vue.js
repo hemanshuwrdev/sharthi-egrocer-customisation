@@ -21,6 +21,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var vue_multiselect__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(vue_multiselect__WEBPACK_IMPORTED_MODULE_4__);
 /* harmony import */ var _Auth_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../Auth.js */ "./resources/js/Auth.js");
 /* harmony import */ var _mixins_TranslationHelper_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../../mixins/TranslationHelper.js */ "./resources/js/mixins/TranslationHelper.js");
+/* harmony import */ var _driverStatusConfig__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./driverStatusConfig */ "./resources/js/views/Sellers/driverStatusConfig.js");
 function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
 
@@ -309,11 +310,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 //
 //
-//
-//
-//
-//
-//
+
 
 
 
@@ -399,18 +396,45 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
   computed: {
     isSellerRole: function isSellerRole() {
       return this.$roleSeller === this.login_user.role.name;
+    },
+    // What a distributor can set. SIMPLE_DRIVER_STATUS (driverStatusConfig.js) keeps it to Active / Deactive; flip it to
+    // false and Not-Approved / Block are back. "Registered" (0) is the state of a driver who has signed up and is
+    // waiting to be approved - not something to set on a driver who works for you (they cannot log in and drop out of
+    // the list). Whatever state the driver is in right now is always shown, so they can be moved out of it.
+    statusOptions: function statusOptions() {
+      var _this = this;
+      var all = [{
+        text: __('registered'),
+        value: 0
+      }, {
+        text: __('active'),
+        value: 1
+      }, {
+        text: __('not_approved'),
+        value: 2
+      }, {
+        text: __('deactive'),
+        value: 3
+      }, {
+        text: __('block'),
+        value: 4
+      }];
+      var offered = _driverStatusConfig__WEBPACK_IMPORTED_MODULE_7__.SIMPLE_DRIVER_STATUS ? [1, 3] : [1, 2, 3, 4];
+      return all.filter(function (o) {
+        return offered.includes(o.value) || o.value === _this.deliveryBoys.status;
+      });
     }
   },
   created: function created() {
-    var _this = this;
+    var _this2 = this;
     this.id = this.$route.params.id;
     if (this.$roleDeliveryBoy === this.login_user.role.name) {
       this.id = this.login_user.delivery_boy.id;
     }
     this.fetchLanguages().then(function () {
-      if (_this.id) {
-        _this.deliveryBoys.id = _this.id;
-        _this.getDeliveryBoy();
+      if (_this2.id) {
+        _this2.deliveryBoys.id = _this2.id;
+        _this2.getDeliveryBoy();
       }
     });
     this.getCities();
@@ -429,19 +453,19 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       }
     },
     getCountries: function getCountries() {
-      var _this2 = this;
+      var _this3 = this;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/countries').then(function (response) {
-        _this2.countries = response.data.data || [];
-        if (!_this2.countries.some(function (c) {
-          return c.dial_code === _this2.deliveryBoys.country_code;
+        _this3.countries = response.data.data || [];
+        if (!_this3.countries.some(function (c) {
+          return c.dial_code === _this3.deliveryBoys.country_code;
         })) {
-          var india = _this2.countries.find(function (c) {
+          var india = _this3.countries.find(function (c) {
             return c.dial_code === '+91';
           });
-          if (india) _this2.deliveryBoys.country_code = india.dial_code;
+          if (india) _this3.deliveryBoys.country_code = india.dial_code;
         }
       })["catch"](function () {
-        _this2.countries = [];
+        _this3.countries = [];
       });
     },
     // Get the currently active language based on activeLanguageTab
@@ -458,30 +482,30 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       return orderedLangs[this.activeLanguageTab] || null;
     },
     fetchLanguages: function fetchLanguages() {
-      var _this3 = this;
+      var _this4 = this;
       return axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/active_languages').then(function (res) {
         var langs = res.data.data;
-        _this3.languages = [];
-        _this3.translations = {};
-        _this3.languages = langs;
-        _this3.languagesKey++;
+        _this4.languages = [];
+        _this4.translations = {};
+        _this4.languages = langs;
+        _this4.languagesKey++;
         var defaultLang = langs.find(function (l) {
           return l.is_default == 1;
         });
         if (!defaultLang) {
-          _this3.showError('No default language configured.');
+          _this4.showError('No default language configured.');
           return;
         }
-        _this3.defaultLanguage = defaultLang;
-        _this3.defaultLanguageId = defaultLang ? defaultLang.id : null;
-        _this3.currentLanguage = defaultLang.id;
+        _this4.defaultLanguage = defaultLang;
+        _this4.defaultLanguageId = defaultLang ? defaultLang.id : null;
+        _this4.currentLanguage = defaultLang.id;
         // Set activeLanguageTab to default language index
-        _this3.activeLanguageTab = langs.findIndex(function (l) {
+        _this4.activeLanguageTab = langs.findIndex(function (l) {
           return l.id === defaultLang.id;
         });
-        _this3.deliveryBoys.language_id = defaultLang.id;
+        _this4.deliveryBoys.language_id = defaultLang.id;
         langs.forEach(function (lang) {
-          _this3.$set(_this3.translations, lang.id, {
+          _this4.$set(_this4.translations, lang.id, {
             name: '',
             address: '',
             other_payment_information: ''
@@ -551,14 +575,14 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
     // Distributor adding a new driver: if the mobile number already belongs to a driver (added by another
     // distributor), offer to link that driver instead. Returns true when the confirmation was opened.
     lookupExistingDriver: function lookupExistingDriver() {
-      var _this4 = this;
+      var _this5 = this;
       return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
         var res, data;
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                if (!(!_this4.isSellerRole || _this4.deliveryBoys.id || !_this4.deliveryBoys.mobile)) {
+                if (!(!_this5.isSellerRole || _this5.deliveryBoys.id || !_this5.deliveryBoys.mobile)) {
                   _context.next = 2;
                   break;
                 }
@@ -566,8 +590,8 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
               case 2:
                 _context.prev = 2;
                 _context.next = 5;
-                return axios__WEBPACK_IMPORTED_MODULE_2___default().post(_this4.$apiUrl + '/seller/delivery_boys/lookup', {
-                  mobile: String(_this4.deliveryBoys.mobile)
+                return axios__WEBPACK_IMPORTED_MODULE_2___default().post(_this5.$apiUrl + '/seller/delivery_boys/lookup', {
+                  mobile: String(_this5.deliveryBoys.mobile)
                 });
               case 5:
                 res = _context.sent;
@@ -578,8 +602,8 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                 }
                 return _context.abrupt("return", false);
               case 9:
-                _this4.existingDriver = data;
-                _this4.showExistingDriverModal = true;
+                _this5.existingDriver = data;
+                _this5.showExistingDriverModal = true;
                 return _context.abrupt("return", true);
               case 14:
                 _context.prev = 14;
@@ -602,18 +626,18 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
     },
     confirmLinkDriver: function confirmLinkDriver() {
-      var _this5 = this;
+      var _this6 = this;
       return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee2() {
         var res, _res$data, _error$response, _error$response$data;
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                _this5.isLinkingDriver = true;
+                _this6.isLinkingDriver = true;
                 _context2.prev = 1;
                 _context2.next = 4;
-                return axios__WEBPACK_IMPORTED_MODULE_2___default().post(_this5.$apiUrl + '/seller/delivery_boys/link', {
-                  mobile: String(_this5.deliveryBoys.mobile)
+                return axios__WEBPACK_IMPORTED_MODULE_2___default().post(_this6.$apiUrl + '/seller/delivery_boys/link', {
+                  mobile: String(_this6.deliveryBoys.mobile)
                 });
               case 4:
                 res = _context2.sent;
@@ -623,9 +647,9 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                 }
                 throw new Error(((_res$data = res.data) === null || _res$data === void 0 ? void 0 : _res$data.message) || __('something_went_wrong'));
               case 7:
-                _this5.showExistingDriverModal = false;
-                _this5.showMessage('success', __('driver_added_successfully'));
-                _this5.$router.push({
+                _this6.showExistingDriverModal = false;
+                _this6.showMessage('success', __('driver_added_successfully'));
+                _this6.$router.push({
                   path: '/seller/delivery_boys'
                 });
                 _context2.next = 15;
@@ -633,10 +657,10 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
               case 12:
                 _context2.prev = 12;
                 _context2.t0 = _context2["catch"](1);
-                _this5.showError(_context2.t0.message || (_context2.t0 === null || _context2.t0 === void 0 ? void 0 : (_error$response = _context2.t0.response) === null || _error$response === void 0 ? void 0 : (_error$response$data = _error$response.data) === null || _error$response$data === void 0 ? void 0 : _error$response$data.message) || __('something_went_wrong'));
+                _this6.showError(_context2.t0.message || (_context2.t0 === null || _context2.t0 === void 0 ? void 0 : (_error$response = _context2.t0.response) === null || _error$response === void 0 ? void 0 : (_error$response$data = _error$response.data) === null || _error$response$data === void 0 ? void 0 : _error$response$data.message) || __('something_went_wrong'));
               case 15:
                 _context2.prev = 15;
-                _this5.isLinkingDriver = false;
+                _this6.isLinkingDriver = false;
                 return _context2.finish(15);
               case 18:
               case "end":
@@ -689,15 +713,15 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       }
     },
     getBonusSettings: function getBonusSettings() {
-      var _this6 = this;
+      var _this7 = this;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/delivery_boys/bonus_settings').then(function (response) {
         var data = response.data;
-        _this6.bonusSettings = data.data;
-        if (_this6.bonusSettings.delivery_boy_bonus_settings == 1) {
-          _this6.deliveryBoys.bonus_type = _this6.bonusSettings.delivery_boy_bonus_type;
-          _this6.deliveryBoys.bonus_percentage = _this6.bonusSettings.delivery_boy_bonus_percentage;
-          _this6.deliveryBoys.bonus_min_amount = _this6.bonusSettings.delivery_boy_bonus_min_amount;
-          _this6.deliveryBoys.bonus_max_amount = _this6.bonusSettings.delivery_boy_bonus_max_amount;
+        _this7.bonusSettings = data.data;
+        if (_this7.bonusSettings.delivery_boy_bonus_settings == 1) {
+          _this7.deliveryBoys.bonus_type = _this7.bonusSettings.delivery_boy_bonus_type;
+          _this7.deliveryBoys.bonus_percentage = _this7.bonusSettings.delivery_boy_bonus_percentage;
+          _this7.deliveryBoys.bonus_min_amount = _this7.bonusSettings.delivery_boy_bonus_min_amount;
+          _this7.deliveryBoys.bonus_max_amount = _this7.bonusSettings.delivery_boy_bonus_max_amount;
         }
       });
     },
@@ -724,17 +748,17 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       }
     },
     getCities: function getCities() {
-      var _this7 = this;
+      var _this8 = this;
       this.isLoading = true;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/cities').then(function (response) {
-        _this7.isLoading = false;
+        _this8.isLoading = false;
         var data = response.data;
         // API returns data.data = { total, cities }; ensure we always set an array for multiselect
         var raw = data.data;
         var list = raw && raw.cities ? raw.cities : raw;
-        _this7.cities = Array.isArray(list) ? list : list && _typeof(list) === 'object' ? Object.values(list) : [];
-        if (_this7.deliveryBoys.id && _this7.record) {
-          _this7.applyRecordCities();
+        _this8.cities = Array.isArray(list) ? list : list && _typeof(list) === 'object' ? Object.values(list) : [];
+        if (_this8.deliveryBoys.id && _this8.record) {
+          _this8.applyRecordCities();
         }
       });
     },
@@ -756,105 +780,105 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       this.setCityId();
     },
     getDeliveryBoy: function getDeliveryBoy() {
-      var _this8 = this;
+      var _this9 = this;
       axios__WEBPACK_IMPORTED_MODULE_2___default().get(this.$apiUrl + '/delivery_boys/edit/' + this.id).then(function (response) {
-        _this8.isLoading = false;
+        _this9.isLoading = false;
         var data = response.data;
         if (data.status === 1) {
-          var _this8$record, _this8$record2, _this8$record3, _this8$record4, _this8$record5, _this8$record6, _this8$record7, _this8$record8, _this8$record9, _this8$record10, _this8$record11, _this8$record12, _this8$record13;
-          _this8.record = data.data;
-          _this8.translations = {};
-          if (!_this8.languages.length) return;
+          var _this9$record, _this9$record2, _this9$record3, _this9$record4, _this9$record5, _this9$record6, _this9$record7, _this9$record8, _this9$record9, _this9$record10, _this9$record11, _this9$record12, _this9$record13;
+          _this9.record = data.data;
+          _this9.translations = {};
+          if (!_this9.languages.length) return;
 
           // Helper: show empty string when value is null, undefined, or string "null"
           var emptyIfNull = function emptyIfNull(val) {
             return val != null && val !== "null" ? val : "";
           };
-          _this8.translations = {};
-          _this8.languages.forEach(function (lang) {
-            var _this8$record$transla;
-            var t = (_this8$record$transla = _this8.record.translations) === null || _this8$record$transla === void 0 ? void 0 : _this8$record$transla.find(function (tr) {
+          _this9.translations = {};
+          _this9.languages.forEach(function (lang) {
+            var _this9$record$transla;
+            var t = (_this9$record$transla = _this9.record.translations) === null || _this9$record$transla === void 0 ? void 0 : _this9$record$transla.find(function (tr) {
               return tr.language_id === lang.id;
             });
             if (lang.is_default) {
-              _this8.$set(_this8.translations, lang.id, {
-                name: emptyIfNull(t === null || t === void 0 ? void 0 : t.name) || emptyIfNull(_this8.record.name),
-                address: emptyIfNull(t === null || t === void 0 ? void 0 : t.address) || emptyIfNull(_this8.record.address),
-                other_payment_information: emptyIfNull(t === null || t === void 0 ? void 0 : t.other_payment_information) || emptyIfNull(_this8.record.other_payment_information)
+              _this9.$set(_this9.translations, lang.id, {
+                name: emptyIfNull(t === null || t === void 0 ? void 0 : t.name) || emptyIfNull(_this9.record.name),
+                address: emptyIfNull(t === null || t === void 0 ? void 0 : t.address) || emptyIfNull(_this9.record.address),
+                other_payment_information: emptyIfNull(t === null || t === void 0 ? void 0 : t.other_payment_information) || emptyIfNull(_this9.record.other_payment_information)
               });
             } else {
-              _this8.$set(_this8.translations, lang.id, {
+              _this9.$set(_this9.translations, lang.id, {
                 name: emptyIfNull(t === null || t === void 0 ? void 0 : t.name),
                 address: emptyIfNull(t === null || t === void 0 ? void 0 : t.address),
                 other_payment_information: emptyIfNull(t === null || t === void 0 ? void 0 : t.other_payment_information)
               });
             }
           });
-          _this8.deliveryBoys.id = _this8.record ? _this8.record.id : null;
-          _this8.deliveryBoys.admin_id = emptyIfNull((_this8$record = _this8.record) === null || _this8$record === void 0 ? void 0 : _this8$record.admin_id);
-          _this8.deliveryBoys.name = emptyIfNull((_this8$record2 = _this8.record) === null || _this8$record2 === void 0 ? void 0 : _this8$record2.name);
-          _this8.deliveryBoys.dob = emptyIfNull((_this8$record3 = _this8.record) === null || _this8$record3 === void 0 ? void 0 : _this8$record3.dob);
-          _this8.deliveryBoys.mobile = emptyIfNull((_this8$record4 = _this8.record) === null || _this8$record4 === void 0 ? void 0 : _this8$record4.mobile);
-          _this8.deliveryBoys.country_code = ((_this8$record5 = _this8.record) === null || _this8$record5 === void 0 ? void 0 : _this8$record5.country_code) || "+91";
-          _this8.deliveryBoys.license_no = emptyIfNull((_this8$record6 = _this8.record) === null || _this8$record6 === void 0 ? void 0 : _this8$record6.license_no);
-          _this8.deliveryBoys.email = (_this8$record7 = _this8.record) !== null && _this8$record7 !== void 0 && _this8$record7.admin ? _this8.record.admin.email || '' : '';
-          _this8.deliveryBoys.password = "";
-          _this8.deliveryBoys.confirm_password = "";
-          _this8.deliveryBoys.ifsc_code = emptyIfNull((_this8$record8 = _this8.record) === null || _this8$record8 === void 0 ? void 0 : _this8$record8.ifsc_code);
-          _this8.deliveryBoys.bank_name = emptyIfNull((_this8$record9 = _this8.record) === null || _this8$record9 === void 0 ? void 0 : _this8$record9.bank_name);
-          _this8.deliveryBoys.bank_account_number = emptyIfNull((_this8$record10 = _this8.record) === null || _this8$record10 === void 0 ? void 0 : _this8$record10.bank_account_number);
-          _this8.deliveryBoys.account_name = emptyIfNull((_this8$record11 = _this8.record) === null || _this8$record11 === void 0 ? void 0 : _this8$record11.account_name);
-          _this8.applyRecordCities();
-          _this8.deliveryBoys.address = emptyIfNull((_this8$record12 = _this8.record) === null || _this8$record12 === void 0 ? void 0 : _this8$record12.address);
-          _this8.deliveryBoys.other_payment_information = emptyIfNull((_this8$record13 = _this8.record) === null || _this8$record13 === void 0 ? void 0 : _this8$record13.other_payment_information);
-          _this8.deliveryBoys.driving_license = "";
-          _this8.deliveryBoys.driving_license_url = _this8.record ? _this8.$storageUrl + _this8.record.driving_license : "";
-          _this8.deliveryBoys.national_identity_card = "";
-          _this8.deliveryBoys.national_identity_card_url = _this8.record ? _this8.$storageUrl + _this8.record.national_identity_card : "";
-          _this8.deliveryBoys.status = _this8.record ? _this8.record.status : 0;
-          _this8.deliveryBoys.remark = _this8.record ? _this8.record.remark : "";
-          _this8.deliveryBoys.bonus_type = _this8.record ? _this8.record.bonus_type : 0;
-          _this8.deliveryBoys.bonus_percentage = _this8.record ? _this8.record.bonus_percentage : 0;
-          _this8.deliveryBoys.bonus_min_amount = _this8.record ? _this8.record.bonus_min_amount : 0;
-          _this8.deliveryBoys.bonus_max_amount = _this8.record ? _this8.record.bonus_max_amount : 0;
+          _this9.deliveryBoys.id = _this9.record ? _this9.record.id : null;
+          _this9.deliveryBoys.admin_id = emptyIfNull((_this9$record = _this9.record) === null || _this9$record === void 0 ? void 0 : _this9$record.admin_id);
+          _this9.deliveryBoys.name = emptyIfNull((_this9$record2 = _this9.record) === null || _this9$record2 === void 0 ? void 0 : _this9$record2.name);
+          _this9.deliveryBoys.dob = emptyIfNull((_this9$record3 = _this9.record) === null || _this9$record3 === void 0 ? void 0 : _this9$record3.dob);
+          _this9.deliveryBoys.mobile = emptyIfNull((_this9$record4 = _this9.record) === null || _this9$record4 === void 0 ? void 0 : _this9$record4.mobile);
+          _this9.deliveryBoys.country_code = ((_this9$record5 = _this9.record) === null || _this9$record5 === void 0 ? void 0 : _this9$record5.country_code) || "+91";
+          _this9.deliveryBoys.license_no = emptyIfNull((_this9$record6 = _this9.record) === null || _this9$record6 === void 0 ? void 0 : _this9$record6.license_no);
+          _this9.deliveryBoys.email = (_this9$record7 = _this9.record) !== null && _this9$record7 !== void 0 && _this9$record7.admin ? _this9.record.admin.email || '' : '';
+          _this9.deliveryBoys.password = "";
+          _this9.deliveryBoys.confirm_password = "";
+          _this9.deliveryBoys.ifsc_code = emptyIfNull((_this9$record8 = _this9.record) === null || _this9$record8 === void 0 ? void 0 : _this9$record8.ifsc_code);
+          _this9.deliveryBoys.bank_name = emptyIfNull((_this9$record9 = _this9.record) === null || _this9$record9 === void 0 ? void 0 : _this9$record9.bank_name);
+          _this9.deliveryBoys.bank_account_number = emptyIfNull((_this9$record10 = _this9.record) === null || _this9$record10 === void 0 ? void 0 : _this9$record10.bank_account_number);
+          _this9.deliveryBoys.account_name = emptyIfNull((_this9$record11 = _this9.record) === null || _this9$record11 === void 0 ? void 0 : _this9$record11.account_name);
+          _this9.applyRecordCities();
+          _this9.deliveryBoys.address = emptyIfNull((_this9$record12 = _this9.record) === null || _this9$record12 === void 0 ? void 0 : _this9$record12.address);
+          _this9.deliveryBoys.other_payment_information = emptyIfNull((_this9$record13 = _this9.record) === null || _this9$record13 === void 0 ? void 0 : _this9$record13.other_payment_information);
+          _this9.deliveryBoys.driving_license = "";
+          _this9.deliveryBoys.driving_license_url = _this9.record ? _this9.$storageUrl + _this9.record.driving_license : "";
+          _this9.deliveryBoys.national_identity_card = "";
+          _this9.deliveryBoys.national_identity_card_url = _this9.record ? _this9.$storageUrl + _this9.record.national_identity_card : "";
+          _this9.deliveryBoys.status = _this9.record ? _this9.record.status : 0;
+          _this9.deliveryBoys.remark = _this9.record ? _this9.record.remark : "";
+          _this9.deliveryBoys.bonus_type = _this9.record ? _this9.record.bonus_type : 0;
+          _this9.deliveryBoys.bonus_percentage = _this9.record ? _this9.record.bonus_percentage : 0;
+          _this9.deliveryBoys.bonus_min_amount = _this9.record ? _this9.record.bonus_min_amount : 0;
+          _this9.deliveryBoys.bonus_max_amount = _this9.record ? _this9.record.bonus_max_amount : 0;
         } else {
-          _this8.showError(data.message);
+          _this9.showError(data.message);
           setTimeout(function () {
-            _this8.$router.back();
+            _this9.$router.back();
           }, 1000);
         }
       })["catch"](function (error) {
         var _error$request;
-        _this8.isLoading = false;
+        _this9.isLoading = false;
         if ((_error$request = error.request) !== null && _error$request !== void 0 && _error$request.statusText) {
-          _this8.showError(error.request.statusText);
+          _this9.showError(error.request.statusText);
         } else if (error.message) {
-          _this8.showError(error.message);
+          _this9.showError(error.message);
         } else {
-          _this8.showError("Something went wrong!");
+          _this9.showError("Something went wrong!");
         }
       });
     },
     saveRecord: function saveRecord() {
-      var _this9 = this;
+      var _this10 = this;
       return _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee3() {
         var _defaultTrans$name;
-        var defaultLang, defaultTrans, switchToDefault, _defaultTrans$address, _defaultTrans$other_p, _this9$deliveryBoys$d, _this9$deliveryBoys$r, isEdit, fd, _this9$deliveryBoys$p, _this9$deliveryBoys$c, _this9$deliveryBoys$c2, url, response, _response$data, _response$data$data, _iterator, _step, _t$name, _t$address, _t$other_payment_info, lang, t, tfd, tRes, _tRes$data, _error$response2, _error$response2$data;
+        var defaultLang, defaultTrans, switchToDefault, _defaultTrans$address, _defaultTrans$other_p, _this10$deliveryBoys$, _this10$deliveryBoys$2, isEdit, fd, _this10$deliveryBoys$3, _this10$deliveryBoys$4, _this10$deliveryBoys$5, url, response, _response$data, _response$data$data, _iterator, _step, _t$name, _t$address, _t$other_payment_info, lang, t, tfd, tRes, _tRes$data, _error$response2, _error$response2$data;
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                if (_this9.defaultLanguage) {
+                if (_this10.defaultLanguage) {
                   _context3.next = 3;
                   break;
                 }
-                _this9.showError(__('default_language_not_found') || 'Default language not loaded.');
+                _this10.showError(__('default_language_not_found') || 'Default language not loaded.');
                 return _context3.abrupt("return");
               case 3:
-                defaultLang = _this9.defaultLanguage;
-                defaultTrans = _this9.translations[defaultLang.id];
+                defaultLang = _this10.defaultLanguage;
+                defaultTrans = _this10.translations[defaultLang.id];
                 switchToDefault = function switchToDefault() {
-                  _this9.activeLanguageTab = _this9.languages.findIndex(function (l) {
+                  _this10.activeLanguageTab = _this10.languages.findIndex(function (l) {
                     return l.id === defaultLang.id;
                   });
                 };
@@ -862,28 +886,28 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                   _context3.next = 10;
                   break;
                 }
-                _this9.showError(__('please_fill_name_in_default_language') || 'Please fill the name in the default language.');
+                _this10.showError(__('please_fill_name_in_default_language') || 'Please fill the name in the default language.');
                 switchToDefault();
                 return _context3.abrupt("return");
               case 10:
-                if (_this9.deliveryBoys.mobile) {
+                if (_this10.deliveryBoys.mobile) {
                   _context3.next = 14;
                   break;
                 }
-                _this9.showError(__('please_fill_mobile') || 'Please fill the mobile number.');
+                _this10.showError(__('please_fill_mobile') || 'Please fill the mobile number.');
                 switchToDefault();
                 return _context3.abrupt("return");
               case 14:
-                if (!(!_this9.isSellerRole && !_this9.deliveryBoys.city_id)) {
+                if (!(!_this10.isSellerRole && !_this10.deliveryBoys.city_id)) {
                   _context3.next = 18;
                   break;
                 }
-                _this9.showError(__('please_select_city') || 'Please select a city.');
+                _this10.showError(__('please_select_city') || 'Please select a city.');
                 switchToDefault();
                 return _context3.abrupt("return");
               case 18:
                 _context3.next = 20;
-                return _this9.lookupExistingDriver();
+                return _this10.lookupExistingDriver();
               case 20:
                 if (!_context3.sent) {
                   _context3.next = 22;
@@ -892,12 +916,12 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                 return _context3.abrupt("return");
               case 22:
                 // All client-side checks passed — start loading
-                _this9.isLoading = true;
+                _this10.isLoading = true;
                 _context3.prev = 23;
-                isEdit = !!_this9.deliveryBoys.id;
+                isEdit = !!_this10.deliveryBoys.id;
                 fd = new FormData();
                 if (isEdit) {
-                  fd.append('id', _this9.deliveryBoys.id);
+                  fd.append('id', _this10.deliveryBoys.id);
                 }
 
                 // default language
@@ -907,45 +931,45 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                 fd.append('other_payment_information', (_defaultTrans$other_p = defaultTrans.other_payment_information) !== null && _defaultTrans$other_p !== void 0 ? _defaultTrans$other_p : '');
 
                 // main fields
-                fd.append('dob', (_this9$deliveryBoys$d = _this9.deliveryBoys.dob) !== null && _this9$deliveryBoys$d !== void 0 ? _this9$deliveryBoys$d : '');
-                fd.append('mobile', _this9.deliveryBoys.mobile);
-                fd.append('country_code', _this9.deliveryBoys.country_code);
-                fd.append('license_no', _this9.deliveryBoys.license_no);
-                fd.append('email', _this9.deliveryBoys.email);
-                fd.append('ifsc_code', _this9.deliveryBoys.ifsc_code);
-                fd.append('bank_name', _this9.deliveryBoys.bank_name);
-                fd.append('bank_account_number', _this9.deliveryBoys.bank_account_number);
-                fd.append('account_name', _this9.deliveryBoys.account_name);
-                if (!_this9.isSellerRole) {
-                  fd.append('city_id', _this9.deliveryBoys.city_id);
-                  (_this9.deliveryBoys.city_ids || []).forEach(function (id, i) {
+                fd.append('dob', (_this10$deliveryBoys$ = _this10.deliveryBoys.dob) !== null && _this10$deliveryBoys$ !== void 0 ? _this10$deliveryBoys$ : '');
+                fd.append('mobile', _this10.deliveryBoys.mobile);
+                fd.append('country_code', _this10.deliveryBoys.country_code);
+                fd.append('license_no', _this10.deliveryBoys.license_no);
+                fd.append('email', _this10.deliveryBoys.email);
+                fd.append('ifsc_code', _this10.deliveryBoys.ifsc_code);
+                fd.append('bank_name', _this10.deliveryBoys.bank_name);
+                fd.append('bank_account_number', _this10.deliveryBoys.bank_account_number);
+                fd.append('account_name', _this10.deliveryBoys.account_name);
+                if (!_this10.isSellerRole) {
+                  fd.append('city_id', _this10.deliveryBoys.city_id);
+                  (_this10.deliveryBoys.city_ids || []).forEach(function (id, i) {
                     return fd.append('city_ids[' + i + ']', id);
                   });
                 }
-                fd.append('status', _this9.deliveryBoys.status);
-                fd.append('remark', (_this9$deliveryBoys$r = _this9.deliveryBoys.remark) !== null && _this9$deliveryBoys$r !== void 0 ? _this9$deliveryBoys$r : '');
-                fd.append('bonus_type', _this9.deliveryBoys.bonus_type || 0);
-                fd.append('bonus_percentage', _this9.deliveryBoys.bonus_percentage || 0);
-                fd.append('bonus_min_amount', _this9.deliveryBoys.bonus_min_amount || 0);
-                fd.append('bonus_max_amount', _this9.deliveryBoys.bonus_max_amount || 0);
+                fd.append('status', _this10.deliveryBoys.status);
+                fd.append('remark', (_this10$deliveryBoys$2 = _this10.deliveryBoys.remark) !== null && _this10$deliveryBoys$2 !== void 0 ? _this10$deliveryBoys$2 : '');
+                fd.append('bonus_type', _this10.deliveryBoys.bonus_type || 0);
+                fd.append('bonus_percentage', _this10.deliveryBoys.bonus_percentage || 0);
+                fd.append('bonus_min_amount', _this10.deliveryBoys.bonus_min_amount || 0);
+                fd.append('bonus_max_amount', _this10.deliveryBoys.bonus_max_amount || 0);
 
                 // password: required on CREATE; on EDIT send only when filled
                 if (!isEdit) {
-                  fd.append('password', (_this9$deliveryBoys$p = _this9.deliveryBoys.password) !== null && _this9$deliveryBoys$p !== void 0 ? _this9$deliveryBoys$p : '');
-                  fd.append('confirm_password', (_this9$deliveryBoys$c = _this9.deliveryBoys.confirm_password) !== null && _this9$deliveryBoys$c !== void 0 ? _this9$deliveryBoys$c : '');
-                } else if (_this9.deliveryBoys.password) {
-                  fd.append('password', _this9.deliveryBoys.password);
-                  fd.append('confirm_password', (_this9$deliveryBoys$c2 = _this9.deliveryBoys.confirm_password) !== null && _this9$deliveryBoys$c2 !== void 0 ? _this9$deliveryBoys$c2 : '');
+                  fd.append('password', (_this10$deliveryBoys$3 = _this10.deliveryBoys.password) !== null && _this10$deliveryBoys$3 !== void 0 ? _this10$deliveryBoys$3 : '');
+                  fd.append('confirm_password', (_this10$deliveryBoys$4 = _this10.deliveryBoys.confirm_password) !== null && _this10$deliveryBoys$4 !== void 0 ? _this10$deliveryBoys$4 : '');
+                } else if (_this10.deliveryBoys.password) {
+                  fd.append('password', _this10.deliveryBoys.password);
+                  fd.append('confirm_password', (_this10$deliveryBoys$5 = _this10.deliveryBoys.confirm_password) !== null && _this10$deliveryBoys$5 !== void 0 ? _this10$deliveryBoys$5 : '');
                 }
 
                 // files
-                if (_this9.deliveryBoys.driving_license instanceof File) {
-                  fd.append('driving_license', _this9.deliveryBoys.driving_license);
+                if (_this10.deliveryBoys.driving_license instanceof File) {
+                  fd.append('driving_license', _this10.deliveryBoys.driving_license);
                 }
-                if (_this9.deliveryBoys.national_identity_card instanceof File) {
-                  fd.append('national_identity_card', _this9.deliveryBoys.national_identity_card);
+                if (_this10.deliveryBoys.national_identity_card instanceof File) {
+                  fd.append('national_identity_card', _this10.deliveryBoys.national_identity_card);
                 }
-                url = isEdit ? _this9.$apiUrl + '/delivery_boys/update' : _this9.$apiUrl + '/delivery_boys/save';
+                url = isEdit ? _this10.$apiUrl + '/delivery_boys/update' : _this10.$apiUrl + '/delivery_boys/save';
                 _context3.next = 53;
                 return axios__WEBPACK_IMPORTED_MODULE_2___default().post(url, fd);
               case 53:
@@ -957,11 +981,11 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                 throw new Error(((_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message) || __('something_went_wrong'));
               case 56:
                 if (!isEdit) {
-                  _this9.deliveryBoys.id = (_response$data$data = response.data.data) === null || _response$data$data === void 0 ? void 0 : _response$data$data.id;
+                  _this10.deliveryBoys.id = (_response$data$data = response.data.data) === null || _response$data$data === void 0 ? void 0 : _response$data$data.id;
                 }
 
                 // Save non-default language translations
-                _iterator = _createForOfIteratorHelper(_this9.languages);
+                _iterator = _createForOfIteratorHelper(_this10.languages);
                 _context3.prev = 58;
                 _iterator.s();
               case 60:
@@ -976,7 +1000,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                 }
                 return _context3.abrupt("continue", 78);
               case 64:
-                t = _this9.translations[lang.id];
+                t = _this10.translations[lang.id];
                 if (!(!t || !t.name && !t.address && !t.other_payment_information)) {
                   _context3.next = 67;
                   break;
@@ -984,13 +1008,13 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                 return _context3.abrupt("continue", 78);
               case 67:
                 tfd = new FormData();
-                tfd.append('id', _this9.deliveryBoys.id);
+                tfd.append('id', _this10.deliveryBoys.id);
                 tfd.append('language_id', lang.id);
                 tfd.append('name', (_t$name = t.name) !== null && _t$name !== void 0 ? _t$name : '');
                 tfd.append('address', (_t$address = t.address) !== null && _t$address !== void 0 ? _t$address : '');
                 tfd.append('other_payment_information', (_t$other_payment_info = t.other_payment_information) !== null && _t$other_payment_info !== void 0 ? _t$other_payment_info : '');
                 _context3.next = 75;
-                return axios__WEBPACK_IMPORTED_MODULE_2___default().post(_this9.$apiUrl + '/delivery_boys/update', tfd);
+                return axios__WEBPACK_IMPORTED_MODULE_2___default().post(_this10.$apiUrl + '/delivery_boys/update', tfd);
               case 75:
                 tRes = _context3.sent;
                 if (!(!tRes.data || tRes.data.status !== 1)) {
@@ -1013,14 +1037,14 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
                 _iterator.f();
                 return _context3.finish(85);
               case 88:
-                _this9.showMessage('success', isEdit ? __('delivery_boy_updated_successfully') : __('delivery_boy_saved_successfully'));
-                if (!_this9.login_user || _this9.login_user.role_id !== 4) {
-                  if (_this9.$route.path.includes('/seller')) {
-                    _this9.$router.push({
+                _this10.showMessage('success', isEdit ? __('delivery_boy_updated_successfully') : __('delivery_boy_saved_successfully'));
+                if (!_this10.login_user || _this10.login_user.role_id !== 4) {
+                  if (_this10.$route.path.includes('/seller')) {
+                    _this10.$router.push({
                       path: '/seller/delivery_boys'
                     });
                   } else {
-                    _this9.$router.push({
+                    _this10.$router.push({
                       path: '/delivery_boys'
                     });
                   }
@@ -1030,10 +1054,10 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
               case 92:
                 _context3.prev = 92;
                 _context3.t1 = _context3["catch"](23);
-                _this9.showError(_context3.t1.message || (_context3.t1 === null || _context3.t1 === void 0 ? void 0 : (_error$response2 = _context3.t1.response) === null || _error$response2 === void 0 ? void 0 : (_error$response2$data = _error$response2.data) === null || _error$response2$data === void 0 ? void 0 : _error$response2$data.message) || __('something_went_wrong') || 'Something went wrong.');
+                _this10.showError(_context3.t1.message || (_context3.t1 === null || _context3.t1 === void 0 ? void 0 : (_error$response2 = _context3.t1.response) === null || _error$response2 === void 0 ? void 0 : (_error$response2$data = _error$response2.data) === null || _error$response2$data === void 0 ? void 0 : _error$response2$data.message) || __('something_went_wrong') || 'Something went wrong.');
               case 95:
                 _context3.prev = 95;
-                _this9.isLoading = false;
+                _this10.isLoading = false;
                 return _context3.finish(95);
               case 98:
               case "end":
@@ -1348,6 +1372,30 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 
 /***/ }),
 
+/***/ "./resources/js/views/Sellers/driverStatusConfig.js":
+/*!**********************************************************!*\
+  !*** ./resources/js/views/Sellers/driverStatusConfig.js ***!
+  \**********************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   SIMPLE_DRIVER_STATUS: () => (/* binding */ SIMPLE_DRIVER_STATUS)
+/* harmony export */ });
+// Which driver statuses the DISTRIBUTOR panel offers (driver edit form status buttons + Drivers list chips).
+//
+//   true  = just Active / Deactive. Active can use the app; Deactive cannot log in and is logged out of the app
+//           (the server already does that for every status other than Active).
+//   false = the full set again: Not-Approved and Blocked come back in the form and as chips.
+//
+// Display only: the server accepts every status either way, and a driver already in another state (Registered,
+// Not-Approved, Blocked, Removed) is still shown with that state, so nobody disappears from the panel.
+// To bring the other statuses back, change this one word to false and rebuild (npm run dev).
+var SIMPLE_DRIVER_STATUS = true;
+
+/***/ }),
+
 /***/ "./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Sellers/EditDeliveryBoy.vue?vue&type=style&index=0&id=9805bbb8&scoped=true&lang=css":
 /*!********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/views/Sellers/EditDeliveryBoy.vue?vue&type=style&index=0&id=9805bbb8&scoped=true&lang=css ***!
@@ -1365,7 +1413,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n/* All colours come from the --ui-* tokens that modern.css defines on .ui-modern (the seller layout). */\n.ui-span-all[data-v-9805bbb8] { grid-column: 1 / -1;\n}\n\n/* mobile number: country-code dropdown + number as one control */\n.ui-phone[data-v-9805bbb8] {\n    display: flex; align-items: stretch; flex-wrap: nowrap; height: 44px; border-radius: 12px; border: 1px solid var(--ui-border); background: var(--ui-soft);\n    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;\n}\n.ui-phone[data-v-9805bbb8]:focus-within { background: var(--ui-card); border-color: var(--ui-primary); box-shadow: 0 0 0 3px var(--ui-primary-soft);\n}\n.ui-phone__code[data-v-9805bbb8] { position: relative; flex: 0 0 auto; width: 84px; border-right: 1px solid var(--ui-border);\n}\n.ui-phone__toggle[data-v-9805bbb8] {\n    width: 100%; height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 0 12px; border: 0;\n    border-radius: 11px 0 0 11px; background: transparent; color: var(--ui-text); font-size: 14px; font-weight: 600; cursor: pointer;\n}\n.ui-phone__caret[data-v-9805bbb8] { width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--ui-muted);\n}\n.ui-phone__menu[data-v-9805bbb8] {\n    position: absolute; top: 100%; left: 0; z-index: 1050; width: 130px; max-height: 220px; overflow-y: auto; margin: 6px 0 0; padding: 6px;\n    list-style: none; background: var(--ui-card); border: 1px solid var(--ui-border); border-radius: 12px; box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);\n}\n.ui-phone__menu li[data-v-9805bbb8] { padding: 7px 10px; border-radius: 8px; font-size: 14px; color: var(--ui-text); cursor: pointer;\n}\n.ui-phone__menu li[data-v-9805bbb8]:hover { background: var(--ui-soft);\n}\n.ui-phone__input[data-v-9805bbb8] {\n    flex: 1 1 auto; min-width: 0; height: 100%; padding: 0 14px; border: 0; border-radius: 0 11px 11px 0; background: transparent;\n    color: var(--ui-text); font-size: 14px; outline: none; box-shadow: none;\n}\n.ui-phone__input[data-v-9805bbb8]::-moz-placeholder { color: var(--ui-muted);\n}\n.ui-phone__input[data-v-9805bbb8]::placeholder { color: var(--ui-muted);\n}\n\n/* \"driver already exists\" confirmation modal */\n.driver-link[data-v-9805bbb8] { color: var(--ui-text);\n}\n.driver-link__head[data-v-9805bbb8] { display: flex; align-items: flex-start; gap: 14px; padding: 22px 22px 14px;\n}\n.driver-link__title[data-v-9805bbb8] { flex: 1 1 auto; min-width: 0;\n}\n.driver-link__title h5[data-v-9805bbb8] { margin: 0 0 4px; font-size: 18px; font-weight: 800; letter-spacing: -0.01em; color: var(--ui-text);\n}\n.driver-link__title p[data-v-9805bbb8] { margin: 0; font-size: 14px; line-height: 1.45; color: var(--ui-muted);\n}\n.driver-link__close[data-v-9805bbb8] {\n    flex-shrink: 0; width: 32px; height: 32px; margin: -4px -6px 0 0; border: 0; border-radius: 10px; background: transparent;\n    font-size: 24px; line-height: 1; color: var(--ui-muted); cursor: pointer;\n}\n.driver-link__close[data-v-9805bbb8]:hover { background: var(--ui-soft); color: var(--ui-text);\n}\n.driver-link__card[data-v-9805bbb8] {\n    margin: 4px 22px 0; padding: 16px; border: 1px solid var(--ui-border); border-radius: 14px; background: var(--ui-soft);\n}\n.driver-link .driver-link__avatar[data-v-9805bbb8] { width: 48px; height: 48px; font-size: 16px;\n}\n.driver-link .driver-link__card .ui-person[data-v-9805bbb8] { min-width: 0;\n}\n.driver-link__who[data-v-9805bbb8] { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0;\n}\n.driver-link__who strong[data-v-9805bbb8] { font-size: 16px; font-weight: 700; color: var(--ui-text);\n}\n.driver-link .driver-link__status[data-v-9805bbb8] { font-size: 11.5px; padding: 3px 10px;\n}\n.driver-link__details[data-v-9805bbb8] { list-style: none; margin: 14px 0 0; padding: 12px 0 0; border-top: 1px dashed var(--ui-border); display: grid; gap: 8px;\n}\n.driver-link__details li[data-v-9805bbb8] { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--ui-text);\n}\n.driver-link__details li i[data-v-9805bbb8] { width: 16px; margin-top: 3px; text-align: center; color: var(--ui-muted);\n}\n.driver-link__notice[data-v-9805bbb8] {\n    display: flex; align-items: flex-start; gap: 10px; margin: 14px 22px 0; padding: 10px 14px; border-radius: 12px;\n    font-size: 13.5px; font-weight: 600; background: var(--tone-bg); color: var(--tone-fg);\n}\n.driver-link__notice i[data-v-9805bbb8] { margin-top: 2px;\n}\n.driver-link__actions[data-v-9805bbb8] { display: flex; justify-content: flex-end; gap: 10px; padding: 18px 22px 22px;\n}\n.driver-link__actions .btn[data-v-9805bbb8] { min-width: 110px; border-radius: 10px; font-weight: 600;\n}\n@media (max-width: 575px) {\n.driver-link__actions[data-v-9805bbb8] { flex-direction: column-reverse;\n}\n.driver-link__actions .btn[data-v-9805bbb8] { width: 100%;\n}\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n/* All colours come from the --ui-* tokens that modern.css defines on .ui-modern (the seller layout). */\n.ui-span-all[data-v-9805bbb8] { grid-column: 1 / -1;\n}\n\n/* mobile number: country-code dropdown + number as one control */\n.ui-phone[data-v-9805bbb8] {\n    display: flex; align-items: stretch; flex-wrap: nowrap; height: 44px; border-radius: 12px; border: 1px solid var(--ui-border); background: var(--ui-soft);\n    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;\n}\n.ui-phone[data-v-9805bbb8]:focus-within { background: var(--ui-card); border-color: var(--ui-primary); box-shadow: 0 0 0 3px var(--ui-primary-soft);\n}\n.ui-phone__code[data-v-9805bbb8] { position: relative; flex: 0 0 auto; width: 84px; border-right: 1px solid var(--ui-border);\n}\n.ui-phone__toggle[data-v-9805bbb8] {\n    width: 100%; height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 0 12px; border: 0;\n    border-radius: 11px 0 0 11px; background: transparent; color: var(--ui-text); font-size: 14px; font-weight: 600; cursor: pointer;\n}\n.ui-phone__caret[data-v-9805bbb8] { width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--ui-muted);\n}\n.ui-phone__menu[data-v-9805bbb8] {\n    position: absolute; top: 100%; left: 0; z-index: 1050; width: 130px; max-height: 220px; overflow-y: auto; margin: 6px 0 0; padding: 6px;\n    list-style: none; background: var(--ui-card); border: 1px solid var(--ui-border); border-radius: 12px; box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);\n}\n.ui-phone__menu li[data-v-9805bbb8] { padding: 7px 10px; border-radius: 8px; font-size: 14px; color: var(--ui-text); cursor: pointer;\n}\n.ui-phone__menu li[data-v-9805bbb8]:hover { background: var(--ui-soft);\n}\n.ui-phone__input[data-v-9805bbb8] {\n    flex: 1 1 auto; min-width: 0; height: 100%; padding: 0 14px; border: 0; border-radius: 0 11px 11px 0; background: transparent;\n    color: var(--ui-text); font-size: 14px; outline: none; box-shadow: none;\n}\n.ui-phone__input[data-v-9805bbb8]::-moz-placeholder { color: var(--ui-muted);\n}\n.ui-phone__input[data-v-9805bbb8]::placeholder { color: var(--ui-muted);\n}\n\n/* \"driver already exists\" confirmation modal */\n.driver-link[data-v-9805bbb8] { color: var(--ui-text);\n}\n.driver-link__head[data-v-9805bbb8] { display: flex; align-items: flex-start; gap: 14px; padding: 22px 22px 14px;\n}\n.driver-link__title[data-v-9805bbb8] { flex: 1 1 auto; min-width: 0;\n}\n.driver-link__title h5[data-v-9805bbb8] { margin: 0 0 4px; font-size: 18px; font-weight: 800; letter-spacing: -0.01em; color: var(--ui-text);\n}\n.driver-link__title p[data-v-9805bbb8] { margin: 0; font-size: 14px; line-height: 1.45; color: var(--ui-muted);\n}\n.driver-link__close[data-v-9805bbb8] {\n    flex-shrink: 0; width: 32px; height: 32px; margin: -4px -6px 0 0; border: 0; border-radius: 10px; background: transparent;\n    font-size: 24px; line-height: 1; color: var(--ui-muted); cursor: pointer;\n}\n.driver-link__close[data-v-9805bbb8]:hover { background: var(--ui-soft); color: var(--ui-text);\n}\n.driver-link__card[data-v-9805bbb8] {\n    margin: 4px 22px 0; padding: 16px; border: 1px solid var(--ui-border); border-radius: 14px; background: var(--ui-soft);\n}\n.driver-link .driver-link__avatar[data-v-9805bbb8] { width: 48px; height: 48px; font-size: 16px;\n}\n.driver-link .driver-link__card .ui-person[data-v-9805bbb8] { min-width: 0;\n}\n.driver-link__who[data-v-9805bbb8] { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0;\n}\n.driver-link__who strong[data-v-9805bbb8] { font-size: 16px; font-weight: 700; color: var(--ui-text);\n}\n.driver-link .driver-link__status[data-v-9805bbb8] { font-size: 11.5px; padding: 3px 10px;\n}\n.driver-link__details[data-v-9805bbb8] { list-style: none; margin: 14px 0 0; padding: 12px 0 0; border-top: 1px dashed var(--ui-border); display: grid; gap: 8px;\n}\n.driver-link__details li[data-v-9805bbb8] { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--ui-text);\n}\n.driver-link__details li i[data-v-9805bbb8] { width: 16px; margin-top: 3px; text-align: center; color: var(--ui-muted);\n}\n.driver-link__notice[data-v-9805bbb8] {\n    display: flex; align-items: flex-start; gap: 10px; margin: 14px 22px 0; padding: 10px 14px; border-radius: 12px;\n    font-size: 13.5px; font-weight: 600; background: var(--tone-bg); color: var(--tone-fg);\n}\n.driver-link__notice i[data-v-9805bbb8] { margin-top: 2px;\n}\n.driver-link__actions[data-v-9805bbb8] { display: flex; justify-content: flex-end; gap: 10px; padding: 18px 22px 22px;\n}\n.driver-link__actions .btn[data-v-9805bbb8] { min-width: 110px; border-radius: 10px; font-weight: 600;\n}\n@media (max-width: 575px) {\n.driver-link__actions[data-v-9805bbb8] { flex-direction: column-reverse;\n}\n.driver-link__actions .btn[data-v-9805bbb8] { width: 100%;\n}\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -2496,16 +2544,7 @@ var render = function () {
                                 _c("b-form-radio-group", {
                                   staticClass: "ui-seg",
                                   attrs: {
-                                    options: [
-                                      { text: _vm.__("registered"), value: 0 },
-                                      { text: _vm.__("active"), value: 1 },
-                                      {
-                                        text: _vm.__("not_approved"),
-                                        value: 2,
-                                      },
-                                      { text: _vm.__("deactive"), value: 3 },
-                                      { text: _vm.__("block"), value: 4 },
-                                    ],
+                                    options: _vm.statusOptions,
                                     buttons: "",
                                     "button-variant": "outline-primary",
                                     required: "",

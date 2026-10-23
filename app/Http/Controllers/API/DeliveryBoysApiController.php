@@ -326,6 +326,18 @@ class DeliveryBoysApiController extends Controller
             return CommonHelper::responseError('delivery_boy_not_found');
         }
 
+        // "Registered" is a driver who signed up and is waiting for approval: they cannot log in and the distributor's
+        // driver list does not show them. A distributor must not move one of their own drivers into that state — it
+        // happened (the status radio offered it), and the driver simply vanished. The form no longer offers it; this
+        // stops an old cached copy of the page, or any other client, doing the same. A driver already Registered can
+        // still be saved (e.g. to set them Active), and the platform admin is not restricted.
+        if ($request->filled('status')
+            && (int) $request->status === DeliveryBoy::$statusRegistered
+            && (int) $deliveryBoy->status !== DeliveryBoy::$statusRegistered
+            && \App\Models\Seller::where('admin_id', auth()->id())->exists()) {
+            return CommonHelper::responseError('Registered is not a status a distributor can set. Please choose Active, Not-Approved, Deactive or Block.');
+        }
+
 
 
 

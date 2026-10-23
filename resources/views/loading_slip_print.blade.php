@@ -581,12 +581,8 @@
         <tbody>
             @foreach ($itemSummary as $index => $item)
                 @php
-                    $displayName = strtoupper(\App\Helpers\CommonHelper::itemNameWithVariant($item->product_name, $item->variant_name));
-                    // New orders already carry the pack in the variant name ("20 NOS/BAG"); only older ones need it added.
-                    if (isset($item->secondary_unit_value) && $item->secondary_unit_value > 1 && $item->secondary_unit_name
-                        && !str_contains((string) $item->variant_name, '/')) {
-                        $displayName .= ' | ' . (int) $item->secondary_unit_value . ' ' . strtoupper($item->secondary_unit_name);
-                    }
+                    // Name + "<inner value> <inner unit>/<outer unit>" pack are built per variant in the controller.
+                    $displayName = $item->display_name;
 
                     $boxQty = $item->qty . ' nos';
                     if (isset($item->secondary_unit_value) && $item->secondary_unit_value > 1 && $item->secondary_unit_name) {

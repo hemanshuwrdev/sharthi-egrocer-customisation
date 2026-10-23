@@ -24,6 +24,71 @@ use Illuminate\Support\Str;
 
 class AdminAuthController extends Controller
 {
+    /**
+     * The driver / seller / salesman an OTP login is for. Saved numbers are plain ("9120019980"), but an app may send the
+     * same number written another way - "+919120019980", "91 9120019980", "09120019980" - and an exact match then calls a
+     * correct, Active account "not registered". Exact first, so nothing that works today changes; only when that finds
+     * nothing, the same number without the country code / spaces / leading zero. If still nothing, what arrived is logged
+     * (number masked) so the cause is visible in storage/logs.
+     */
+    private function findByMobile(string $modelClass, $mobile, $countryCode, int $loginType, Request $request)
+    {
+        $found = $modelClass::where('mobile', $mobile)->first();
+        $how   = 'exact';
+
+        if (!$found && ($variants = self::mobileVariants($mobile, $countryCode))) {
+            $found = $modelClass::whereIn('mobile', $variants)->first();
+            $how   = 'number-format';   // the app wrote the number differently from how it is saved
+        }
+
+        // One line per OTP login, tagged `otp_login` so the /sms-inspect page lists it. The code itself is never seen here
+        // (with Firebase on, the phone and Google check it); this shows what the app sent and whether an account matched.
+        $raw  = (string) $mobile;
+        $info = [
+            'type'          => $loginType,   // 3 distributor, 4 driver, 5 salesman
+            'firebase_otp'  => (int) \App\Models\Setting::where('variable', 'firebase_authentication')->value('value') === 1,
+            'mobile_masked' => strlen($raw) > 5 ? substr($raw, 0, 3) . str_repeat('*', strlen($raw) - 5) . substr($raw, -2) : '(short/empty)',
+            'mobile_length' => strlen($raw),
+            'country_code'  => (string) $countryCode,
+            'sent_fields'   => array_values(array_intersect(['mobile', 'phone', 'id', 'country_code', 'type', 'otp'], array_keys($request->all()))),
+        ];
+
+        if ($found) {
+            Log::info('otp_login: account found', $info + ['account_id' => $found->id, 'matched_by' => $how]);
+        } else {
+            Log::warning('otp_login: NO account matched the number the app sent', $info);
+        }
+
+        return $found;
+    }
+
+    /** Other ways of writing the same number: digits only, without the app's country code (or India's 91), without a leading 0. */
+    private static function mobileVariants($mobile, $countryCode): array
+    {
+        $digits = preg_replace('/\D+/', '', (string) $mobile);
+        if ($digits === '') {
+            return [];
+        }
+
+        $out = [$digits];
+        $cc  = preg_replace('/\D+/', '', (string) $countryCode);
+        // A prefix is only ever cut from a number longer than 10 digits, so a plain 10-digit number that merely
+        // starts with the same digits as the country code (9120019980 and "91") is never mistaken for a prefixed one.
+        if ($cc !== '' && strlen($digits) > 10 && str_starts_with($digits, $cc) && strlen($digits) - strlen($cc) >= 6) {
+            $out[] = substr($digits, strlen($cc));
+        }
+        if ($cc !== '91' && str_starts_with($digits, '91') && strlen($digits) - 2 === 10) {
+            $out[] = substr($digits, 2);
+        }
+        foreach ($out as $v) {
+            if (strlen($v) > 6 && str_starts_with($v, '0')) {
+                $out[] = ltrim($v, '0');
+            }
+        }
+
+        return array_values(array_diff(array_unique($out), [(string) $mobile]));
+    }
+
     public function login(Request $request)
     {
         $requestData = $request->all();
@@ -77,7 +142,7 @@ class AdminAuthController extends Controller
 
             // OTP passed — now check user existence
             if ($loginType == 4) {
-                $deliveryBoy = DeliveryBoy::where('mobile', $mobile)->first();
+                $deliveryBoy = $this->findByMobile(DeliveryBoy::class, $mobile, $countryCode, $loginType, $request);
                 if (!$deliveryBoy) {
                     return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
                 }
@@ -86,7 +151,7 @@ class AdminAuthController extends Controller
                     return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
                 }
             } elseif ($loginType == 3) {
-                $seller = \App\Models\Seller::where('mobile', $mobile)->first();
+                $seller = $this->findByMobile(\App\Models\Seller::class, $mobile, $countryCode, $loginType, $request);
                 if (!$seller) {
                     return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
                 }
@@ -95,7 +160,7 @@ class AdminAuthController extends Controller
                     return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
                 }
             } elseif ($loginType == 5) {
-                $salesman = Salesman::where('mobile', $mobile)->first();
+                $salesman = $this->findByMobile(Salesman::class, $mobile, $countryCode, $loginType, $request);
                 if (!$salesman) {
                     return CommonHelper::responseError('user_is_not_register_with_this_mobile_number');
                 }

@@ -461,7 +461,7 @@ class SmsInspectController extends BaseController
         $rawLines = explode("\n", $content);
         $rawLines = array_reverse($rawLines);
 
-        $pattern = '/MSG91|SmsHelper|Twilio|send_sms|sms_verifications|otp_provider/i';
+        $pattern = '/MSG91|SmsHelper|Twilio|send_sms|sms_verifications|otp_provider|otp_login/i';
 
         foreach ($rawLines as $line) {
             $trimmed = trim($line);

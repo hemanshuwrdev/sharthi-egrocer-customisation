@@ -124,6 +124,7 @@
 </template>
 <script>
 import axios from 'axios';
+import { SIMPLE_DRIVER_STATUS } from './driverStatusConfig';
 
 // delivery_boys.status: 0 registered, 1 active, 2 not approved, 3 deactive, 4 blocked, 7 removed
 const STATUS = { registered: 0, active: 1, notApproved: 2, deactive: 3, blocked: 4, removed: 7 };
@@ -190,8 +191,11 @@ export default {
         statusChips() {
             const count = (id) => this.deliveryBoys.filter(b => b.status === id).length;
             const chips = [{ key: 'all', id: '', label: __('all'), count: this.deliveryBoys.length }];
-            [STATUS.active, STATUS.notApproved, STATUS.deactive, STATUS.blocked, STATUS.removed].forEach(id => {
-                if (id !== STATUS.removed || count(id) > 0) {
+            // SIMPLE_DRIVER_STATUS (driverStatusConfig.js): Active / Deactive always get a chip; every other state only when a
+            // driver is in it, so nobody is hidden. Flip the flag to false and Not-Approved / Blocked chips are always shown again.
+            const alwaysShown = SIMPLE_DRIVER_STATUS ? [STATUS.active, STATUS.deactive] : [STATUS.active, STATUS.notApproved, STATUS.deactive, STATUS.blocked];
+            [STATUS.active, STATUS.registered, STATUS.notApproved, STATUS.deactive, STATUS.blocked, STATUS.removed].forEach(id => {
+                if (alwaysShown.includes(id) || count(id) > 0) {
                     chips.push({ key: id, id: id, label: this.statusLabel(id), count: count(id) });
                 }
             });
@@ -244,8 +248,9 @@ export default {
             axios.get(this.$apiUrl + '/delivery_boys')
                 .then((response) => {
                     this.isLoading = false;
-                    // status 0 = signed up but not yet taken on by the distributor; never listed
-                    this.deliveryBoys = (response.data.data || []).filter(boy => boy.status !== STATUS.registered);
+                    // Every driver linked to this distributor, whatever the status. A "Registered" (0) driver used to be
+                    // hidden here, so one saved with that status vanished from the panel with no way to bring it back.
+                    this.deliveryBoys = response.data.data || [];
                 })
                 .catch(() => {
                     this.isLoading = false;

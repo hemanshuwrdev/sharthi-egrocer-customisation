@@ -576,7 +576,8 @@ class StoreSettingsApiController extends Controller
                     $setting->value
                 );
             } else {
-                $setting->value = $request->$key;
+                // An empty box (e.g. no App Store URL) arrives as null, and settings.value cannot be null.
+                $setting->value = $request->$key ?? '';
             }
 
             $setting->save();
