@@ -198,9 +198,18 @@ class AdminAuthController extends Controller
             return CommonHelper::responseError('your_account_is_blocked_please_contact_to_administrator_for_activate');
         }
 
+        // Anything else that is not Active — Deactivated (3), Removed (7) — is refused too. Only the statuses
+        // above had a gate, so a deactivated driver could still log in.
+        if ($user->role_id == Role::$roleDeliveryBoy && isset($user->deliveryBoy) && (int) $user->deliveryBoy->status !== DeliveryBoy::$statusActive) {
+            return CommonHelper::responseError('your_account_is_deactivated_please_contact_your_distributor');
+        }
+
         // Salesman status gate
         if ($user->role_id == Role::$roleSalesman && isset($user->salesman) && $user->salesman->status == Salesman::$statusBlocked) {
             return CommonHelper::responseError('your_account_is_blocked_please_contact_to_administrator_for_activate');
+        }
+        if ($user->role_id == Role::$roleSalesman && isset($user->salesman) && (int) $user->salesman->status !== Salesman::$statusActive) {
+            return CommonHelper::responseError('your_account_is_deactivated_please_contact_your_distributor');
         }
 
         // Super Admin two-factor authentication (Settings -> Security): park the login and email a code.

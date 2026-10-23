@@ -377,6 +377,12 @@ class DeliveryBoysApiController extends Controller
             $deliveryBoy->save();
             $zoneOverlaps = !empty($cityIds) ? $this->syncZones($deliveryBoy, $cityIds) : [];
 
+            // Deactivated / blocked / removed: log him out of the app now (the access-token check would
+            // catch him on his next request anyway; this also stops his push notifications at once).
+            if ((int) $deliveryBoy->status !== DeliveryBoy::$statusActive) {
+                CommonHelper::revokeAppAccess($deliveryBoy->admin_id);
+            }
+
             // Update Admin password when password is provided
             if ($request->filled('password')) {
                 $admin = Admin::find($deliveryBoy->admin_id);
@@ -519,6 +525,10 @@ class DeliveryBoysApiController extends Controller
                 $deliveryBoy->remark = $request->remark ?? "";
                 $deliveryBoy->save();
 
+                if ((int) $deliveryBoy->status !== DeliveryBoy::$statusActive) {
+                    CommonHelper::revokeAppAccess($deliveryBoy->admin_id);
+                }
+
                 if (isset($request->status) && $request->status === DeliveryBoy::$statusActive) {
                     $status_name = DeliveryBoy::$Active;
                 } else {
@@ -576,6 +586,7 @@ class DeliveryBoysApiController extends Controller
 
             $deliveryBoy->delete();
             CommonHelper::releaseMobile(\App\Models\MobileRegistry::ROLE_DELIVERY_BOY, $deliveryBoy->id);
+            CommonHelper::revokeAppAccess($deliveryBoy->admin_id);
         }
 
         return CommonHelper::responseSuccess('delivery_boy_deleted_successfully');

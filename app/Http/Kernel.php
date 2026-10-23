@@ -62,5 +62,6 @@ class Kernel extends HttpKernel
         'auth.customer' => \App\Http\Middleware\CustomerUserProvider::class,
         'lang' => \App\Http\Middleware\SetLang::class,
         'resolve.language' => \App\Http\Middleware\ResolveLanguage::class,
+        'active.app_user' => \App\Http\Middleware\EnsureActiveAppUser::class,
     ];
 }

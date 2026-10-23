@@ -202,6 +202,12 @@ class SalesmanApiController extends Controller
             }
 
             DB::commit();
+
+            // Deactivated: log him out of the app now (the access-token check would catch him on his next
+            // request anyway; this also stops his push notifications at once).
+            if ((int) $salesman->status !== Salesman::$statusActive) {
+                CommonHelper::revokeAppAccess($salesman->admin_id);
+            }
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -247,6 +253,7 @@ class SalesmanApiController extends Controller
             }
             CommonHelper::releaseMobile(MobileRegistry::ROLE_SALESMAN, $salesman->id);
             DB::commit();
+            CommonHelper::revokeAppAccess($adminId);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([

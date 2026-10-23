@@ -2701,5 +2701,6 @@
     "cart_value_gap": "A cart worth between",
     "cart_value_above": "A cart worth more than",
     "cart_value_gets_nothing": "gets no discount",
-    "cart_value_leave_to_empty": "Leave the last To empty to keep the discount going."
+    "cart_value_leave_to_empty": "Leave the last To empty to keep the discount going.",
+    "your_account_is_deactivated_please_contact_your_distributor": "Your account has been deactivated. Please contact your distributor."
 }

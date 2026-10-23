@@ -3323,6 +3323,26 @@ class CommonHelper
      * when the orders table doesn't have them yet, so code deployed before `php artisan migrate` still places orders].
      */
     /**
+     * Ends an app user's login for good: revokes every access token they hold and drops their push
+     * (FCM) tokens so the phone stops getting notifications. Used when a salesman or driver is
+     * deactivated or removed. Safe to call repeatedly; reactivating them just means they log in again.
+     */
+    public static function revokeAppAccess($admin): void
+    {
+        $adminId = is_object($admin) ? $admin->id : $admin;
+        if (!$adminId) {
+            return;
+        }
+
+        \Illuminate\Support\Facades\DB::table('oauth_access_tokens')
+            ->where('user_id', $adminId)
+            ->where('revoked', false)
+            ->update(['revoked' => true]);
+
+        \App\Models\AdminToken::where('user_id', $adminId)->delete();
+    }
+
+    /**
      * Nearest-rupee rounding of an order total, as [rounded total, round-off] — the round-off being what rounding
      * added (+) or took off (-): 20424.80 -> [20425.0, 0.20], 20424.40 -> [20424.0, -0.40]. Every place that
      * works out an order's final_total at placement uses this, so the cart, the order, the invoice and what the

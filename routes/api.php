@@ -68,7 +68,7 @@ Route::get('area/search-by-pincode', [\App\Http\Controllers\API\AreaApiControlle
 
 Route::get('policies', [\App\Http\Controllers\SellerController::class, 'getPolicies']);
 
-Route::middleware('auth:api')->group(function () {
+Route::middleware(['auth:api', 'active.app_user'])->group(function () {
     Route::get('admin_settings', [\App\Http\Controllers\Controller::class, 'getAdminSettings']);
     Route::get('dashboard', [\App\Http\Controllers\Controller::class, 'index']);
     Route::get('get_top_notifications', [\App\Http\Controllers\Controller::class, 'getTopNotifications']);
